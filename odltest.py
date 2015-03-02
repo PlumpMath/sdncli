@@ -1,8 +1,6 @@
 import unittest
 import requests
-import yaml
-import json
-import pprint
+import sets
 from requests.auth import HTTPBasicAuth
 
 
@@ -14,6 +12,7 @@ RESTAPI = {'NODEINVENTORY': 'http://{server}:8181/restconf/operational/opendayli
 
 class TestODL(unittest.TestCase):
     def test_request(self):
+        nodes = set()
         server = "localhost"
         session = requests.Session()
         headers = {'content-type': 'application/xml'}
@@ -21,22 +20,14 @@ class TestODL(unittest.TestCase):
         # params = {'depth': '0'}
         resource = RESTAPI['NODEINVENTORY'].format(server=server)
         retval = session.get(resource, auth=auth, params=None, headers=headers)
-        data = retval.json()
-        print data
-        print "\n### Return ####\n"
-        for k1, v1 in data.items():
-            print k1, v1
-        # for key in data['nodes']:
-        #     if data["nodes"]["node"][0]['flow-node-inventory:description']:
-        #         print "yes"
-        #     #
-        #     # s = data["nodes"]["node"][0]["id"]
-        #     # # print data["nodes"]["node"][1]["id"]
-        #     # print data["nodes"]["node"][2]["id"]
-        #     # print data["nodes"]["node"][3]["id"]
-        #     # print data["nodes"]["node"][4]["id"]
-
         self.assertTrue(retval.status_code, 200)
+        data = retval.json()
+        node_count = len(data["nodes"]["node"])
+        for i in range(node_count):
+            if "config" not in data["nodes"]["node"][i]["id"]:
+                new_node = data["nodes"]["node"][i]["id"]
+                nodes.add(new_node)
+        print nodes 
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)
