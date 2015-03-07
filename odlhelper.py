@@ -1,26 +1,36 @@
 #!/usr/bin/python
+# (C)2015 Brocade Communications Systems, Inc.
+# 130 Holger Way, San Jose, CA 95134.
+# All rights reserved.
+# Author: Gary Berger <gberger@brocade.com>
 """
 Usage:
         odl get-nodes [--json]
         odl get-hosts [--json]
-        odl get-flows [--address]
+        odl get-flows [--json]
+        odl delete-flow <node> <table> <flow>
+        odl get-flow <node> <table> <flow>
+        odl add-flow <node> <table> <flow>
 
 Options :
     -A, --address           Address to bind UI
     -I, --ignore
     -h, --help
 """
+
 import requests
 from lib.docopt import docopt
 from requests.auth import HTTPBasicAuth
+import lib.bvctmpl as t
+# from ncclient import manager
+import pprint
 from prettytable import PrettyTable
-import json
 
 
 RESTAPI = {'NODEINVENTORY': 'http://{server}:8181/restconf/operational/opendaylight-inventory:nodes',
            'TOPOLOGY': 'http://{server}:8181/restconf/operational/network-topology:network-topology/',
-           'B': 'http://{server}:8181/restconf/operational/opendaylight-inventory:',
-           'C': 'http://{server}:8181/restconf/operational/opendaylight-inventory:'}
+           'FLOWMOD': 'http://{server}:8181/restconf/config/opendaylight-inventory:nodes/node/{node}/flow-node-inventory:table/{table}/flow/{flow}',
+           'FLOW': 'http://{server}:8181/restconf/config/opendaylight-inventory:nodes/node/{node}/flow-node-inventory:table/{table}/flow/{flow}'}
 
 
 class Controller(object):
@@ -30,114 +40,169 @@ class Controller(object):
         self.session = requests.Session()
         self.headers = {'content-type': 'application/json'}
         self.auth = HTTPBasicAuth('admin', 'admin')
-        self.nodeset = set()
-        #Can you have mac duplicated?
-        self.hostmap = {}
-
-    def print_table(self, columns, rows):
-        table = PrettyTable()
-        # table = PrettyTable(["Nodes"])
-        # for i in columns - 1:
-        #     table.add_row(i)
-        print table
 
     def get_nodes(self, dumpjson=False):
         # try:
             resource = RESTAPI['NODEINVENTORY'].format(server=self.server)
             retval = self.session.get(resource, auth=self.auth, params=None, headers=self.headers)
             if retval.status_code == 200:
-                data = retval.text
-                json_data = json.loads(data)
-                if dumpjson is not False:
-                    print json.dumps(json_data, sort_keys=True, indent=4, separators=(',', ': '))
-                node_count = len(json_data["nodes"]["node"])
-                for i in range(node_count):
-                    if "config" not in json_data["nodes"]["node"][i]["id"]:
-                        new_node = json_data["nodes"]["node"][i]["id"]
-                        self.nodeset.add(new_node)
+                data = retval.json()
+                nodes = data.get('nodes').get('node')
+                for node in nodes:
+                    if "cont" not in node['id']:
+                        print node['id']
 
-                for i in sorted(self.nodeset):
-                    print i
-            # except Exception, e:
+    def get_flows(self, dumpjson=False):
+        flowtable = self._get_flows()
+        print flowtable.items()
+        for f in flowtable:
+            print f
+
+    def _get_flows(self, dumpjson=False):
+        '''
+        Get all flows known to controller. Traverses the node-inventory document to assemble.
+        '''
+        #TODO Better management of match and action types
+        #TODO Should this be formatted similar to ovs-ofctl dumpflows
+        # try:
+        resource = RESTAPI['NODEINVENTORY'].format(server=self.server)
+        try:
+            retval = self.session.get(resource, auth=self.auth, params=None, headers=self.headers)
+        except Exception, error:
+            raise error
+
+        if retval.status_code == 200:
+            flowtable = {}
+            data = retval.json()
+            nodes = data.get('nodes').get('node')
+            for node in nodes:
+                if "cont" not in node['id']:
+                    table = node['flow-node-inventory:table']
+                    for table_entry in table:
+                        if 'flow' in table_entry:
+                            #TODO check this list
+                            flow_rule = table_entry.get('flow')[0]
+                            flowmap = {'node': node['id'],
+                                       'flow_id': flow_rule.get('id'),
+                                       'table_id': flow_rule.get('table_id'),
+                                       'hard_timeout': flow_rule.get('hard-timeout'),
+                                       'idle_timeout': flow_rule.get('idle-timeout'),
+                                       'match': flow_rule.get('match'),
+                                       'instructions': flow_rule.get('instructions')
+                                       }
+                            flowtable.setdefault(flow_rule.get('cookie'), []).append(flowmap)
+            return flowtable
+        else:
+            print("Error with call {}").format(resource)
+            print("Error: {}").format(resource.error)
 
     def get_hosts(self, dumpjson=False):
+        dbhosts = {}
+        hosttable = self._get_hosts()
+        for hosts in hosttable:
+            host = hosttable.get(hosts)
+            for h in host:
+                htsa = h.get('htsa')
+                tid = h.get('t_id')
+                for p in htsa:
+                    for q in tid:
+                        hostmap = {'IP': p.get('ip'), 'MacAddr': p.get('mac'), 'TID': q.get('t_id')}
+                        dbhosts.setdefault(p.get('id'), []).append(hostmap)
+
+        self.print_table(dbhosts)
+
+        # node_port = v[23:].split(':')
+        #                         mapping = {'port': node_port[2],
+        #                                    'switch': node_port[0] + ":" + node_port[1]}
+
+    def _get_hosts(self, dumpjson=False):
+        '''
+        Get all hosts connected to known switches using topology data source
+        '''
         # try:
+        resource = RESTAPI['TOPOLOGY'].format(server=self.server)
+        retval = self.session.get(resource, auth=self.auth, params=None, headers=self.headers)
+        if retval.status_code == 200:
+            hosttable = {}
+            self.session = requests.Session()
+            self.auth = HTTPBasicAuth('admin', 'admin')
             resource = RESTAPI['TOPOLOGY'].format(server=self.server)
+        try:
             retval = self.session.get(resource, auth=self.auth, params=None, headers=self.headers)
-            if retval.status_code == 200:
-                data = retval.text
-                json_data = json.loads(data)
-                if dumpjson is not False:
-                    print json.dumps(json_data, sort_keys=True, indent=4, separators=(',', ': '))
-                node_count = len(json_data["network-topology"]["topology"][0]["node"])
-                # for i in range(node_count):
-                #     if "host" in json_data["network-topology"]["topology"][0]["node"][i]["node-id"]:
-                #         new_host = json_data["network-topology"]["topology"][0]["node"][i]["node-id"]
-                #         self.hostmap[new_host[5:]] = ''
-                for i in range(node_count):
-                    if 'host-tracker-service:addresses' in json_data['network-topology']['topology'][0]['node'][i]:
-                        mylist = json_data['network-topology']['topology'][0]['node'][i]['host-tracker-service:addresses']
-                        for l in mylist:
-                            mapping = {'ip': l['ip']}
-                            self.hostmap.setdefault(l['mac'], []).append(mapping)
+        except Exception, error:
+            raise error
 
-                for i in range(node_count):
-                    if 'host-tracker-service:id' in json_data['network-topology']['topology'][0]['node'][i]:
-                        mylist = json_data['network-topology']['topology'][0]['node'][i]['termination-point']
-                        for l in mylist:
-                            for k, v in l.items():
-                                mac = v[5:22]
-                                node_port = v[23:].split(':')
-                                node = node_port[0] + ":" + node_port[1]
-                                mapping = {'port': node_port[2],
-                                           'switch': node_port[0] + ":" + node_port[1]}
-                                self.hostmap.setdefault(mac, []).append(mapping)
+        if retval.status_code == 200:
+            data = retval.json()
+            nodes = data.get('network-topology').get('topology')
+            for node in nodes:
+                topology_nodes = node.get('node')
+                for t_node in topology_nodes:
+                    if 'host' in t_node.get('node-id'):
+                        host = {'t_id': t_node.get('termination-point'),
+                                'htsa': t_node.get('host-tracker-service:addresses')
+                                }
+                        hosttable.setdefault(t_node.get('node-id'), []).append(host)
 
-                for k, v in self.hostmap.items():
-                    print "{0}    {1}    {2}    {3}".format(k, v[0]['ip'], v[1]['switch'], v[1]['port'])
-            else:
-                print "error"
-        # except Exception, e:
-        #     raise e
+        return hosttable
 
-    def get_flows(self):
-        pass
+        # for l in mytp:
+        #     for k, v in l.items():
+        #         mac = v[5:22]
+        #         node_port = v[23:].split(':')
+        #         mapping = {'port': node_port[2],
+        #                    'switch': node_port[0] + ":" + node_port[1]}
+        #         self.hostmap.setdefault(mac, []).append(mapping)
+        # for l in myaddr:
+        #         mapping = {'ip': l['ip']}
+        #         self.hostmap.setdefault(l['mac'], []).append(mapping)
+    def delete_flow(self, node, table, flow):
+        resource = RESTAPI['DELETEFLOW'].format(server=self.server, node=node, table=table, flow=flow)
+        retval = self.session.delete(resource, auth=self.auth, params=None, headers=self.headers)
+        if retval.status_code is not "200":
+            print retval.text
 
-    def set_flow(self, src, dst, ):
+    def get_flow(self, node, table, flow):
+        resource = RESTAPI['FLOW'].format(server=self.server, node=node, table=table, flow=flow)
+        retval = self.session.get(resource, auth=self.auth, params=None, headers=self.headers)
+        if retval.status_code is not "200":
+            print retval.status_code
+            print retval.text
+        else:
+            print retval.text
 
-        # PUT http://192.168.239.129:8181/restconf/config/opendaylight-inventory:nodes/node/openflow:1/flow-node-inventory:table/0/flow/1
+    def add_flow(self, node, table, flow, actions):
+        print actions
+        headers = {'content-type': 'application/xml'}
+        resource = RESTAPI['FLOW'].format(server=self.server, node=node, table=table, flow=flow)
+        retval = self.session.post(resource, auth=self.auth, params=None, headers=headers, data=actions)
+        print resource
+        print flow
+        if retval.status_code is not "200":
+            print retval.status_code
+            print retval.text
+        else:
+            print retval.text
 
-        # APIDICT = {"Table": "http://{host}:8181/restconf/config/opendaylight-inventory:nodes/node/{node}:{port}/flow-node-inventory:table/{table_num}/flow/{flow_num}"}
+    # def netconf_connect(self, host, port, user):
+    #     with manager.connect(host=host, port=830, username=user, hostkey_verify=False) as m:
+    #         c = m.get_config(source='running').data_xml
+    #     with open("%s.xml" % host, 'w') as f:
+    #         f.write(c)
 
-        '''
+    def parse_hosttable(self, hosttable):
+        for row in hosttable:
+            print row
 
-        # content-type: application/yang.data+json
-
-
-        <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-        <flow xmlns="urn:opendaylight:flow:inventory">
-            <strict>false</strict>
-            <table_id>0</table_id>
-            <id>1</id>
-            <priority>5</priority>
-            <hard-timeout>0</hard-timeout>
-            <idle-timeout>0</idle-timeout>
-            <installHw>true</installHw>
-            <flow-name>DropAll</flow-name>
-            <instructions>
-                <instruction>
-                    <order>0</order>
-                    <apply-actions>
-                        <action>
-                            <order>0</order>
-                            <drop-action/>
-                        </action>
-                    </apply-actions>
-                </instruction>
-            </instructions>
-        </flow>
-        '''
-
+    def print_table(self, table):
+        add_header = False
+        for i in table:
+            if not add_header:
+                p = PrettyTable(table.get(i)[0].keys())
+                p.padding_width = 1
+                add_header = True
+            p.add_row(table.get(i)[0].values())
+        print p
 
 if __name__ == "__main__":
     args = docopt(__doc__)
@@ -146,7 +211,11 @@ if __name__ == "__main__":
         ctl.get_nodes(args["--json"])
     if args["get-hosts"]:
         ctl.get_hosts(args["--json"])
-
-
-
-
+    if args["get-flows"]:
+        pprint.pprint(ctl.get_flows(args["--json"]))
+    if args["delete-flow"]:
+        ctl.delete_flow(args['<node>'], args['<table>'], args['<flow>'])
+    if args["get-flow"]:
+        ctl.get_flow(args['<node>'], args['<table>'], args['<flow>'])
+    if args["add-flow"]:
+        ctl.add_flow(args['<node>'], args['<table>'], args['<flow>'], t.addflow)
