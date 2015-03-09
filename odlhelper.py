@@ -35,28 +35,33 @@ RESTAPI = {'NODEINVENTORY': 'http://{server}:8181/restconf/operational/opendayli
 
 class Controller(object):
     def __init__(self, restconf_server='localhost', port=8181):
-        self.server = restconf_server
         self.port = port
+        self.auth = HTTPBasicAuth('admin', 'admin')
+        self.server = restconf_server
         self.session = requests.Session()
         self.headers = {'content-type': 'application/json'}
-        self.auth = HTTPBasicAuth('admin', 'admin')
 
     def get_nodes(self, dumpjson=False):
+            nodetable = {}
         # try:
             resource = RESTAPI['NODEINVENTORY'].format(server=self.server)
-            retval = self.session.get(resource, auth=self.auth, params=None, headers=self.headers)
+            try:
+                retval = self.session.get(resource, auth=self.auth, params=None, headers=self.headers)
+            except Exception, e:
+                raise e
             if retval.status_code == 200:
                 data = retval.json()
                 nodes = data.get('nodes').get('node')
-                for node in nodes:
+                for node in sorted(nodes):
                     if "cont" not in node['id']:
-                        print node['id']
+                        nodeentry = {"Node": node.get('id')}
+                        nodetable.setdefault(node.get('id'), []).append(nodeentry)
+            self.print_table(nodetable)
 
     def get_flows(self, dumpjson=False):
         flowtable = self._get_flows()
-        print flowtable.items()
-        for f in flowtable:
-            print f
+        # for f in sorted(flowtable):
+        #     print f
 
     def _get_flows(self, dumpjson=False):
         '''
@@ -80,14 +85,15 @@ class Controller(object):
                     table = node['flow-node-inventory:table']
                     for table_entry in table:
                         if 'flow' in table_entry:
-                            #TODO check this list
+                            #TODO check the list depth
+                            print table_entry
                             flow_rule = table_entry.get('flow')[0]
                             flowmap = {'node': node['id'],
+                                       'match': flow_rule.get('match'),
                                        'flow_id': flow_rule.get('id'),
                                        'table_id': flow_rule.get('table_id'),
                                        'hard_timeout': flow_rule.get('hard-timeout'),
                                        'idle_timeout': flow_rule.get('idle-timeout'),
-                                       'match': flow_rule.get('match'),
                                        'instructions': flow_rule.get('instructions')
                                        }
                             flowtable.setdefault(flow_rule.get('cookie'), []).append(flowmap)
@@ -99,17 +105,20 @@ class Controller(object):
     def get_hosts(self, dumpjson=False):
         dbhosts = {}
         hosttable = self._get_hosts()
-        for hosts in hosttable:
-            host = hosttable.get(hosts)
-            for h in host:
-                htsa = h.get('htsa')
-                tid = h.get('t_id')
-                for p in htsa:
-                    for q in tid:
-                        hostmap = {'IP': p.get('ip'), 'MacAddr': p.get('mac'), 'TID': q.get('t_id')}
-                        dbhosts.setdefault(p.get('id'), []).append(hostmap)
-
-        self.print_table(dbhosts)
+        if hosttable is not None:
+            for hosts in hosttable:
+                host = hosttable.get(hosts)
+                for h in host:
+                    tid = h.get('t_id')
+                    htsa = h.get('htsa')
+                    for p in htsa:
+                        for q in tid:
+                            hostmap = {'IP': p.get('ip'), 'MacAddr': p.get('mac'), 'TID': q.get('tp-id')[23:]}
+                            dbhosts.setdefault(p.get('id'), []).append(hostmap)
+            self.print_table(dbhosts)
+        else:
+            print("Found no hosts")
+            return
 
         # node_port = v[23:].split(':')
         #                         mapping = {'port': node_port[2],
@@ -119,43 +128,36 @@ class Controller(object):
         '''
         Get all hosts connected to known switches using topology data source
         '''
-        # try:
         resource = RESTAPI['TOPOLOGY'].format(server=self.server)
-        retval = self.session.get(resource, auth=self.auth, params=None, headers=self.headers)
-        if retval.status_code == 200:
-            hosttable = {}
-            self.session = requests.Session()
-            self.auth = HTTPBasicAuth('admin', 'admin')
-            resource = RESTAPI['TOPOLOGY'].format(server=self.server)
         try:
             retval = self.session.get(resource, auth=self.auth, params=None, headers=self.headers)
         except Exception, error:
             raise error
 
         if retval.status_code == 200:
+            hosttable = {}
             data = retval.json()
             nodes = data.get('network-topology').get('topology')
             for node in nodes:
                 topology_nodes = node.get('node')
-                for t_node in topology_nodes:
-                    if 'host' in t_node.get('node-id'):
-                        host = {'t_id': t_node.get('termination-point'),
-                                'htsa': t_node.get('host-tracker-service:addresses')
-                                }
-                        hosttable.setdefault(t_node.get('node-id'), []).append(host)
+                if topology_nodes is not None:
+                    for t_node in topology_nodes:
+                        if 'host' in t_node.get('node-id'):
+                            host = {'t_id': t_node.get('termination-point'),
+                                    'htsa': t_node.get('host-tracker-service:addresses')
+                                    }
+                            hosttable.setdefault(t_node.get('node-id'), []).append(host)
+                else:
+                    return None
 
         return hosttable
 
-        # for l in mytp:
         #     for k, v in l.items():
         #         mac = v[5:22]
         #         node_port = v[23:].split(':')
         #         mapping = {'port': node_port[2],
         #                    'switch': node_port[0] + ":" + node_port[1]}
-        #         self.hostmap.setdefault(mac, []).append(mapping)
-        # for l in myaddr:
-        #         mapping = {'ip': l['ip']}
-        #         self.hostmap.setdefault(l['mac'], []).append(mapping)
+
     def delete_flow(self, node, table, flow):
         resource = RESTAPI['DELETEFLOW'].format(server=self.server, node=node, table=table, flow=flow)
         retval = self.session.delete(resource, auth=self.auth, params=None, headers=self.headers)
@@ -196,7 +198,7 @@ class Controller(object):
 
     def print_table(self, table):
         add_header = False
-        for i in table:
+        for i in sorted(table):
             if not add_header:
                 p = PrettyTable(table.get(i)[0].keys())
                 p.padding_width = 1
