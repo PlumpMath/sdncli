@@ -5,15 +5,13 @@
 # Author: Gary Berger <gberger@brocade.com>
 """
 Usage:
-        bvc  get-nodes [--address <ip>]  [--json]  
+        bvc  get-nodes [--address <ip>] [--json]
         bvc  get-hosts [--address <ip>] [--json]
         bvc  get-flows [--address <ip>] [--json]
-        bvc  get-modules [--address <ip>]
-        bvc  get-mounts [--address <ip>]
         bvc  get-flow   <node> <table> <flow> [--address <ip>]
         bvc  add-flow   <node> <table> <flow> [--address <ip>]
         bvc  del-flow   <node> <table> <flow> [--address <ip>]
-        bvc  mount-device  <name> <address> <user> <password> [port] [--vdx]
+        bvc  mount-device <name> <address> <user> <password> [port]
         bvc  unmount-device <name>
 
 Options :
@@ -29,17 +27,14 @@ from requests.auth import HTTPBasicAuth
 import lib.bvctmpl as t
 import pprint
 from prettytable import PrettyTable
-from lib.netconflib import netconf_mount, netconf_mount_vdx
+from lib.netconflib import netconf_mount
 
-API = {'NODEOPER': 'http://{server}:8181/restconf/operational/opendaylight-inventory:nodes',
-       'NODECONFIG': 'http://{server}:8181/restconf/config/opendaylight-inventory:nodes',
+API = {'NODEINVENTORY': 'http://{server}:8181/restconf/operational/opendaylight-inventory:nodes',
        'TOPOLOGY': 'http://{server}:8181/restconf/operational/network-topology:network-topology/',
        'FLOWMOD': 'http://{server}:8181/restconf/config/opendaylight-inventory:nodes/node/{node}/flow-node-inventory:table/{table}/flow/{flow}',
        'FLOW': 'http://{server}:8181/restconf/config/opendaylight-inventory:nodes/node/{node}/flow-node-inventory:table/{table}/flow/{flow}',
-       'MODULES': 'http://{server}:8181/restconf/config/opendaylight-inventory:nodes/node/controller-config/yang-ext:mount/config:modules',
-       'MOUNTS': 'http://{server}:8181/restconf/config/opendaylight-inventory:nodes/node/controller-config/yang-ext:mount/',
-       'UNMOUNT': 'http://{server}:8181/restconf/config/opendaylight-inventory:nodes/node/controller-config/yang-ext:mount/config:modules/module/odl-sal-netconf-connector-cfg:sal-netconf-connector/{name}'
-       }
+       'MOUNT': 'http://<server>:8181/restconf/config/opendaylight-inventory:nodes/node/controller-config/yang-ext:mount/config:modules',
+       'UNMOUNT': ' http://<serve>:8181/restconf/config/opendaylight-inventory:nodes/node/controller-config/yang-ext:mount/config:modules/module/odl-sal-netconf-connector-cfg:sal-netconf-connector/{name}'}
 
 
 class Controller(object):
@@ -51,12 +46,8 @@ class Controller(object):
         self.headers = {'content-type': 'application/json'}
 
     def get_nodes(self, dumpjson=False):
-        self._get_nodes_oper(dumpjson)
-        self._get_nodes_config(dumpjson)
-
-    def _get_nodes_oper(self, dumpjson=False):
             nodetable = {}
-            resource = API['NODEOPER'].format(server=self.server)
+            resource = API['NODEINVENTORY'].format(server=self.server)
             try:
                 retval = self.session.get(resource, auth=self.auth, params=None, headers=self.headers, timeout=5)
             except Exception, e:
@@ -71,45 +62,22 @@ class Controller(object):
                         nodeentry = {"Node": node['id']}
                         nodetable.setdefault(node['id'], []).append(nodeentry)
             if len(nodetable) > 0:
-                self.print_table("get_nodes_oper", nodetable)
-            else:
-                print "No nodes found"
-                return None   
-
-    def _get_nodes_config(self, dumpjson=False):
-            nodetable = {}
-            resource = API['NODECONFIG'].format(server=self.server)
-            try:
-                retval = self.session.get(resource, auth=self.auth, params=None, headers=self.headers, timeout=5)
-            except Exception, e:
-                raise e
-            if retval.status_code == 200:
-                data = retval.json()
-                if dumpjson:
-                    pprint.pprint(data)
-                nodes = data['nodes']['node']
-                for node in sorted(nodes):
-                    if "cont" not in node['id']:
-                        nodeentry = {"Node": node['id']}
-                        nodetable.setdefault(node['id'], []).append(nodeentry)
-            if len(nodetable) > 0:
-                self.print_table("get_nodes_config", nodetable)
+                self.print_table(nodetable)
             else:
                 print "No nodes found"
                 return None
 
     def get_flows(self, dumpjson=False):
-        configtable = self._get_flow_entries("NODECONFIG", dumpjson)
-        if configtable is not None:
-            if len(configtable) > 0:
-                self.print_table("get_flows", configtable, 'nodeid')
-            else:
-                print "No flows found in configuration table"
-                return None
+        flowtable = self._get_flows()
+        if len(flowtable) > 0:
+            self.print_table(flowtable, 'nodeid')
+        else:
+            print "No flows found"
+            return None
 
     def extract(self, ind, outd):
         for key, value in ind.viewitems():
-            # print("Key: {key}, Value: {value}, Type: {type}").format(key=key, value=value, type=type(value))
+            print("Key: {key}, Value: {value}, Type: {type}").format(key=key, value=value, type=type(value))
             if isinstance(value, dict):
                 self.extract(value, outd)
             elif isinstance(value, list):
@@ -119,61 +87,23 @@ class Controller(object):
                 outd[key] = value
         return outd
 
-    def extractkeys(self, ks, inputitems, outputitems):
-        for key, value in inputitems.viewitems():
-            # print("Key: {key}, Value: {value}, Type: {type}").format(key=key, value=value, type=type(value))
-            if isinstance(value, dict):
-                self.extractkeys(ks, value, outputitems)
-                idx = str(uuid.uuid4())
-                outputitems[idx] = ''
-            elif isinstance(value, list):
-                for i in value:
-                    if i['type'] in ks:
-                        self.extractkeys(ks, i, outputitems)
-            else:
-                print("Key: {key}, Value: {value}, Type: {type}").format(key=key, value=value, type=type(value))
-    
-                # outputitems[idx][key] = value
-
-        return outputitems
-
-    def _get_flow_entries(self, api, dumpjson):
-        new_flow_entry = {}
-        flowdb = {}
-        resource = API[api].format(server=self.server)
+    def _get_flows(self, dumpjson=False):
+        resource = API['NODEINVENTORY'].format(server=self.server)
         retval = self.session.get(resource, auth=self.auth, params=None, headers=self.headers, timeout=5)
         data = retval.json()
         if dumpjson:
             pprint.pprint(data)
         nodes = data['nodes']['node']
+        new_flow_entry = {}
         for node in nodes:
             if "cont" not in node.get('id'):
-                _nodeid = node.get('id')
-                if _nodeid is not None:
-                    print "Nodeid: %s" % _nodeid
-                    if "flow-node-inventory:table" in node:
-                        table = node['flow-node-inventory:table']
-                        for table_entry in table:
-                            if 'flow' in table_entry:
-                                for flow_entry in table_entry.get('flow'):
-                                    s = self.extract(flow_entry, new_flow_entry)
-                                    flowmap = {'nodeid': _nodeid,
-                                               # 'flowname': s['flow-name'],
-                                               'hardtimeout': s['hard-timeout'],
-                                               'idletimeout': s['idle-timeout'],
-                                               'flowid': s['id'],
-                                               'in_port': s['in-port'],
-                                               'ipv4destination': s['ipv4-destination'],
-                                               'order': s['order'],
-                                               #TODO get index of nodes to dereference
-                                               'outputnode': s['output-node-connector'],
-                                               'priority': s['priority'],
-                                               'table_id': s['table_id'],
-                                               'ethertype': s['type']}
-                                                # 'vlanid': s['vlan-id']}
-                                                #TODO  u'vlan-id-present': True}
-                                    flowdb.setdefault(str(uuid.uuid4()), []).append(flowmap)
-        return flowdb
+                # _nodeid = node.get('id')
+                table = node['flow-node-inventory:table']
+                for table_entry in table:
+                    if 'flow' in table_entry:
+                        for flow_entry in table_entry.get('flow'):
+                            s = self.extract(flow_entry, new_flow_entry)
+                            pprint.pprint(s)
 
 
     def _get_flows1(self, dumpjson=False):
@@ -291,7 +221,7 @@ class Controller(object):
                             hostmap = {'IP': p.get('ip'), 'MacAddr': p.get('mac'), 'TID': q.get('tp-id')}
                             dbhosts.setdefault(p.get('id'), []).append(hostmap)
             if len(dbhosts) > 0:
-                self.print_table("get_hosts", dbhosts)
+                self.print_table(dbhosts)
             else:
                 print "Found no Hosts"
                 return
@@ -340,66 +270,18 @@ class Controller(object):
         #         mapping = {'port': node_port[2],
         #                    'switch': node_port[0] + ":" + node_port[1]}
 
-    def get_modules(self, dumpjson=False):
-        resource = API['MODULES'].format(server=self.server)
+    def mount_netconf_device(self, name, node, user, pw, port='830'):
+        resource = API['MOUNT'].format(server=self.server)
         headers = {'content-type': 'application/xml'}
-        retval = self.session.get(resource, auth=self.auth, params=None, headers=headers)
+        retval = self.session.post(resource, auth=self.auth, params=None, headers=headers, data=netconf_mount(name, node, user, pw))
         if retval.status_code is not "200":
-            print retval.status_code
-            print retval.text
-        else:
-            data = retval.json()
-            pprint.pprint(data)
-
-    def get_mounts(self, dumpjson=False):
-        mountdb = {}
-        keys = {"odl-sal-netconf-connector-cfg:sal-netconf-connector"}
-        resource = API['MOUNTS'].format(server=self.server)
-        headers = {'content-type': 'application/xml'}
-        retval = self.session.get(resource, auth=self.auth, params=None, headers=headers)
-        if str(retval.status_code)[:1] == "2":
-            data = retval.json()
-            root = data['config:modules']['module']
-            for line in root:
-                if line['type'] in keys:
-                    print line['name']
-                    mountmap = {'name': line['name'],
-                                'address': line['odl-sal-netconf-connector-cfg:address'],
-                                'port': line['odl-sal-netconf-connector-cfg:port'],
-                                'username': line['odl-sal-netconf-connector-cfg:username'],
-                                'password': line['odl-sal-netconf-connector-cfg:password']
-                                }
-                    mountdb.setdefault(str(uuid.uuid4()), []).append(mountmap)
-            if len(mountdb) > 0:
-                self.print_table("get_mounts", mountdb)
-        else:
-            print retval.status_code
-            print retval.text
-
-    def mount_netconf_device(self, name, node, user, pw, port, vdx=None):
-        if not port:
-            port = 830
-        if vdx is not None:
-            data = netconf_mount_vdx(name, node, port, user, pw)
-        else:
-            data = netconf_mount(name, node, port, user, pw)
-        resource = API['MODULES'].format(server=self.server)
-        headers = {'content-type': 'application/xml'}
-        retval = self.session.post(resource, auth=self.auth, params=None, headers=headers, data=data)
-        if str(retval.status_code)[:1] == "2":
             print "Mounted Node {} on {}".format(name, node)
-        else:
-            print retval.text
-            print retval.status_code
 
     def unmount_netconf_device(self, name):
-        resource = API['UNMOUNT'].format(server=self.server, name=name)
+        resource = API['UNMOUNT'].format(name=name)
         headers = {'content-type': 'application/xml'}
-        retval = self.session.delete(resource, auth=self.auth, params=None, headers=headers)
+        retval = self.session.post(resource, auth=self.auth, params=None, headers=headers, data=netconf_mount(name, node, user, pw))
         if retval.status_code is not "200":
-            print retval.status_code
-            print retval.text
-        else:
             print "UnMounted Node {}".format(name)
 
     def delete_flow(self, node, table, flow):
@@ -440,15 +322,7 @@ class Controller(object):
         for row in hosttable:
             print row
 
-    def print_table(self, text, table, sortkey=None):
-        self.table_banner(text)
-        self.print_table_detail(table, sortkey)
-
-    def table_banner(self, text):
-        print("+-------------------------+")
-        print text
-
-    def print_table_detail(self, table, sortkey=None):
+    def print_table(self, table, sortkey=None):
         p = PrettyTable()
         col_head = table.get(table.keys()[0])[0].keys()
         p.field_names = col_head
@@ -474,10 +348,6 @@ if __name__ == "__main__":
         ctl.get_hosts(args["--json"])
     if args["get-flows"]:
         ctl.get_flows(args["--json"])
-    if args["get-modules"]:
-        ctl.get_modules(args["--json"])
-    if args["get-mounts"]:
-        ctl.get_mounts(args["--json"])
     if args["del-flow"]:
         ctl.delete_flow(args['<node>'], args['<table>'], args['<flow>'])
     if args["get-flow"]:
@@ -485,7 +355,7 @@ if __name__ == "__main__":
     if args["add-flow"]:
         ctl.add_flow(args['<node>'], args['<table>'], args['<flow>'])
     if args["mount-device"]:
-        ctl.mount_netconf_device(args['<name>'], args['<address>'], args['<user>'], args['<password>'], args['port'], args["--vdx"])
+        ctl.mount_netconf_device(args['<name>'], args['<address>'], args['user'], args['password'], args['port'])
     if args["unmount-device"]:
-        ctl.unmount_netconf_device(args['<name>'])
+        ctl.mount_netconf_device(args['name'])
 
