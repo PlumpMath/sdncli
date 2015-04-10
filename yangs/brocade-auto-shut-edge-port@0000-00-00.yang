@@ -1,0 +1,42 @@
+/******************************************************************
+* Logical Chassis CLI Yang model that will contain logical chassis clis
+*
+*   June 2014-2015, Anand Subramanian
+*
+* Copyright (c) 2014 by Brocade Communications Systems, Inc.
+* All rights reserved.
+*******************************************************************/
+
+module brocade-auto-shut-edge-port {
+    namespace "http://brocade.com/ns/brocade-auto-shut-edge-port";
+    prefix brocade-auto-shut-edge-port;
+
+    import tailf-common    { 
+        prefix "tailf";  
+    }
+
+    //import brocade-vcs {
+      //  prefix brocade-vcs;
+    //}
+
+    import brocade-rbridge {
+        prefix rbridge;
+    }
+
+    grouping auto-shut-edge-port-cmds {
+        container vcs {
+            container auto-shut {
+                //tailf:display-when '((/vcsmode/vcs-mode = "true") and (/vcsmode/vcs-cluster-mode = "true"))';
+                //tailf:cli-incomplete-command;
+
+                leaf lag {
+                    type empty;
+                }
+            }
+        }
+    }
+
+    augment "/rbridge:rbridge-id" {
+        uses auto-shut-edge-port-cmds;
+    }
+}

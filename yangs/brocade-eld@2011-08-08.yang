@@ -1,0 +1,82 @@
+module brocade-eld {
+
+	namespace "urn:brocade.com:mgmt:brocade-eld";
+	prefix "eld";
+	
+    import tailf-common { prefix "tailf"; }
+    
+    import brocade-interface {
+        prefix interface;
+    }
+
+	revision "2011-08-08" {
+       description "Initial version";
+    }
+
+    typedef rxlim-type {
+        type uint32 {
+            range "1 .. 5" {
+            }
+        }
+    }
+    typedef hellointerval-type {
+        type uint32 {
+            range "100 .. 5000" {
+            }
+        }
+    }
+    typedef shutdowntime-type {
+        type uint32 {
+            range "0|10 .. 1440" {
+            }
+            }
+    }
+
+    augment "/interface:protocol" {
+		container edge-loop-detection {
+//			tailf:hidden eld;
+
+			leaf pdu-rx-limit{
+				type uint32 {
+					range "1..5" {
+					}
+				}
+				default 1;
+			}
+			leaf hello-interval{
+				type uint32 {
+					range "100..5000" {
+					}
+				}
+				default 1000;
+			}	
+			leaf shutdown-time{
+				type uint32 {
+					range "0..1440" {
+					}
+				}
+				default 0;
+			}
+			container mac-refresh-time-config {
+//				tailf:hidden full;
+				leaf mac-refresh-time {
+					type uint32 {
+						range "60..300"{
+						}
+					}
+					units seconds;
+				}	
+				leaf mac-refresh-type {
+					type enumeration{
+						enum all {
+							value 1;
+						}
+						enum port {
+							value 2;
+						}
+					}
+				}
+			}
+		}
+	}
+}

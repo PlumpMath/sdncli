@@ -1,0 +1,185 @@
+/***********************************************************************
+ * brocade-distributedlog.yang: Brocade Distributedlog Data Model
+ *
+ * April 2011, Jaykishan Leelakrishnan
+ *
+ * Copyright (c) 2011 by Brocade Communications Systems, Inc.
+ * All rights reserved.
+ *
+ **********************************************************************/
+module brocade-distributedlog {
+    namespace "urn:brocade.com:mgmt:brocade-distributedlog";
+    prefix "distributedlog";
+
+	import tailf-common {
+		prefix tailf;
+	}
+
+	/* for single show container */
+	/*import brocade-common-show {
+        prefix "common-show";
+        }*/
+	/* for user defined data-types */
+    import brocade-common-def {
+        prefix common-def;
+    }
+
+	organization
+		"Brocade Communications Inc.";
+
+	contact
+		"Brocade Communications Systems, Inc.
+		Postal: 130 Holger Way,
+		San Jose, CA 95134
+		U.S.A
+		Tel: +1-408-333-8000
+		E-mail: support@Brocade.com
+		web: www.brocade.com.";
+
+	description "Vcs log related information";
+
+	reference
+		"<Author Name>, '<Title>', <RFC XXXX>, <Month> <YEAR>.";
+
+	revision 2010-12-02 {
+            description "Initial version";
+	}
+
+	/* Type Definitions */ 
+
+	/* define the "show log" functionality */
+	augment "/common-def:show" {
+		container log {
+
+            tailf:action audit {
+                input {
+                    choice audit-log-input {
+                        mandatory true;
+
+                        case non-support-save-logs {
+                            leaf non-support-save {
+                                type empty;
+                            }
+                        }
+                        case all-logs {
+                            leaf all {
+                                type empty;
+                            }
+                        }
+                        case filtered-logs {
+                            leaf rbridge-id {
+                                type common-def:domain-id-type;
+                            }
+                            leaf user {
+                                type string;
+                            }
+                            leaf type {
+                                type enumeration {
+                                    enum session;
+                                    enum command;
+                                }
+                            }
+                        }
+                    }
+
+                    leaf limit {
+                        type uint32;
+                    }
+    		    }
+		    } /* show log audit */
+
+tailf:action audit-ccm {
+                input {
+                    choice audit-log-input {
+                        mandatory true;
+
+                        case non-support-save-logs {
+                            leaf non-support-save-ccm {
+                                type empty;
+                            }
+                        }
+                        case all-logs {
+                            leaf all-ccm {
+                                type empty;
+                            }
+                        }
+                        case filtered-logs {
+                            leaf rbridge-id-ccm {
+                                type common-def:domain-id-type;
+                            }
+
+
+            leaf user-ccm {
+                                type string;
+                            }
+                            leaf type-ccm {
+                                type enumeration {
+                                    enum session;
+                                    enum command;
+                                }
+                            }
+                        }
+                    }
+
+                    leaf limit {
+                        type uint32;
+                    }
+                }
+            } /* show ccm log audit */
+
+
+/* Enable after actionpoints have been implemented
+            tailf:action generic {
+                input {
+                    choice generic-log-input {
+                        case all-logs {
+                            leaf all {
+                                type empty;
+                            }
+                        }
+                        case filtered-logs {
+                            leaf rbridge-id {
+                                type common-def:domain-id-type;
+                            }
+                        }
+                    }
+                }
+            }
+
+            tailf:action service {
+                input {
+                    choice service-log-input {
+                        case all-logs {
+                            leaf all {
+                                type empty;
+                            }
+                        }
+                        case filtered-logs {
+                            leaf rbridge-id {
+                                type common-def:domain-id-type;
+                            }
+                        }
+                    }
+                }
+            }
+
+            tailf:action managedObject {
+                input {
+                    choice managed-object-log-input {
+                        case all-logs {
+                            leaf all {
+                                type empty;
+                            }
+                        }
+                        case filtered-logs {
+                            leaf rbridge-id {
+                                type common-def:domain-id-type;
+                            }
+                        }
+                    }
+                }
+            }
+*/
+	    } /* end of log container */
+    } /* end of show */
+} /* end of distributedlog module */

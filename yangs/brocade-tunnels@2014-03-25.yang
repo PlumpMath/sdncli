@@ -1,0 +1,631 @@
+/***********************************************************************
+ * brocade-tunnels.yang
+ *      Brocade IP tunnel management module
+ *
+ * May 2013, Sachin Holla
+ *
+ * Copyright (c) 2013 by Brocade Communications Systems, Inc.
+ * All rights reserved.
+ *
+ **********************************************************************/
+module brocade-tunnels {
+    namespace "urn:brocade.com:mgmt:brocade-tunnels";
+    prefix "tunnels";
+
+    import ietf-inet-types {
+        prefix "inet";
+    }
+
+    import tailf-common {
+        prefix "tailf";
+    }
+
+    import brocade-common-def {
+        prefix "comn";
+    }
+
+    import brocade-vcs {
+        prefix "vcs";
+    }
+
+    import brocade-interface {
+        prefix "intf";
+    }
+
+    import brocade-intf-loopback {
+        prefix "lo";
+    }
+
+    import brocade-vrrp {
+        prefix "vrrp";
+    }
+
+    import brocade-span {
+        prefix "span";
+    }
+
+    import brocade-sflow {
+        prefix sflow;
+    }
+
+    import brocade-mac-access-list {
+        prefix mac-access-list;
+    }
+
+    import brocade-ip-access-list {
+        prefix ip-access-list;
+    }
+
+    organization
+        "Brocade Communications Systems, Inc.";
+
+    contact
+        "Brocade Communications Systems, Inc.
+         Postal: 130 Holger Way
+                 San Jose, CA 95134
+                 U.S.A
+         Tel: +1-408-333-8000
+         E-mail: support@Brocade.com
+         Web: www.brocade.com";
+
+    description
+        "This management module is an instrumentation to manage the IP
+        tunnels.
+
+        Glossary of the terms used:
+        ---------------------------
+        VXLAN       Virtual eXtensible Local Area Network. See internet
+                    draft draft-mahalingam-dutt-dcops-vxlan-03.
+        VXLAN Gateway
+                    Software module in Brocade VCS switch which forwards
+                    traffic between VXLAN and non-VXLAN environments.
+        NSX         NSX is a network virtualization platform solution
+                    by Vmware. Refer - www.vmware.com/in/products/nsx
+        NSX Controller
+                    NSX Controller is the cluster of x86 systems which
+                    manage the virtual networks.
+        TCP         Transmission Control Protocol (RFC 793)
+        SSL         Secure Sockets Layer Protocol (RFC 6101)
+
+        ";
+
+    revision "2014-03-25" {
+        description
+            "Following enhancements are done to overlay-gateway:
+             1. Support for loopback interface as gateway IP address
+             ";
+    }
+
+    revision "2013-05-03" {
+        description
+            "Initial version. Includes management of Overlay gateway
+            instances and NSX controller connection parameters.";
+    }
+
+
+    typedef name32-type {
+        description
+            "Defines common type for names. Name can contain maximum of
+            32 characters. Alphabets, digits, hyphen and underscore
+            charcters are allowed.";
+        type string {
+            pattern '[-_a-zA-Z0-9]{1,32}';
+        }
+    }
+
+    typedef overlay-gw-name-type {
+        type name32-type {
+        }
+    }
+
+    typedef nvp-controller-name-type {
+        type name32-type {
+        }
+    }
+
+    typedef tunnel-id-type {
+        type uint32 {
+            range "1..100000" {
+            }
+        }
+    }
+
+    typedef site-id-type {
+        description
+            "Unique site identifier. Can be max 63 characters string
+            containing alphabets, digits, hyphen or underscore.";
+        type string {
+            pattern '[-_a-zA-Z0-9]{1,63}';
+        }
+    }
+ 
+    typedef overlay-gw-type {
+        type enumeration {
+            enum nsx {
+                value 1;
+            }
+            enum layer2-extension {
+                value 2;
+            }
+        }
+    }
+
+    typedef tunnel-mode-type {
+        type enumeration {
+            enum vxlan {
+                value 1;
+            }
+        }
+    }
+
+    typedef direction-type {
+        type enumeration {
+            enum tx {
+                value 1;
+            }
+            enum rx {
+                value 2;
+            }
+            enum both {
+                value 3;
+            }
+        }
+    }
+
+    typedef mac-address-type {
+        type string {
+            pattern '[0-9a-fA-F]{4}(\.[0-9a-fA-F]{4}){2}'; 
+        }
+    }
+
+    typedef vlan-range-type {
+        type string {
+            pattern "[0-9]+(-[0-9]+)?(,[0-9]+(-[0-9]+)?)*";
+            length "1..255";
+        }
+    }
+    
+    typedef vfab-type {
+        type uint32 {
+        }
+    }
+
+    typedef vfab-range-type {
+        type comn:ui32-range {
+        }
+    }
+
+    typedef vni-type {
+        type uint32 {
+            range "1..16777215" {
+            }
+        }
+    }
+
+    typedef vni-range-type {
+        type comn:ui32-range {
+        }
+    }
+
+    typedef ecmp-id-type {
+        type uint32;
+    }
+
+
+
+    list nsx-controller {
+		when '/vcs:vcsmode/vcs:vcs-cluster-mode = "true"';
+
+        key "name";
+        max-elements 1;
+        description
+            "";
+
+        leaf name {
+            type nvp-controller-name-type;
+            description
+                "NSX controller name";
+        }
+
+        container connection-addr {
+            description
+                "Connection method, IP address and port information";
+
+            leaf address {
+                type inet:ip-address {
+                }
+                description
+                    "IP address of the NSX controller. Only IPv4 address
+                    is supported.";
+            }
+
+            leaf port {
+                type uint32 {
+                    range "1..65535" {
+                    }
+                }
+                description
+                    "TCP port number for the NSX controller. This is an
+                    optional parameter; default value is 6632.";
+                default 6632;
+            }
+
+            leaf method {
+                type enumeration {
+                    enum tcp {
+                        value 1;
+                    }
+                    enum ssl {
+                        value 2;
+                    }
+                }
+                description
+                    "This parameter defines the connection method to be
+                    usedto connect to NSX controller. By default SSL is
+                    used";
+                default ssl;
+            }
+        }
+
+        leaf reconnect-interval {
+            type uint32 {
+                range "1..1000" {
+                }
+            }
+            description
+                "Configures the re-connect interval for the NSX
+                controller connection. If the connection to NSX is
+                broken for some reason, re-connections will be attempted
+                at this rate. Default value is 10 seconds.";
+            default 10;
+            units "seconds";
+        }
+
+        leaf activate {
+            type empty;
+            description
+                "Activate the connection to NSX controller. At least the
+                IP address must have been configured before activating
+                the connection.";
+        }
+    }
+
+
+    list overlay-gateway {
+		when '/vcs:vcsmode/vcs:vcs-cluster-mode = "true"';
+        description
+            "";
+        key "name";
+        max-elements 1;
+
+        leaf name {
+            type overlay-gw-name-type;
+            description
+                "Name of Overlay Gateway";
+        }
+
+        leaf gw-type {
+            type overlay-gw-type;
+            description
+                "Defines type of function provided by this gateway.";
+        }
+
+        container ip {
+
+            container interface {
+
+                container ve {
+
+                    leaf ve-id {
+                        type intf:ve-type;
+                    }
+
+                    leaf vrrp-extended-group {
+                        type vrrp:vrid-type;
+                    }
+                }
+
+                container loopback {
+
+                    leaf loopback-id {
+                        type lo:intf-loopback-port-type;
+                    }
+                }
+            }
+        }
+
+        container attach {
+
+            container rbridge-id {
+
+                leaf rb-add {
+                    type comn:ui32-range {
+                    }
+                }
+                leaf rb-remove {
+                    type comn:ui32-range {
+                    }
+                }
+            }
+
+            list vlan {
+                key "vid mac";
+
+                leaf vid {
+                    description
+                        "Vlan ID. Vlan must have been configured before
+                         attaching to the overlay gateway.";
+                    type uint32 {
+                        range "1..4090";
+                    }
+                }
+
+                leaf mac {
+                    type mac-address-type;
+                }
+            }
+        }
+
+        container map {
+            
+            list vlan-vni-mapping {
+                key "vid";
+                
+                leaf vid {
+                    type vfab-type;
+                }
+                
+                leaf vni {
+                    type vni-type;
+                }
+            }
+
+            container vlan {
+                container vni {
+                    leaf auto {
+                        type empty;
+                    }
+                }
+            }
+        }
+
+
+        list site {
+
+            key name;
+            description
+                "Site represents a remote VCS to which tunnel need to be
+                setup. Site is identified by a name.";
+
+            leaf name {
+                type site-id-type;
+            }
+
+            list tunnel-dst {
+                max-elements 1;
+                key address;
+                description
+                    "Site IP address configuration represents
+                    destination IP of tunnel to the site. Tunnel will
+                    not be setup without the IP address configuration.";
+
+                leaf address {
+                    type inet:ip-address {
+                    }
+                }
+            }
+
+            container extend {
+                description
+                    "This configuration represents the layer2 domains to
+                    be extended towards this site. In other words, it
+                    represents switchport VLANs on the tunnels to the
+                    site. VNI classification will be derived from 'map
+                    vlan' configuration on this overlay gateway.";
+
+                container vlan {
+                    leaf add {
+                        type vfab-range-type;
+                    }
+                    leaf remove {
+                        type vfab-range-type;
+                    }
+                }
+            }
+
+            leaf shutdown {
+                type empty;
+                description
+                    "Admin shutdown tunnels to this site. By default
+                    tunnels are admin enabled.";
+            }
+        }
+
+        container enable {
+
+            container statistics {
+ 
+                leaf stats-direction {
+                    type direction-type;
+                }
+
+                leaf vlan-action {
+                    type enumeration {
+                        enum add {
+                            value 1;
+                        }
+                        enum remove {
+                            value 2;
+                        }
+                    }
+                }
+
+                leaf vlan-list {
+                    type vfab-range-type;
+                }
+            }
+        }
+
+        list monitor {
+            max-elements 1;
+            key "session";
+            
+            leaf session {
+                type span:session-type;
+            }
+
+            leaf direction {
+                type direction-type;
+            }
+ 
+            leaf remote-endpoint {
+                type union {            
+                    type enumeration {
+                        enum any {
+                            value 1;
+                        }
+                    }
+                    
+                    type inet:ipv4-address {
+                    }
+                }
+            }
+            
+            leaf vlan-leaf {
+                mandatory true;
+                type enumeration {
+                    enum vlan {
+                        value 1;
+                    }
+                }           	
+            }
+ 
+            leaf vlan-add-remove {
+                type enumeration {
+                    enum add {			    			
+                        value 1;
+                    }     
+                    enum remove {			    			
+                        value 2;
+                    }
+                }
+            }
+ 
+            leaf vlan-range {	      		              
+                type vfab-range-type;
+            }         
+        }
+        
+        list sflow {
+            max-elements 1;
+            key "sflow-profile-name";
+            
+	        leaf sflow-profile-name {
+	            mandatory true;
+	            type sflow:profile-name-type;
+	        }
+	        
+            leaf sflow-remote-endpoint {
+                type union {            
+                    type enumeration {
+                        enum any {
+                            value 1;
+                        }
+                    }
+                    
+                    type inet:ipv4-address {
+                    }
+                }
+            }           
+ 
+            leaf sflow-vlan-action {
+                mandatory true;
+                type enumeration {
+                    enum add {			    			
+                        value 1;
+                    }     
+                    enum remove {			    			
+                        value 2;
+                    }
+                }
+            }
+ 
+            leaf sflow-vlan-range {	      		                              
+                type vfab-range-type;
+            }  
+        }
+
+        container access-lists {
+
+            container mac {
+                container in {
+                    leaf mac-acl-in-name { 
+                        type mac-access-list:mac-acl-name;
+                    }
+                    leaf mac-acl-in-dir {
+                        type empty;
+                    }
+                }
+                container out {
+                    leaf mac-acl-out-name {
+                        type mac-access-list:mac-acl-name;
+                    }
+                    leaf mac-acl-out-dir {
+                        type empty;
+                    }
+                }
+            }
+
+            container ipv4 {
+
+                container in {
+                    leaf ipv4-acl-in-name {
+                        type ip-access-list:l3-acl-policy-name;
+                    }
+                    leaf ipv4-acl-in-dir {
+                        type empty;
+                    }
+                }
+
+                container out {
+                    leaf ipv4-acl-out-name {
+                        type ip-access-list:l3-acl-policy-name;
+                    }
+                    leaf ipv4-acl-out-dir {
+                        type empty;
+                    }
+                }
+            }
+
+            container ipv6 {
+                container in {
+                    leaf ipv6-acl-in-name {
+                        type ip-access-list:l3-acl-policy-name;
+                    }
+                    leaf ipv6-acl-in-dir {
+                        type empty;
+                    }
+                }
+                container out {
+                    leaf ipv6-acl-out-name {
+                        type ip-access-list:l3-acl-policy-name;
+                    }
+                    leaf ipv6-acl-out-dir {
+                        type empty;
+                    }
+                }
+            }
+
+        }
+
+        leaf activate {
+            type empty;
+            description
+                "Activates the Overlay gateway instance. Gateway is
+                inactive by default. When gateway is inactive all
+                associated tunnels will also be inactive (oper down).";
+        }
+    }
+
+}
+

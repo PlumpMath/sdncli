@@ -1,0 +1,324 @@
+// YANG submodule for MPLS statedata configurations.
+// Revisions:
+//     2011-04-20: Initial version.
+//
+
+submodule mpls-statedata 
+{
+    belongs-to netiron-statedata 
+    {
+        prefix "statedata";
+    }
+
+    import common-defs
+    {
+        prefix "common";
+    }
+
+    organization
+        "Brocade Communications Inc.";
+
+    contact
+             "Technical Support Center"+
+             "130 Holger Way,"+
+             "San Jose, CA  95134"+
+             "Email:  ipsupport@brocade.com"+
+             "Phone: 1-800-752-8061"+
+             "URL:  www.brocade.com";
+    
+    description "This module defines the device Router MPLS state data. VERSION: V5.8.00a";
+    
+    revision 2011-04-20
+    {
+        description "Initial revision";
+    }
+
+    grouping per-priority-bandwidth-grouping
+    {
+        description "Bandwidth(kbps) per priority (0-7)";   
+        list priority-bandwidth
+        {
+            key "priority";
+            description "Bandwidth(kbps) for a priority";
+            leaf priority 
+            {
+                type common:priority-value; 
+                description "Priority value";
+            }
+            leaf bandwidth 
+            {
+                type uint32
+                {
+                    range "0..4294967295";
+                }
+                description "Bandwidth(kbps)";
+            }
+        }//end list priority-bandwidth
+        
+    }//end grouping per-priority-bandwidth-grouping
+    
+    grouping mpls-lsp-statedata-grouping
+    {
+        description "Router MPLS LSP statedata grouping";
+        container mpls-lsp-statedata
+        {
+            description "Router MPLS LSP statedata";
+            list lsp
+            {
+                key "name";
+                description "MPLS Signaled label switched "+
+                     "path configuration";
+            
+                leaf name
+                {
+                    type string
+                    {
+                        length "1..64";
+                    }
+                    description "LSP name";
+                }
+            
+                leaf to
+                {
+                    type common:ipv4_address;
+                    description "Egress LER for the LSP";
+                }
+
+
+                choice admin-state
+                {
+                    description "The administrative state of the LSP";
+                 
+                    case up
+                    {
+                        leaf up
+                        {
+                            type empty;
+                            description "Up";
+                        }
+                    }
+                    case down
+                    {
+                        leaf down
+                        {
+                            type empty;
+                            description "Down";
+                        }
+                    }
+                } // end choice admin-state
+
+                choice oper-state
+                {
+                    description "The operational state of the LSP";
+                 
+                    case up
+                    {
+                        leaf up
+                        {
+                            type empty;
+                            description "Up";
+                        }
+                    }
+                    case up-star
+                    {
+                        leaf up-star
+                        {
+                            type empty;
+                            description "Up*";
+                        }
+                    }
+                    case down
+                    {
+                        leaf down
+                        {
+                            type empty;
+                            description "Down";
+                        }
+                    }
+                } // end choice oper-state
+
+                leaf tunnel-intf
+                {
+                    type string
+                    {
+                        length "1..16";
+                    }
+                    description "The tunnel interface";
+                }
+
+                leaf up-dn-times
+                {
+                    type uint16
+                    {
+                        range "0..65535";
+                    }
+                    description "The number of times the operational state"+
+                    " of the LSP's primary path has transitioned from DOWN"+
+                    " to UP";
+                }
+
+                leaf retry-no
+                {
+                    type uint16
+                    {
+                        range "0..65535";
+                    }
+                    description "The number of attempts the ingress LER has"+
+                                " made to connect to the egress LER";
+                }
+
+                leaf active-path
+                {
+                    type string
+                    {
+                        length "1..64";
+                    }
+                    description "The path currently in use for this LSP.";
+                }
+
+            } // end list lsp
+            
+        } //end container mpls-lsp-statedata
+
+    } //end grouping mpls-lsp-statedata-grouping
+
+    grouping mpls-interface-statedata-grouping
+    {
+        description "Router MPLS interface statedata grouping";
+        container mpls-interface-statedata
+        {
+            description "Router MPLS interface state data";
+            list interface 
+            {
+                key interface-id;
+                description "List of MPLS-enabled interfaces -- state data";
+                
+                leaf interface-id
+                {
+                    type common:interface-all-types;
+                    description "The interface identifier including chassis slot and port number";
+                }
+
+                choice admin-state
+                {
+                    description "The administrative state of the interface";
+                 
+                    case up
+                    {
+                        leaf up
+                        {
+                            type empty;
+                            description "Up";
+                        }
+                    }
+                    case down
+                    {
+                        leaf down
+                        {
+                            type empty;
+                            description "Down";
+                        }
+                    }
+                } // end choice admin-state
+
+                choice oper-state
+                {
+                    description "The operational state of the interface";
+                 
+                    case up
+                    {
+                        leaf up
+                        {
+                            type empty;
+                            description "Up";
+                        }
+                    }
+                    case down
+                    {
+                        leaf down
+                        {
+                            type empty;
+                            description "Down";
+                        }
+                    }
+                } // end choice oper-state
+
+                leaf maximum-bw
+                {
+                    type uint32
+                    {
+                        range "0..4294967295";
+                    }
+                    description "The maximum outbound bandwidth that can"+
+                    " be used on the interface.";
+                }
+
+                leaf maximum-reservable-bw
+                {
+                    type uint32
+                    {
+                        range "0..4294967295";
+                    }
+                    description "The maximum bandwidth that can be"+
+                    " reserved on the interface.";
+                }
+
+                leaf admin-groups-bitmap
+                {
+                    type uint32
+                    {
+                        range "0..4294967295";
+                    }
+                    description "The bitfield indicating the"+
+                    " administrative groups to which this interface belongs.";
+                }
+
+                container per-priority-reservable-bw
+                {
+                    description "The amount of bandwidth not yet reserved on"
+                    +"the interface per priority (0 to 7)";
+                    uses per-priority-bandwidth-grouping;
+                } // end container per-priority-reservable-bw
+
+                container per-priority-last-sent-reservable-bw
+                {
+                    description "The values in the Unreserved Bandwidth TLV"
+                    +" sent in the most recent OSPF-TE LSA.";
+                    uses per-priority-bandwidth-grouping;
+                } // end container per-priority-reservable-bw
+
+                container protecting-bypass-lsp
+                {
+                    description "The name of any bypass LSPs that are"
+                    +"protecting this interface.";
+                    leaf-list lsp
+                    {
+                        type string
+                        {
+                            length "1..64";
+                        }
+                        description "bypass LSP name";
+                    }
+                } // end container
+
+            } // end list interface
+
+        } //end container mpls-interface-statedata
+
+    } //end grouping mpls-interface-statedata-grouping
+
+    grouping mpls-statedata-grouping 
+    {
+        description "Router MPLS state data group";
+        container mpls-statedata
+        {
+            description "Router MPLS state data";
+            uses mpls-lsp-statedata-grouping;
+            uses mpls-interface-statedata-grouping;
+             
+        } //end container mpls-statedata
+        
+    } //end grouping mpls-statedata-grouping
+    
+} //end submodule mpls-statedata
+  

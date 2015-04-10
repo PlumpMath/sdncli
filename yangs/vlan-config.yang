@@ -1,0 +1,124 @@
+// YANG submodule for VLAN configuration definitions.
+// Revisions:
+//     2011-04-20: Initial version.
+//
+
+submodule vlan-config 
+{
+    belongs-to netiron-config 
+    {
+        prefix brcd;
+    }
+
+    import common-defs
+    {
+        prefix "common";
+    }
+
+
+    organization
+        "Brocade Communications Inc.";
+
+    contact
+             "Technical Support Center"+
+             "130 Holger Way,"+
+             "San Jose, CA  95134"+
+             "Email:  ipsupport@brocade.com"+
+             "Phone: 1-800-752-8061"+
+             "URL:  www.brocade.com";
+
+    description "This module defines the VLAN configuration. VERSION: V5.8.00a";
+    
+    revision 2011-04-20
+    {
+        description "Initial revision";
+    }
+
+    grouping vlan-config-grouping 
+    {
+        description "VLAN configuration group";
+        container vlan-config
+        {
+            description "List of VLANs configured on the system";
+             
+            list vlan 
+            {
+                key vlan-id;
+                max-elements 4090;
+                description "VLAN configuration";
+                
+                leaf vlan-id 
+                {
+                    type common:vlan-identifier;
+                    description "VLAN ID";
+                }
+            
+                leaf vlan-name 
+                {
+                    type string 
+                    {
+                        length "1..31";
+                    }
+                    description "VLAN Name";
+                }
+            
+                leaf-list tagged
+                {
+                    type common:ethernet-pos-intf-multiple;
+                    description "Tagged Interfaces list";
+                }
+
+                leaf-list untagged
+                {
+                    type common:ethernet-pos-intf-multiple;
+                    description "Untagged Interfaces list";
+                }
+
+                leaf-list uplink-switch 
+                {
+                    type common:ethernet-pos-intf-multiple;
+                    description "List of Uplink ports to enable "+
+                           "uplink switching on this VLAN.";
+                }
+
+                uses common:priority-grouping;
+        
+                leaf router-interface
+                {
+                    type common:ve-intf-single;
+                    description "router VE inteface";
+                }
+           
+                leaf loop-detection 
+                {
+                    type empty;
+                    description "Enable loop detection on the VLAN";
+                }
+                
+                leaf vlan-accounting 
+                {
+                    type empty;
+                    description "Enable VLAN Accounting on the VLAN";
+                }
+                
+                leaf vlan-cpu-protection 
+                {
+                    type empty;
+                    description "Enables Vlan CPU protection for "+ 
+                        "unknown unicast and multicast packets";
+                }
+
+            } //end list vlan
+            
+            leaf default-vlan-id
+	    {
+	        type common:vlan-identifier;
+	        description "Default VLAN identifier";
+	    }
+
+        } //end container vlan-config
+        
+    } //end grouping vlan-config-grouping
+    
+} //end submodule vlan-config
+  

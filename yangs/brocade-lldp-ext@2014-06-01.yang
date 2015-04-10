@@ -1,0 +1,180 @@
+/**********************************************************************
+ * brocade-lldp-ext.yang:An Extension Model to Brocade LLDP Data Model
+ *
+ * July 2014, Mayank Maheshwari
+ *
+ * Copyright (c) 2014 by Brocade Communications Systems, Inc.
+ * All rights reserved.
+ *
+ **********************************************************************/
+module brocade-lldp-ext {
+    namespace "urn:brocade.com:mgmt:brocade-lldp-ext";
+    prefix "lldp-extensions";
+
+    import tailf-common {
+        prefix tailf;
+    }
+
+    import ietf-yang-types {
+        prefix yang;
+    }
+
+    import brocade-interface {
+       prefix interface;
+    }
+
+	import brocade-common-def {
+        prefix common-def;
+    }
+
+    organization
+        "Brocade Communications Systems, Inc.";
+
+    contact
+        "Brocade Communications Systems, Inc.
+         Postal: 130 Holger Way
+                 San Jose, CA 95134
+                 U.S.A
+         Tel: +1-408-333-8000
+         E-mail: support@Brocade.com
+         Web: www.brocade.com";
+
+    description
+        "This module is an extension to lldp model for 
+          - Defining RPCs to retrieve lldp neighbors 
+            in the managed device.";
+
+    revision "2014-06-01" {
+        description     
+            "Initial version of this management module.";
+    }
+
+    rpc get-lldp-neighbor-detail {
+        description
+            "This is a function that serves to return the Neighbor
+            details of all the interfaces of the managed entity.";
+        input {
+            choice request-type {
+                case get-request {
+                    uses interface:interface-name-info {
+                        description
+                            "This specifies the interface for which this
+                            function is invoked. This is optional input,
+                            when not specified means 'all' interfaces in the
+                            managed entity.";
+                    }
+                }
+                case get-next-request {
+                    leaf last-rcvd-ifindex {
+                        mandatory false;
+                        type uint32;
+                        description
+                            "This specifies the ifindex of last interface
+                            received in previous requests to fetch next
+                            set of records. This is optional input,when
+                            not specified means fetch records from beginning
+                            from the managed entity.";
+                    }
+                }
+                case get-rbridge-specific {
+                    leaf rbridge-id {
+                        mandatory false;
+                        type common-def:rbridge-id-type;
+                        description
+                            "This specifies the unique identifier to fetch
+                             lldp neighbors of managed entity identified
+                             by this identifier.";
+                    }
+                }
+            }
+        }
+
+        output {
+            list lldp-neighbor-detail {
+                key "local-interface-name remote-interface-name";
+                description
+                    "A list of lldp neighbor interface entries.";
+
+                leaf local-interface-name {
+                    type string;
+                    description
+                        "This indicates the local interface display name.";
+                }
+                leaf local-interface-mac {
+                    type interface:mac-address-type;
+                    description
+                        "This indicates the local interface mac.";
+                }
+                leaf local-interface-ifindex {
+                    type uint64;
+                    description
+                        "This indicates the local interface IfIndex.";
+                }
+                leaf remote-interface-name {
+                    type string;
+                    description
+                        "This indicates the remote interface display name.";
+                }
+                leaf remote-interface-mac {
+                    type interface:mac-address-type;
+                    description
+                        "This indicates the remote interface mac.";
+                }
+                leaf remote-port-description {
+                    type string;
+                    description
+                        "This indicates the remote port description.";
+                }
+                leaf remote-chassis-id {
+                    type string;
+                    description
+                        "This indicates the remote chassis id.";
+                }
+                leaf remote-system-name {
+                    type string;
+                    description
+                        "This indicates the remote system name.";
+                }
+                leaf remote-system-description {
+                    type string;
+                    description
+                        "This indicates the remote system description.";
+                }
+                leaf dead-interval {
+                    type uint64;
+                    units "Seconds";
+                    description
+                        "This indicates the dead interval";
+                }
+                leaf remaining-life {
+                    type uint64;
+                    units "Seconds";
+                    description
+                        "This indicates the dead interval";
+                }
+                leaf lldp-pdu-transmitted {
+                    type yang:counter64;
+                    description
+                        "The number of Lldp PDUs transmitted from
+                         the interface";
+                }
+                leaf lldp-pdu-received {
+                    type yang:counter64;
+                    description
+                        "The number of Lldp PDUs received by the
+                         interface";
+                }
+            }
+
+            leaf has-more {
+                type boolean;
+                    description
+                        "Informs whether there has more records that
+                         are not part of current response. Based on this
+                         flag remaining records can be fetched with
+                         another request by giving IfIndex of last
+                         interface received in response";
+            }
+        }
+    }
+}

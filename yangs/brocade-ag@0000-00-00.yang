@@ -1,0 +1,180 @@
+/***********************************************************************
+ *brocade-ag.yang-: Brocade Access Gateway Data Model
+ *
+ *  Jul 2011, Ramachandran Anantharaman
+ *
+ * Copyright (c) 2011-2014 by Brocade Communications Systems, Inc.
+ * All rights reserved.
+ *
+ **********************************************************************/
+module brocade-ag {
+    namespace "urn:brocade.com:mgmt:brocade-ag";
+    prefix "ag";
+
+    import tailf-common {
+        prefix tailf;
+    }
+    
+    import brocade-rbridge {
+        prefix rbridge;
+    }
+
+    organization
+        "Brocade Communications Systems, Inc.";
+
+    contact           
+        "Brocade Communications Systems, Inc.
+         Postal: 130 Holger Way
+                 San Jose, CA 95134
+                 U.S.A
+         Tel: +1-408-333-8000
+         E-mail: support@Brocade.com 
+         web: www.brocade.com.";
+
+    description       
+        "This management module is an instrumentation to manage AG 
+         feature.";
+
+    typedef port-type {
+        type string {
+            length "1..16"  {
+            }
+        }
+    }
+
+    typedef wwn-type {
+        type string {
+            pattern '([0-9a-f]{2}(:[0-9a-f]{2}){7})|([a,A][n.N][y,Y])|([n,N][o,O][n,N][e,E])';
+        }
+        description
+            "World Wide Name (Only lower case allowed)";
+    }
+
+    typedef nport-interfaces-type-optional {
+        type string { length "1..250"; }
+    }
+
+    typedef fport-interfaces-type-optional {
+        type string { length "1..250"; }
+    }
+
+    typedef nport-interfaces-type {
+        type string { length "1..250"; }
+    }
+
+    typedef fport-interfaces-type {
+        type string { length "1..250"; }
+    }
+
+    typedef pgid-type {
+        type uint32 {
+            range "0..1000" {
+                error-message
+                    "% Error: Value out of range" ;
+            }
+        }
+    }
+
+    typedef pg-type {
+        type string { length "1..250"; }
+    }
+
+  typedef ag-policy-types {
+        type string { length "1..10"; }
+  }
+
+  typedef pg-policy-types {
+        type string { length "1..10"; }
+  }
+
+    augment "/rbridge:rbridge-id" {
+	container ag {
+
+
+            container nport-menu {
+                container nport-interface {
+                    list nport {
+
+        		key agNPortNb;
+
+                        leaf agNPortNb {
+                                type nport-interfaces-type;
+                                mandatory true;
+                        }
+
+                        uses nportclis;
+                    }
+                }
+            }
+
+            list pg {
+
+                key pgid;
+
+                leaf pgid {
+                    type pgid-type;
+                    mandatory true;
+                }
+
+                uses pgclis;
+             }
+
+	    container timeout {
+		leaf fnmtovalue {
+		    type uint32 {
+                        range "30..3600" {
+                             error-message
+                                 "% Error: Value out of range" ;
+                         }
+                     }
+		}
+	    }
+
+            container counter {
+		leaf reliabilitycountervalue {
+                    type uint32 {
+                        range "10..100" {
+                             error-message
+                                 "% Error: Value out of range" ;
+                         }
+                     }
+		}
+	    }
+        }
+    }
+
+    grouping nportclis {
+        container map {
+            container map-fport {
+                container map-fport-interface {
+                    leaf-list map-fcoe {
+		    type fport-interfaces-type;
+    	        }
+              }
+            }
+        }
+    }
+
+
+    grouping pgclis {
+                container nport {
+                    container pg-nport-interface {
+ 	                leaf-list nports {
+			    type nport-interfaces-type;
+                        }
+                    }
+		}
+
+		leaf-list modes {
+			type pg-policy-types;
+		}
+
+		leaf rename {
+			type string;
+		}
+    }
+
+
+}
+
+

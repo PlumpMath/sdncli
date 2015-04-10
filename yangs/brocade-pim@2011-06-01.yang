@@ -1,0 +1,416 @@
+/*************************************************************
+* Brocade PIM Data model 
+*
+*  September 2011, Rahul Jain
+*
+* Copyright (c) 2010 by Brocade Communications Systems, Inc.
+* All rights reserved.
+*************************************************************/
+
+module brocade-pim {
+    namespace "urn:brocade.com:mgmt:brocade-pim";
+    prefix pim;
+
+    /* Linkage Statements */
+
+    import brocade-rbridge {
+        prefix rbridge;
+    }
+ 
+   import brocade-interface {
+        prefix interface;
+    }
+
+    import brocade-ip-config {
+        prefix ip-config;
+    }
+
+    import tailf-common {
+        prefix "tailf";
+    }
+
+    import ietf-inet-types {
+        prefix "inet";
+    }
+
+    /* Meta Information */
+    
+    organization
+        "Brocade Communications Systems, Inc.";
+    
+    contact
+        "Brocade Communications Systems, Inc.
+         130 Holger Way,
+         San Jose, CA 95134
+         U.S.A
+         Tel: +1-408-333-8000
+         E-mail: info@brocade.com
+         Web: www.brocade.com";
+    
+    description
+        "This file describes the data modeliing of all
+         the configuration commands for the multicast 
+         protocol, Protocol Independent Multicast (PIM).";
+
+    /* Revision history */
+
+    revision "2011-06-01" {
+        description
+            "Initial version of PIM module";
+    }
+
+    /* Module Definition */
+
+    /* Global definitions of data types */
+    typedef spt-thr-type {
+        type union {
+            type uint32 {
+                range "1..4294967295" {
+                }
+            }
+            type enumeration {
+                enum infinity {
+                    value 0;
+                }
+            }
+        }    
+    }
+   	
+	typedef pim-src-grp-ipv4-addr {
+        type inet:ipv4-address {
+        }
+    }
+
+	typedef pim-grp-prefix-addr {
+        type inet:ipv4-address {
+        }
+    }
+	 
+    typedef pim-ipv4-addr {
+        type string {
+            pattern '((0'
+                +   '|(1[0-9]{0,2})'
+                +   '|(2(([0-4][0-9]?)|(5[0-5]?)|([6-9]?)))'
+                +   '|([3-9][0-9]?)'
+                +  ')'
+                + '\.){3}'
+                + '(0'
+                +  '|(1[0-9]{0,2})'
+                +  '|(2(([0-4][0-9]?)|(5[0-5]?)|([6-9]?)))'
+                +  '|([3-9][0-9]?))' {
+            }
+	    }
+    }
+    
+    typedef pim-intf-types {
+        type enumeration {
+            enum gigabitethernet {
+            }
+            enum fortygigabitethernet {
+            }
+            enum tengigabitethernet {
+            }
+            enum port-channel {
+            }
+            enum ve {
+            }
+            enum hundredgigabitethernet {
+            }
+
+        }
+    }
+	
+	typedef grp-prefix-action {
+        type enumeration {
+            enum add {
+                value 1;
+            }
+            enum delete {
+                value 2;
+            }
+        }
+    }
+
+
+    /* Grouping of PIM config commands under "router pim" command */
+    grouping rtr-pim-cfg-cmd { 
+        /* CLI cmd: [no] max-mcache */
+        leaf max-mcache {
+            type uint32 {
+                range "1..2048" {
+                }
+            }
+			default 2048;
+        }
+        /* CLI cmd: [no] hello-interval */
+        leaf hello-interval {
+            type int16 {
+                range "10..3600" {
+                }
+            }
+			units "Seconds";
+            default 30;
+        }
+        /* CLI cmd: [no] nbr-timeout */
+        leaf nbr-timeout {
+            type int16 {
+                range "35..12600" {
+                }
+            }
+            default 105;
+        }
+        /* CLI cmd: [no] inactivity-timer */
+        leaf inactivity-timer {
+            type int16 {
+                range "60..3600" {
+                }
+            }
+            default 180;
+        }
+        /* CLI cmd: [no] message-interval */
+        leaf message-interval {
+            type uint32 {
+                range "10..65535" {
+                }
+            }
+			units "Seconds";
+			default 60;
+        }
+        /* CLI cmd: [no] spt-threshold {infinity | num} */
+        leaf spt-threshold {
+            type spt-thr-type;	
+			default 1;
+        }
+        /* CLI cmd: bsr-candidate interface {te | po | vlan} <hash-msk_len>
+         *          [<priority>]
+         */
+        container bsr-candidate {
+            list bsr-cand-interface {
+                key "bsr-cand-intf-type bsr-cand-intf-id";
+                
+                leaf bsr-cand-intf-type {
+                    type pim-intf-types;
+                }
+                leaf bsr-cand-intf-id {
+                    type string;
+                }
+                leaf hash-mask-length {
+                    type uint16 {
+                        range "1..32" {
+                        }
+                    }
+                }
+                leaf bsr-cand-priority {
+                    type uint32 {
+                        range "0..255" {
+                        }
+                    }
+                    mandatory false;
+                }
+            }
+        }
+         
+         /* CLI cmd: rp-candidate interface {te|po|vlan} [<prefix-list>] */
+         container rp-candidate {
+             list rp-cand-interface {
+                 key "rp-cand-intf-type rp-cand-intf-id";
+             
+                 leaf rp-cand-intf-type {
+                     type pim-intf-types;
+                 }
+             
+                 leaf rp-cand-intf-id {
+                     type string;
+                 }
+              
+             }
+			 list rp-cand-grp-prefix {
+				key "rp-cand-grp-prefix-action rp-cand-grp-prefix-ip rp-cand-grp-prefix-length";
+				leaf rp-cand-grp-prefix-action {
+					type grp-prefix-action;	
+				}
+				leaf rp-cand-grp-prefix-ip {
+                	type pim-grp-prefix-addr;
+				}
+				leaf rp-cand-grp-prefix-length {
+					type uint16 {
+                        range "1..32" {
+                        }
+                    }
+				}
+			 }
+         }
+         
+         /* CLI cmd: rp-address A.B.C.D [<prefix-list>] */
+         list rp-address {
+             key rp-ip-addr;
+             
+             leaf rp-ip-addr {
+                 type inet:ipv4-address;
+             }
+             
+             leaf prefix-list {
+			 	 //tailf:hidden full; /* Removing support for prefix-list */
+                 type string {
+                     length "1..64" {
+                     }
+                 }
+             } 
+         }
+    }
+    
+    /* Interface level configuration commands */
+    grouping pim-intf-cfg-cmd {
+        container pim-int-cmd {
+            /* CLI cmd: [no] ip pim-sparse */
+            leaf pim-sparse {
+                type empty;
+            }
+            container pim {
+                /* CLI cmd: [no] ip pim border */
+                /* Commenting this CLI since it is not supported in the first
+                 * release */
+                /*leaf border {
+                    type empty;
+                }*/
+                /* CLI cmd: [no] ip pim dr-priority */
+                leaf dr-priority {
+                    type uint32 {
+                        range "0..65535" {
+                        }
+                    }
+					default 1;
+                }
+                /* CLI cmd: [no] ip pim ttl-threshold */
+                leaf ttl-threshold {
+                    type uint32 {
+                        range "1..64" {
+                        }
+                    }
+					default 1;
+                }
+            }
+
+            /* CLI cmd: [no] ip multicast-boundary prefix*/
+			/* We are accepting the CLI without acl name so this is added */
+			leaf multicast-boundary {
+				type empty;
+			}
+
+			/* Commenting out, we are not accepting prefix list or acl name as of now */
+			/*
+			container multicast-boundary {
+				leaf mcast-bdry-prefix-list {
+                 	type string {
+                     	length "1..64" {
+                     	}
+                 	}
+             	}
+        	}
+			*/
+		}
+    }
+
+    grouping pim-intf-phy-cfg {
+        container pim-intf-phy-cont {
+            uses pim-intf-cfg-cmd;
+        }
+    }
+
+    grouping pim-intf-vlan-cfg {
+        container pim-intf-vlan-cont {
+            uses pim-intf-cfg-cmd;
+        }
+    }
+
+    grouping pim-intf-po-cfg {
+        container pim-intf-po-cont {
+            uses pim-intf-cfg-cmd;
+        }
+    }
+
+    /* CLI - [no] ip multicast-routing */
+/*    augment "/rbridge:rbridge-id/rbridge:ip" {
+         //Adding a dummy container node so that the callpoint function
+        // can be associated with the CLI command 
+        container mult_rtr_cont {
+            presence true;
+            leaf multicast-routing {
+                type empty;
+            }
+        }
+    }*/
+
+
+    /* Add PIM router configuration mode */
+    grouping global-pim-cmds {
+        container pim {
+            presence true;
+        
+          /* 
+		   	leaf pimcmd {
+				type empty;
+			}
+
+			*/
+            /*list vrf {
+                description "VRF based PIM";
+                key vrf-id;
+                
+                leaf vrf-id {
+                    type string {
+                        length "1..64" {
+                            description "string;;VRF name (Max 63)";
+                        }
+                    }
+                }
+                
+                // Add the PIM config commands grouping here 
+                uses rtr-pim-cfg-cmd;
+            }*/
+            
+            /* Add the PIM config commands grouping here */
+            uses rtr-pim-cfg-cmd;
+        }
+    }
+
+    augment "/rbridge:rbridge-id/rbridge:router" {
+		container hide-pim-holder {
+        	uses global-pim-cmds;
+		}
+    }
+   /* augment "/common-def:router" {
+        container hide-pim-holder {
+            uses global-pim-cmds;
+        }
+    }*/
+
+    /* Add PIM commands in interface context */
+    augment "/interface:interface/interface:tengigabitethernet/interface:ip" {
+        uses pim-intf-phy-cfg;
+    }
+    augment "/interface:interface/interface:fortygigabitethernet/interface:ip" {
+        uses pim-intf-phy-cfg;
+    }
+    augment "/interface:interface/interface:hundredgigabitethernet/interface:ip" {
+        uses pim-intf-phy-cfg;
+    }
+    augment "/interface:interface/interface:gigabitethernet/interface:ip" {
+        uses pim-intf-phy-cfg;
+    }
+    augment "/rbridge:rbridge-id/interface:interface/interface:ve/ip-config:ip" {
+        uses pim-intf-vlan-cfg;
+    }
+    /*augment "/interface:interface-vlan/interface:interface/interface:ve/interface:ip" {
+        uses pim-intf-vlan-cfg {
+			refine "pim-intf-vlan-cont" {
+			}
+		}
+    }*/
+  /*  augment "/interface:interface/interface:port-channel/interface:ip" {
+        container hide-pim-holder {
+            uses pim-intf-po-cfg;
+        }
+    }*/
+} /* EOF */
+

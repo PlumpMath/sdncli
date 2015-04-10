@@ -1,0 +1,1043 @@
+/***********************************************************************
+ * brocade-ospfv3.yang: Brocade OSPF version 3 module data model
+ *
+ * September 2013, sunniram
+ *
+ * Copyright (c) 2013-2018 by Brocade Communications Systems, Inc.
+ * All rights reserved.
+ *
+ **********************************************************************/ 
+
+module brocade-ospfv3 {
+    
+    namespace "urn:brocade.com:mgmt:brocade-ospfv3";
+    
+    prefix ospfv3;
+
+    import brocade-rbridge {
+        prefix rbridge;
+    }
+    
+    import brocade-ospf {
+        prefix ospf;
+    }    
+
+    import brocade-interface {
+        prefix interface;
+    }
+
+    import brocade-ipv6-config {
+        prefix ipv6-config;
+    }
+
+    import brocade-common-def {
+        prefix common-def;
+    }
+    
+    import brocade-intf-loopback {
+        prefix intf-loopback;
+    }
+
+    import tailf-common {
+        prefix "tailf";
+    }
+
+    import ietf-inet-types {
+        prefix "inet";
+    }
+
+    /* Meta Information */
+    
+    organization "Brocade Communications Systems, Inc.";
+
+    contact           
+        "Brocade Communications Systems, Inc.
+         Postal: 130 Holger Way,
+                 San Jose, CA 95134 
+                  U.S.A
+         Tel: +1-408-333-8000
+         E-mail: support@Brocade.com 
+         web: www.brocade.com.";
+
+    description       
+        "This management module is an instrumentation to manage OSPF Version 3 Protocol."; 
+
+    /* Revision history */
+        
+    revision "2013-08-25" {
+        description "Initial version of the OSPFv3 management module.";
+    }
+
+    /* Module Definition */
+    
+    typedef big-metric {
+        type uint32;
+    }    
+    
+    typedef spi-value-type {
+        type uint32 {        
+        	range "512..4294967295" {
+        	}
+        }        
+    }     
+    
+ 	typedef ospf-show-router-id {
+        type inet:ipv4-address {
+        }
+    }   
+    
+    typedef ospfv3-show-link-id-type {
+        type uint32 {
+           range "0..4294967295" {
+           }
+        }        
+    }   
+    
+    typedef ipsec-authentication-hexkey-string {
+        type string {
+            //pattern "[0-9a-fA-F]{40}";
+            //length of plain text key is 40 chars, but the encrypted key length could be more than that, will be around 60 chars
+            //keeping max length to 80 to accommodate the encrypted key length which otherwise will impact file replay
+            length "0..80" {
+            }             
+        }                 
+    }
+    
+    typedef algorithm-type-ah { 
+        type enumeration {
+            enum hmac-md5 {
+                value 1;
+            }
+            enum hmac-sha1 {
+                value 2;
+            }
+        }
+    }   
+    
+    typedef algorithm-type-esp { 
+        type enumeration {
+            enum NULL {
+                value 1;
+            }
+            //The below options are not supported in 5.0.x
+            /*
+            enum 3des-cbc {
+                value 2;
+            }
+            enum blowfish-cbc {
+                value 3;
+            } 
+            */           
+        }
+    }                           
+    
+    grouping link-interval-attributes-grouping {
+    	//These attributes are present for area virtual-link and interface     	
+    	container link-interval-properties {
+	        leaf hello-interval {
+	            type common-def:time-interval-sec {
+	                range "1..65535" {
+					}
+	            }
+	            description "Time interval in seconds between HELLO packets";
+	        }             
+	        
+	        leaf dead-interval {
+	            type common-def:time-interval-sec {
+	                range "3..65535" {
+					}
+	            }
+	            
+	            description "Indicates the number of seconds that a neighbor router waits for a hello packet"
+	                      + "from the device before declaring the router down.";	                      
+	        }   
+	        
+	        leaf hello-jitter {
+	            type uint32 {
+	                range "1..50" {
+					}
+	            }
+	            description "Allowed jitter between HELLO packets";
+	        }             
+	        
+	        leaf retransmit-interval {
+	            type common-def:time-interval-sec {
+	                range "1..3600" {
+					}
+	            }
+	            
+	            description "The time between retransmissions of LSAs to adjacent routers for an interface."
+	                      + "The value can be from 1-3600 seconds. The default is 5 seconds.";
+	        }             
+        	
+        	leaf transmit-delay {
+	            type common-def:time-interval-sec {
+	                range "0..3600" {
+					}
+	            }
+	            
+	            description "The time it takes to transmit Link State Update packets on this interface."
+	                      + "The range is 0-3600 seconds. The default is 1 second.";
+        	}  
+        	      		
+    	} //end container link-interval-properties
+    
+    } //end grouping link-interval-attributes-grouping    
+    
+	grouping ipsec-auth-key-grouping {
+		
+		container ipsec-auth-key-config {
+
+			leaf spi {                  
+				
+				description "Security Parameter Index"
+				          + "The SPI value in combination with the destination IP address and security protocol  uniquely "
+				          + "identifies the Security Association for a datagram. The near-end and far-end values for the spi must be the same.";				
+				
+				type spi-value-type;
+			}                 
+
+			choice ch-algorithm {
+
+				case ca-ah-algorithm {                                                	                        
+						   
+					leaf ah {
+						type algorithm-type-ah;
+						description "Specify the authentication algorithm to use. ";
+					}
+
+					leaf ah-no-encrypt {      
+						description "Do not encrypt the key ";
+						type empty;   
+					}
+
+					leaf ah-key {   
+						type ipsec-authentication-hexkey-string;
+						description "Key used for ah";
+					}
+						
+				} //end ca-ah-algorithm
+
+				case ca-esp-algorithm {                    	                    		                            
+
+					leaf esp {
+						type algorithm-type-esp;
+						description "Specify Encapsulating Security Payload (ESP) as the protocol to provide packet-level security. ";
+					}
+								
+					leaf esp-no-encrypt {              
+						description "Do not encrypt the key ";
+						type empty;   
+					}
+
+					leaf esp-key {   
+						type ipsec-authentication-hexkey-string;
+						description "Hexadecimal key string for ESP";
+					}  
+
+					leaf esp-auth {
+						type algorithm-type-ah;
+					}
+
+					leaf esp-auth-no-encrypt {      
+						description "Do not encrypt the key ";
+						type empty;   
+					}
+
+					leaf esp-auth-key {   
+						type ipsec-authentication-hexkey-string;
+						description "Hexadecimal key string for authentication algorithm";
+					}
+																	  
+				} //end case ca-esp-algorithm
+
+			} //end choice ch-algorithm      		
+		
+		} //end container ipsec-auth-key-config
+	
+	} //end grouping ipsec-auth-key-grouping
+    
+    grouping ipsec-authentication-grouping {
+    		//The ipsec authentication attributes are present for area and interface
+            container authentication {
+            	//tailf:cli-sequence-commands;
+                description "Authentication of OSPF messages";                                           	                    
+                                 
+                uses ipsec-auth-key-grouping;         				     				                                                                                                                                 
+            
+            } //end container authentication
+            
+    } //end grouping ipsec-authentication-grouping    
+ 
+    grouping link-attributes-grouping {
+    	//These attributes are present for virtual-link and interface
+    	container link-properties {    	
+    		uses link-interval-attributes-grouping;
+    		uses ipsec-authentication-grouping;
+    	} //end container link-properties  	    
+    } //end grouping link-attributes-grouping   
+       
+        
+    grouping stub-area-grouping {
+    	container stub {    	    			        	
+            
+            description "Specify the area as a stub area."
+                      + "OSPFv3 routers within a stub area cannot send or receive External LSAs. In addition,"
+                      + "routers in a stub area must use a default route to the area's Area Border Router (ABR) or"
+                      + "Autonomous System Boundary Router (ASBR) to send traffic out of the area.";  
+                      
+            leaf stub-area-no-summary {
+                type empty;                                            
+                
+                description "Disables summary LSAs from being sent into the area.";
+            }                      
+                      
+            leaf stub-area-metric {
+                type uint32 {
+                	range "1..1048575";
+                }
+                
+                description "Stub area's advertised route metric"
+                          + "Stub metric specifies an additional cost for using a route to or from this area."
+                          + "There is no default. Normal areas do not use the cost parameter.";                
+            }                    
+            
+        } //end container stub
+    } //end grouping stub-area-grouping
+    
+    
+    grouping nssa-area-grouping {
+    	container nssa {    	
+    		presence true;	    		        	
+            
+            description "Specify the area as a Not-So-Stubby Area."
+                      + "NSSA allows to configure OSPF areas that provide the benefits of stub areas, but that also are "
+                      + "capable of importing external route information. OSPF does not flood external routes from "
+                      + "other areas into an NSSA, but does translate and flood route information from the NSSA into other "
+                      + "areas such as the backbone. NSSAs are especially useful to summarize Type-5 External LSAs (external routes) "
+                      + "before forwarding them into an area. The OSPF specification (RFC 2328) prohibits summarization of Type-5 LSAs "
+                      + "and requires OSPF to flood Type-5 LSAs throughout a routing domain. With NSSA, it is possible specify an address "
+                      + "range for aggregating the external routes that the NSSAs ABR exports into other areas."
+                      + "Since the NSSA is partially 'stubby' the ABR does not flood external LSAs from the backbone into the NSSA."
+                      + "To provide access to the rest of the Autonomous System (AS), the ABR generates a default Type-7 LSA into the NSSA.";                      
+               
+            
+            container metric {
+                //In fact just a leaf is sufficient to model the nssa metric config
+                //The container is added so that 'no area 10 nssa ?' lists the configured metric value as well.
+                //Without this container, the configured metric value is not displayed in the 'no' options
+                leaf nssa-area-metric {
+                    mandatory false;
+                    type uint32 {
+                        range "1..1048575";
+                    }
+                    
+                    description "NSSA's advertised stub route metric"
+                              + "The metric specifies the cost of the default LSA originated into the NSSA area. "
+                              + "The range is 1 to 1048575. There is no default";                
+                }
+            }       
+            
+            container area-default-information-originate  { 
+            	presence true;          
+        		
+        		description "This parameter generates a default route into an NSSA. If no-summary option is "
+        		          + "enabled then a type-3 default LSA will be generated into NSSA else a type-7 LSA will be"
+        		          + "generated into NSSA. By default the default-information-origiante parameter is not set.";        	
+            	
+            	leaf area-default-information-originate-metric {
+            		mandatory false;
+	                type uint32 {
+	                	range "1..1048575";
+	                }
+	                
+	                description "This parameter specifies the cost of the default LSA originated into the NSSA area."
+	                          + "The range is 1 to 1048575. There is no default.";	                	                
+	            }
+                
+                leaf area-default-information-originate-metric-type {    
+                	mandatory false;             
+                    type ospf:metric-type;
+                    
+                    description "The metric-type parameter specifies the type of the default external LSA originated "
+                              + "into the NSSA area. It can be either type-1 or type-2. The default is type-1.";
+                }	
+                            
+            } //end container default-information-originate
+
+            leaf no-redistribution {
+            	mandatory false;
+                type empty;                                            
+                
+                description "To disable sending redistributed LSA into nssa area"
+                          + "This parameter prevents an NSSA ABR from generating external (type-7) LSA into "
+                          + "an NSSA area. This is used in the case where an ASBR should generate type-5 LSA into normal "
+                          + "areas and should not generate type-7 LSA into NSSA area. "
+                          + "By default, redistribution is enabled in a NSSA.";
+            } 
+            
+            leaf nssa-area-no-summary {
+            	mandatory false;
+                type empty;                                            
+                
+                description "To disable sending summary LSA into nssa area"
+                          + "This parameter prevents an NSSA ABR from generating a type-3 summary into an NSSA."
+                          + "By default the summary LSA is originated into NSSA.";
+            }     
+            
+            leaf translator-always {
+                type empty;                     
+                mandatory false;                       
+                
+                description "Set nssa translator role"
+                          + "When configured on an ABR, this causes the router to unconditionally assume the role of an NSSA translator."
+                          + "By default, translator-always is not set, the translator role by default is candidate.";
+            }     
+	        
+	        leaf  translator-interval{	            
+	            mandatory false;				
+	            type common-def:time-interval-sec {
+	                range "10..60" {
+					}
+	            }
+	            
+	            description "The time interval for which an elected NSSA translator continues to perform its duties even"
+	             		   +"after its NSSA translator role has been deposed by another router";
+	        }                                      
+            	                                            	
+    	} //end container nssa
+    	
+    } //end grouping nssa-area-grouping      
+ 
+    grouping global-ospf {
+    
+            list area {
+                key "area-id";
+                description "Set the OSPF router area id";
+                leaf area-id {
+                    type ospf:ospf-area-id;
+                }  
+                
+                //This is required for the normal area to be shown in a separate line in the running-config
+                leaf normal {
+                    type empty;
+                }                               
+                                  			   	
+			   	uses nssa-area-grouping;
+			   	uses stub-area-grouping;			   	       					
+				uses ipsec-authentication-grouping;    
+					
+	            list virtual-link {      
+	                key "virtual-link-neighbor";
+	                
+	                description "All ABRs must have either a direct or indirect link to an OSPF backbone area (0.0.0.0 or 0). If an "
+	                          + "ABR does not have a physical link to a backbone area, a virtual link can be configured from the ABR "
+	                          + "to another router within the same area that has a physical connection to the backbone area."
+	                          + "The path for a virtual link is through an area shared by the neighbor ABR (router with a physical "
+	                          + "backbone connection) and the ABR requiring a logical connection to the backbone.";
+	                
+	                leaf virtual-link-neighbor {
+	                    type inet:ipv4-address {
+						}
+						
+						description "The neighbor router is the router ID (IPv4 address) of the router that is physically connected to "
+						          + "the backbone when assigned from the router interface requiring a logical connection. The "
+						          + "neighbor router is the router ID (IPv4 address) of the router requiring a logical connection to "
+						          + "the backbone when assigned from the router interface with the physical connection.";
+	                }
+	                
+	                uses link-attributes-grouping;
+	                                
+	            } //end list virtual-link 	   	
+            
+	            list area-range {        
+	                key "range-address";
+	                
+	                description "If the ABR that connects the NSSA to other areas needs to summarize the routes in the NSSA "
+	                          + "before translating them into Type-5 LSAs and flooding them into the other areas, configure an "
+	                          + "address range. The ABR creates an aggregate value based on the address range. The aggregate "
+	                          + "value becomes the address that the ABR advertises instead of advertising the individual addresses "
+	                          + "represented by the aggregate.";
+	                
+	                leaf range-address {	                    
+	                    type common-def:ipv6-address-prefix {
+	                    }
+	                    
+	                    description "Specifies the IP address portion of the range. The software "
+	                              + "compares the address with the significant bits in the mask. All network addresses that match this"
+	                              + "comparison are summarized in a single route advertised by the router.";
+	                }					
+	                
+	                leaf range-effect {
+	                    type enumeration {
+	                        enum advertise {
+	                            value 1; 
+	                        }
+	                        enum not-advertise { 
+	                            value 2; 
+	                        }                            
+	                    }
+						description "Advertise/Do not advertise this type-3 summarization";
+	                }
+	                
+	                leaf range-cost {
+	                    type ospf:range-metric;
+	                    default 0;	               
+	                    
+	                    description "Used to consolidate and summarize routes at an area boundary."
+	                              + "If the cost parameter is specified, it will be used (overriding the computed cost) to generate the "
+	                              + "summary LSA. If the cost parameter is not specified, then the existing range metric computation "
+	                              + "max or min cost of routes falling under this range will be used to generate summary LSA.";     
+	                }
+	            }  //end list range
+		        
+
+                                                                
+            } //end list area          
+            
+            container auto-cost {
+            	description "Calculate OSPFv3 interface cost according to bandwidth";
+                leaf reference-bandwidth {
+                    type ospf:band-width {
+					}
+					
+					description "Each interface on which OSPFv3 is enabled has a cost associated with it. "
+					          + "By default, OSPF cost of an interface is based on the port speed of the interface. "
+					          + "The software uses the following formula to calculate the cost."
+					          + "Cost = reference-bandwidth/interface-speed";
+                }                
+            } // end container auto-cost            
+            
+            leaf database-overflow-interval {
+                type common-def:time-interval-sec {
+                    range "0..86400";
+                }
+                
+                description "Set how often the router checks whether OSPF external LSDB overflow is eliminated. "
+                		  +	"If a database overflow condition occurs on the device, the device eliminates the condition by "
+                		  +	"removing entries that originated on the device. The exit overflow interval allows you to set how "
+                		  +	"often a device checks to see if the overflow condition has been eliminated. "
+                		  +	"If the configured value of the database overflow interval is 0, then the device never leaves the database overflow condition.";
+            }           
+            
+            container global-default-information-originate {
+                presence true;
+                description "Control distribution of default information";
+                
+                leaf global-default-information-originate-always {
+                    type empty;
+                    description "Always advertise default route";
+                }
+                
+                leaf global-default-information-originate-metric {
+                    type uint32 {
+                        range "0..65535" {
+                        }    
+                    }    
+                    description "OSPF metric for default route";
+                }
+                
+                leaf global-default-information-originate-metric-type {
+                    type ospf:metric-type;
+                    description "OSPF metric type for default route";
+                }
+            }       
+            
+		
+            leaf default-metric {
+                type uint32 {
+                    range "0..65535";
+                }
+                default 10;
+                description "The default metric is a global parameter that specifies the cost applied by default to routes"
+                          + "redistributed into OSPFv3. The default value is 0.";
+            }              
+            
+			leaf default-passive-interface {
+                type empty;
+                description "To set all the interfaces to the default passive state. When the interfaces are configured as passive"
+                          + "the interfaces drop all the OSPFv3 control packets";
+            }                 
+            
+            list distance {
+                key "route-type";
+                
+                description "A unique administrative distance can be configured for each type of OSPFv3 route. "
+                          + "This can be used to influence the device to prefer a static route over an OSPF inter-area "
+                          + "route and to prefer OSPF intra-area routes to static routes."
+                          + "The distance specified influences the choice of routes when the device has multiple routes to the "
+                          + "same network from different protocols. The device prefers the route with the lower administrative distance.";
+                
+                leaf route-type {
+                    type ospf:route-type-enum;
+                    description "The type of route propagation";
+                }
+                
+                leaf distance-value {
+                	type uint32 {
+						range "1..255" {
+						}
+					}
+                    description "The distance for a given type of route";
+                }
+            }  //end list distance
+            
+            container distribute-list {
+                
+                description "By configuring distribution lists we can filter the routes to be placed in the OSPFv3 route table."
+                          + "OSPFv3 distribution lists can filter routes using information specified in an IPv6 prefix list or a route map."
+                          + "Filtering using route maps has higher priority over filtering using global prefix lists.";
+                
+                container route-map {
+                    description "Use route-map to control routes learned by OSPFv3";
+                    
+                    leaf distribute-list-route-map-name {
+                        type common-def:name-string63 {
+                        }
+                        description "Route-map name.";
+                    }
+                    
+                    leaf distribute-list-route-map-in {
+                        type empty;
+                        description "Apply filter for incoming Routes";
+                    }
+                } //end container route-map
+                
+                container prefix-list {
+                    description "Use prefix list to control routes learned by OSPFv3";
+                    
+                    leaf distribute-list-prefix-list-name {
+                        type common-def:name-string63 {
+                        }
+                        description "Prefix list name.";
+                    }
+                    
+                    leaf distribute-list-prefix-list-in {
+                        type empty;
+                        description "Apply filter for incoming Routes";
+                    }
+                } //end container prefix-list    
+                            
+            } //end container distribute-list    
+            
+            leaf external-lsdb-limit {
+                type uint32 {
+                    range "1..250000" {
+                    	//TODO: check the max value. NOS Ospfv2 has max value of 14913080 whereas NI Ospfv3 has max value of 250000
+					}
+                }
+				default 250000;
+                description "Set maximum number of external LSAs";
+            }     
+            
+	    	container graceful-restart {
+				description "Configure OSPFv3 graceful restart options"; 
+	            
+	            container helper {
+	                
+					description "Set graceful restart helper options";   
+					
+		            leaf graceful-restart-helper-disable {
+		                type empty;	
+						description "Disable graceful restart helper capability";				  
+		            }
+		            
+		            leaf graceful-restart-helper-strict-lsa-checking {		            
+		                type empty;	
+						description "Set strict LSA checking";				  
+		            } 
+	            					               
+	            }  //end container helper                 
+           
+	        }  //end container graceful-restart         
+	            
+            
+	        leaf key-add-remove-interval {
+				default 300;
+	            type common-def:time-interval-sec {
+	                range "0..14400" {
+					}
+	            }
+	            description "Used to determine the interval time when authentication addition and deletion will take effect";
+	        }          
+	        
+	        leaf key-rollover-interval {
+	            type common-def:time-interval-sec {
+	                range "0..14400" {
+					}
+	            }
+	            description "Configure OSPFv3 authentication key rollover interval";
+	        }	                                  
+            
+			leaf log-status-change {
+                type empty;
+                description "Control the logging of events related to OSPFv3, such as neighbor state changes and database overflow conditions";
+            }      
+                   
+            leaf global-metric-type {
+                type ospf:metric-type;
+                description "OSPFv3 metric type for redistributed routes";
+            }        
+            
+            container redistribute {
+                description "Enable route redistribution";
+                
+                container redistribute-connected { 
+                    description "Connected routes";
+                    presence true;
+                     
+                    leaf connected-route-map {
+                        description "Route map reference";
+                        type common-def:name-string63 {
+                        } 
+                    }
+                    
+	            	leaf redistribute-connected-metric {
+	            		mandatory false;
+		                type uint32 {
+		                	range "0..65535";
+		                }
+		                description "Specifies the metric used for the redistributed route. If not specified and the value for the"
+		                          + "default-metric command is set to 0, its default metric, then routes redistributed from the various"
+		                          + "routing protocols will have the metric value of the protocol from which they are redistributed.";	               	                
+		            }	
+               
+	                leaf redistribute-connected-metric-type {    
+	                	mandatory false;             
+	                    type ospf:metric-type;
+	                    description "Specifies an OSPF metric type (type 1 or type 2) for the redistributed route."
+	                              + "If not specified, the device uses the value specified by the metric-type command.";
+	                } 
+                    
+                } //end container redistribute-connected
+                
+                container redistribute-static {                     
+                    description "Static routes";
+                    presence true;
+					                    
+                    leaf static-route-map {
+                        description "Route map reference";
+                        type common-def:name-string63 {
+                        }
+                    }
+	            	
+	            	leaf redistribute-static-metric {
+	            		mandatory false;
+		                type uint32 {
+		                	range "0..65535";
+		                }
+		                description "Specifies the metric used for the redistributed route. If not specified and the value for the"
+		                          + "default-metric command is set to 0, its default metric, then routes redistributed from the various"
+		                          + "routing protocols will have the metric value of the protocol from which they are redistributed.";	                	                
+		            }	                
+	                
+	                leaf redistribute-static-metric-type {    
+	                	mandatory false;      
+	                    type ospf:metric-type;
+	                    description "Specifies an OSPF metric type (type 1 or type 2) for the redistributed route."
+	                              + "If not specified, the device uses the value specified by the metric-type command.";
+	                }
+	                                     
+                } //end container redistribute-static
+
+                container redistribute-bgp {                    
+                    description "BGP routes";
+                    presence true;
+                  
+                    leaf bgp-route-map {
+                        description "Route map reference";
+                        type common-def:name-string63 {
+                        }
+                    }
+
+	            	leaf redistribute-bgp-metric {
+	            		mandatory false;
+		                type uint32 {
+		                	range "0..65535";
+		                }
+		                description "Specifies the metric used for the redistributed route. If not specified and the value for the"
+		                          + "default-metric command is set to 0, its default metric, then routes redistributed from the various"
+		                          + "routing protocols will have the metric value of the protocol from which they are redistributed.";	                	                
+		            }	                
+
+	                leaf redistribute-bgp-metric-type {    
+	                	mandatory false;  
+	                    type ospf:metric-type;
+	                    description "Specifies an OSPF metric type (type 1 or type 2) for the redistributed route."
+	                              + "If not specified, the device uses the value specified by the metric-type command.";
+	                }                    
+
+                } //end container redistribute-bgp
+                
+                container redistribute-ospf {                    
+                    description "OSPF routes";
+                    presence true;
+                  
+                    leaf ospf-route-map {
+                        description "Route map reference";
+                        type common-def:name-string63 {
+                        }
+                    }
+
+	            	leaf redistribute-ospf-metric {
+	            		mandatory false;
+		                type uint32 {
+		                	range "0..65535";
+		                }
+		                description "Specifies the metric used for the redistributed route. If not specified and the value for the"
+		                          + "default-metric command is set to 0, its default metric, then routes redistributed from the various"
+		                          + "routing protocols will have the metric value of the protocol from which they are redistributed.";	                	                
+		            }	                
+
+	                leaf redistribute-ospf-metric-type {    
+	                	mandatory false;  
+	                    type ospf:metric-type;
+	                    description "Specifies an OSPF metric type (type 1 or type 2) for the redistributed route."
+	                              + "If not specified, the device uses the value specified by the metric-type command.";
+	                }                    
+
+                } //end container redistribute-ospf                
+                
+            } //end container redistribute
+            
+            list summary-address {
+                key "summary-address-value";
+                
+                description "When the device is an OSPF Autonomous System Boundary Router (ASBR), you can configure it to "
+                          + "advertise one external route as an aggregate for all redistributed routes that are covered by a "
+                          + "specified IPv6 address range. When you configure an address range, the range takes effect immediately."
+                          + "All the imported routes are summarized according to the configured address range. Imported routes that have "
+                          + "already been advertised and that fall within the range are flushed out of the AS and a single route "
+                          + "corresponding to the range is advertised.If you use redistribution filters in addition to address ranges,"
+                          + "the device applies the redistribution filters to routes first, then applies them to the address ranges.";
+                
+                leaf summary-address-value {
+                    type common-def:ipv6-address-prefix {                        
+                    }
+					description "A:B::C:D/LEN;; IPv6 address to match";
+                }                    
+            } //end list summary-address
+            
+            container timers {
+                description "Adjust routing timers";
+                leaf lsa-group-pacing {
+                    type common-def:time-interval-sec {
+                        range "10..1800" {
+						}
+                    }
+                    default 240;
+                    description "The interval at which the device refreshes an accumulated group of LSAs";
+                }
+                
+                container spf  {
+					description "The SPF delay and hold time can be set to lower values to cause the device to change to alternate paths "
+					          + "more quickly if a route fails. Note that lower values for these parameters require more CPU processing time.";					           
+ 					
+                    leaf spf-delay {
+			            type common-def:time-interval-sec {
+			                range "0..65535" {
+							}
+			            } 
+			            description "When the device receives a topology change, the software waits before it starts a"
+			                      + "Shortest Path First (SPF) calculation. By default, the software waits 5 seconds. "
+			                      + "The SPF delay can be configured to a value from 0-65535 seconds. If the SPF delay is set to 0"
+			                      + "seconds, the software immediately begins the SPF calculation after receiving a topology change.";                          
+                    }
+                    
+                    leaf spf-hold-time {
+			            type common-def:time-interval-sec {
+			                range "0..65535" {
+							}
+			            }
+			            description "The device waits a specific amount of time between consecutive SPF calculations."
+			                      + "By default, it waits 10 seconds. The SPF hold time can be configured to a value"
+			                      + "from 0-65535 seconds. If the SPF hold time is set to 0 seconds, "
+			                      + "the software does not wait between consecutive SPF calculations.";                            
+                    }                        
+                } //end container spf
+                
+            } //end container timers   
+            
+			leaf nonstop-routing {
+                type empty;
+                description "If the active management module fails, the standby management module takes over and"
+                		  + "maintains the current OSPF routes, link-state advertisements (LSAs), and neighbor adjacencies, so"
+                		  + "that there is no loss of existing traffic to the OSPF destination.";
+            }
+            
+            leaf maximum-paths {
+                type uint32 {
+                    range "1..8" {                    	
+					}
+                }				
+                description "Set the maximum number of paths to a destination.";
+            }                                                          
+    
+    } //end global-ospf    
+    
+    grouping interface-ospfv3-config {
+        container interface-ospfv3-conf {                        
+            description "Open Shortest Path First version 3 (OSPFv3)";
+            
+            leaf interface-area {
+                type ospf:ospf-area-id;
+                description "Assign an OSPF area for the interface";
+            }            
+            
+            leaf active { 
+                type empty;
+                description  "When you configure an OSPFv3 interface to be active, that interface sends or receives "
+                          +  "all the control packets and forms the adjacency. By default, the ipv6 ospf active command is "
+                          +  "disabled. Whenever you configure the OSPFv3 interfaces to be passive using the "
+                          +  "default-passive-interface command, all the OSPFv3 interfaces stop sending and receiving "
+                          +  "control packets. To send and receive packets over specific interfaces, you can use the ipv6 "
+                          +  "ospf active command.";
+            } 	
+            
+            leaf passive { 
+                type empty;
+                description  "When you configure an OSPF interface to be passive, that interface does not send or "
+                          +  "receive OSPF route updates. This option affects all IPv6 subnets configured on the interface."
+                          +  "By default, all OSPF interfaces are active and thus "
+                          +  "can send and receive OSPF route information. Since a passive interface does not send or "
+                          +  "receive route information, the interface is in effect a stub network.";
+            } 	            		            	                         
+            
+            leaf bfd { 
+                type empty;
+                description "Set Bidirectional Forwarding Detection operation mode on this interface";
+            }             
+                   
+            leaf cost {
+                type uint32 {
+                    range "1..65535" {
+					}
+                }
+            	description "The overhead required (cost) to send a packet across this interface";
+            }        
+            
+            leaf instance {
+                type uint32 {
+                    range "0..255" {
+					}
+                }
+            	description "Instance indicates the number of OSPFv3 instances running on this interface.The default is 1.";
+            }                       
+                           
+            leaf mtu-ignore { 
+                type empty;
+                description "To disable a check that verifies the same MTU is used on the interface"
+                          + "shared by neighbors.By default, the mismatch detection is enabled.";
+            }     
+            
+            leaf network {
+                type enumeration {
+                    enum broadcast { 
+                        value 1; 
+                    }
+                    enum point-to-point {
+                        value 2; 
+                    }
+                }
+                description "To configure the OSPF network type.The default setting of the parameter depends on the network type.";
+            }            
+            
+            leaf priority { 
+                type uint32 {
+					range "0..255" {
+					}
+				}
+				description "To modify the priority of an OSPF router. The value can be from 0-255."
+				          + "The priority is used when selecting the designated router (DR) and backup designated routers (BDRs). Default is 1"
+				          + "If the priority is set to 0, the router does not participate in DR and BDR election.";
+            }  
+            
+            leaf suppress-linklsa { 
+                type empty;
+                description "Suppress link LSA advertisements";
+            }
+            
+            container authentication {
+            	
+                
+                description "Configure ipsec authentication for the interface."
+                          + "The interface IPsec configuration takes precedence over the area IPsec configuration when an area "
+                          + "and an interface within that area use IPsec. Therefore, if you configure IPsec for an interface and "
+                          + "an area configuration also exists that includes this interface, the interface's IPsec configuration is "
+                          + "used by that interface. However, if you disable IPsec on an interface, IPsec is disabled on the "
+                          + "interface even if the interface has its own, specific authentication.";                
+                                
+                uses ipsec-auth-key-grouping;
+                
+	            container ipsec {
+	                description "Configure ipsec authentication for the interface";
+                                
+	                leaf ipsec-authentication-disable {           
+	                    
+	                    description "Disable ipsec authentication on the interface. "
+	                              + "For the purpose of troubleshooting, you can operationally disable IPsec on an interface using this command."
+	                              + "This command disables IPsec on the interface whether its IPsec configuration is the area's IPsec "
+	                              + "configuration or is specific to that interface.";	                    
+	                    
+	                    type empty;      
+	                } 
+	                
+			        leaf ifc-key-add-remove-interval {
+			            type common-def:time-interval-sec {
+			                range "0..14400" {
+							}
+			            }
+			            description "Used to determine the interval time when authentication addition and deletion will take effect";
+			        }
+			    } //end container ipsec
+	                                    	
+            } //end container authentication
+             
+            uses link-interval-attributes-grouping;                        	                         
+        }
+    }       
+    
+    augment "/rbridge:rbridge-id/rbridge:ipv6/rbridge:router" {
+       list ospf {
+         key vrf;
+         leaf vrf {
+			type common-def:vrf-name;                         
+            description "OSPF instance for the VRF ";           
+         }         
+         uses global-ospf;
+       
+       } //end list ospf           
+    }            
+    
+    augment "/interface:interface/interface:gigabitethernet/interface:ipv6" {
+        uses interface-ospfv3-config;
+    }
+     
+    augment "/interface:interface/interface:tengigabitethernet/interface:ipv6" {
+        uses interface-ospfv3-config;
+    }       
+      
+    augment "/interface:interface/interface:fortygigabitethernet/interface:ipv6" {
+        uses interface-ospfv3-config;
+    }
+    
+    augment "/interface:interface/interface:hundredgigabitethernet/interface:ipv6" {
+        uses interface-ospfv3-config;
+    }    
+    
+    augment "/rbridge:rbridge-id/interface:interface/interface:ve/ipv6-config:ipv6" {
+        uses interface-ospfv3-config {
+       		refine "interface-ospfv3-conf" {
+       		}     
+       	}   
+    }
+    
+    augment "/rbridge:rbridge-id/interface:interface/intf-loopback:loopback/ipv6-config:ipv6" {
+        uses interface-ospfv3-config {
+       		refine "interface-ospfv3-conf" {
+       		}     
+       	}
+    }   
+                           
+ }
+ 

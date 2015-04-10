@@ -1,0 +1,175 @@
+// YANG submodule for VLAN statedata configurations.
+// Revisions:
+//     2011-04-20: Initial version.
+//
+
+submodule vlan-statedata 
+{
+    belongs-to netiron-statedata 
+    {
+        prefix "statedata";
+    }
+
+    import common-defs
+    {
+        prefix "common";
+    }
+
+    organization
+        "Brocade Communications Inc.";
+
+    contact
+             "Technical Support Center"+
+             "130 Holger Way,"+
+             "San Jose, CA  95134"+
+             "Email:  ipsupport@brocade.com"+
+             "Phone: 1-800-752-8061"+
+             "URL:  www.brocade.com";
+
+    description "This module defines the device VLAN state data. VERSION: V5.8.00a";
+    
+    revision 2011-04-20
+    {
+        description "Initial revision";
+    }
+
+    grouping vlan-statedata-grouping 
+    {
+        description "device VLAN state data group";
+        container vlan-statedata
+        {
+            description "List of VLANs configured on the system";
+             
+            list vlan 
+            {
+                key vlan-id;
+                max-elements 4090;
+                description "device VLAN state data";
+                
+                leaf vlan-id 
+                {
+                    type common:vlan-identifier;
+                    description "VLAN ID";
+                }
+
+                leaf vlan-name 
+                {
+                    type string 
+                    {
+                        length "1..31";
+                    }
+                    description "VLAN Name";
+                }
+
+                leaf topo-hw-idx
+                {
+                    type uint32
+                    {
+                        range "0..511";
+                    }
+                    description "Topology hardware index";
+                }
+
+                leaf topo-sw-idx
+                {
+                    type uint32
+                    {
+                        range "1..256";
+                    }
+                    description "Topology group id";
+                }
+
+                leaf topo-next-vlan
+                {
+                    type common:vlan-identifier;
+                    description "Topology next vlan";
+                }
+
+                list port
+                {
+                    key port-id;
+                    description "VLAN port list";
+
+                    leaf port-id
+                    {
+                        type common:interface-all-types;
+                        description "VLAN port";
+                    }
+
+                    leaf tag-mode
+                    {
+                        type string
+                        {
+                            pattern
+                                "(untagged)"+
+                                "|(tagged)"+
+                                "|(broken)";
+                        }
+                        description "Tag mode of port";
+                    }
+
+                    leaf state
+                    {
+                        type string
+                        {
+                            length "1..19";
+                        }
+                        description "Current state of the port.";
+                    }
+                } //end list port
+
+                leaf bytes-received
+                {
+                    type string
+                    {
+                        length "1..31";
+                    }
+                    description "Bytes received";
+                }
+            } //end list vlan
+
+            leaf-list untagged
+            {
+                type common:ethernet-pos-intf-multiple;
+                description "All the ports that are configured as untagged ports in all the VLANs on the device";
+            }
+
+            leaf-list tagged
+            {
+                type common:ethernet-pos-intf-multiple;
+                description "All the ports that are configured as tagged ports in all the VLANs on the device";
+            }
+
+            leaf-list dual-mode
+            {
+                type common:ethernet-pos-intf-multiple;
+                description "All the ports that are configured as dual-mode ports in all the VLANs on the device";
+            }
+
+            leaf default-vlan-id
+            {
+                type common:vlan-identifier;
+                description "Default VLAN identifier";
+            }
+
+            leaf control-vlan-id
+            {
+                type common:vlan-identifier;
+                description "Control VLAN identifier";
+            }
+
+            leaf maximum-port-vlan-entries
+            {
+                type uint32
+                {
+                    range "1..512";
+                }
+                description "Maximum PORT-VLAN entries";
+            }
+
+        } //end container vlan-statedata
+        
+    } //end grouping vlan-statedata-grouping
+    
+} //end submodule vlan-statedata
+  

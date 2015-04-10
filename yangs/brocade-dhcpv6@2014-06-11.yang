@@ -1,0 +1,180 @@
+/***********************************************************************
+ * brocade-dhcpv6.yang: Brocade YANG data model for DHCPv6 configuration.
+ *		 			  Currently supports basic relay agent functionality
+ *					  only.
+ *
+ * June 2014, Sachin Rastogi
+ *
+ * Copyright (c) 2014 by Brocade Communications Systems, Inc.
+ * All rights reserved.
+ *
+ **********************************************************************/
+
+module brocade-dhcpv6 {
+    namespace "urn:brocade.com:mgmt:brocade-dhcpv6";
+    prefix dhcpv6;
+
+    /* Linkage Statements */
+
+    import brocade-rbridge {
+        prefix rbridge;
+    }
+
+    import brocade-interface {
+        prefix interface;
+    }
+
+    import brocade-ipv6-config {
+        prefix ipv6-config;
+    }
+
+    import brocade-common-def {
+        prefix common-def;
+    }
+
+    import tailf-common {
+        prefix "tailf";
+    }
+
+    import ietf-inet-types {
+        prefix "inet";
+    }
+
+    /* Meta Information */
+    
+    organization
+        "Brocade Communications Systems, Inc.";
+
+    contact           
+        "Brocade Communications Systems, Inc.
+         Postal: 130 Holger Way,
+                 San Jose, CA 95134 
+                  U.S.A
+         Tel: +1-408-333-8000
+         E-mail: support@Brocade.com 
+         web: www.brocade.com.";
+
+    description       
+        "This management module is an instrumentation to manage 
+         DHCPv6 functionality."; 
+
+    /* Revision history */
+        
+    revision "2014-06-11" {
+        description     
+            "Initial version of this management module.";
+    }
+
+    /* Module Definition */
+
+    typedef dhcp-ipv6-address {
+        type inet:ipv6-address {
+        }    
+    }       
+
+	typedef dhcpv6-iftype {
+        type enumeration {
+            enum gigabitethernet {
+                value 0;
+                description "Gigabit Ethernet interface";
+            }
+            enum tengigabitethernet {
+                value 1;
+                description "TenGigabit Ethernet interface";
+            }
+            enum fortygigabitethernet {
+                value 2;
+                description "FortyGigabit Ethernet interface";
+            }
+            enum hundredgigabitethernet {
+                value 3;
+                description "HundredGigabit Ethernet interface";
+            }
+            enum Ve {
+                value 4;
+                description "Ve interface";
+            }
+        }
+    }
+
+	typedef dhcpv6-ifname {
+        type string {
+            pattern '(((([1-9]|[1-9][0-9]|1[0-9]{2}|2[0-3][0-9])/)?'
+                    + '(([0-9]|1[0-6]))/([1-9]|[1-9][0-9])(:[1-4])?)|'
+                    + '([1-9]|[1-9][0-9]|[1-9][0-9]{2}|[1-7][0-9]{3}|'
+                    + '8[0-1][0-9][0-1]))';
+        }
+    }
+
+    grouping interface-phy-dhcp {
+        container interface-phy-dhcp-conf {
+            uses interface-dhcp;
+        } 
+    }
+
+    grouping interface-ve-dhcp {
+        container interface-ve-dhcp-conf {
+            uses interface-dhcp;
+        }
+    }
+
+
+    grouping interface-dhcp {
+        container dhcp {
+        	container relay {
+
+            	list servers {
+					key "relay-ip-addr";
+					max-elements 16;   /* Currently upto 16 relay addresses supported per interface */
+            		//tailf:cli-run-template-enter "ipv6 dhcp relay address$(relay-ip-addr) $($(server-vrf-name)==.?: use-vrf $(server-vrf-name))\n";
+
+					leaf relay-ip-addr {
+                		type dhcp-ipv6-address;
+						description "DHCPv6 server IPv6 address";
+					}
+
+					leaf server-vrf-name {
+                       	type common-def:vrf-name;
+						description "Name of the VRF that the DHCPv6 server is within";
+					}
+
+					container interface {
+						description "Interface.";
+
+						leaf interface-type {
+							type dhcpv6-iftype;
+							description "Interface type";
+						}
+
+						leaf interface-name {
+							type dhcpv6-ifname;
+							description "Interface name";
+						}
+					}
+            	}
+			} /* interface/ip/dhcp/relay */
+        } /* interface/ip/dhcp */
+    } /* grouping interface-dhcp */
+   
+
+
+    augment "/rbridge:rbridge-id/interface:interface/interface:ve/ipv6-config:ipv6" {
+        uses interface-ve-dhcp;
+    }
+
+    augment "/interface:interface/interface:fortygigabitethernet/interface:ipv6" {
+        uses interface-phy-dhcp;
+    }
+
+    augment "/interface:interface/interface:hundredgigabitethernet/interface:ipv6" {
+        uses interface-phy-dhcp;
+    }
+
+    augment "/interface:interface/interface:tengigabitethernet/interface:ipv6" {
+        uses interface-phy-dhcp;
+    }
+
+    augment "/interface:interface/interface:gigabitethernet/interface:ipv6" {
+        uses interface-phy-dhcp;
+    }
+}

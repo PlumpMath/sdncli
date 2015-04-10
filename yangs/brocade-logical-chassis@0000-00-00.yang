@@ -1,0 +1,37 @@
+/******************************************************************
+* Logical Chassis CLI Yang model that will contain logical chassis clis
+*
+*  September 2011-2012, Anand Subramanian
+*
+* Copyright (c) 2012 by Brocade Communications Systems, Inc.
+* All rights reserved.
+*******************************************************************/
+
+module brocade-logical-chassis {
+    namespace "http://brocade.com/ns/brocade-logical-chassis";
+    prefix brocade-logical-chassis;
+
+    import tailf-common    { 
+        prefix "tailf";  
+    }
+
+    import brocade-rbridge {
+        prefix rbridge;
+    }
+
+    grouping logical-chassis-cmds {
+        container logical-chassis {
+
+            leaf principal-priority {
+                type uint32 {
+                    range "1..128" {
+                    }
+                }
+            }
+        }
+    }
+
+    augment "/rbridge:rbridge-id" {
+        uses logical-chassis-cmds;
+    }
+}

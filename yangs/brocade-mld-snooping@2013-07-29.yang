@@ -1,0 +1,314 @@
+/***********************************************************************
+ * brocade-mld-snooping.yang : Brocade MLD Snooping data model
+ * August 2013, Ankit Jindal
+ * Copyright (c) 2013 by Brocade Communications Systems, Inc.
+ * All rights reserved.
+ **********************************************************************/
+
+module brocade-mld-snooping {
+    namespace "urn:brocade.com:mgmt:brocade-mld-snooping";
+    prefix "mld-snooping";
+	
+    import tailf-common { prefix "tailf"; }
+    import ietf-inet-types  { prefix "inet"; }
+
+    import brocade-rbridge {
+        prefix rbridge;
+    }
+   
+    import brocade-interface {
+        prefix interface;
+    }
+
+     import brocade-ipv6-config {
+        prefix ipv6-config;
+    }
+
+    organization
+        "Brocade Communications Systems, Inc.";
+    
+    contact           
+        "Brocade Communications Systems, Inc.
+         Postal: 1745 Technology Drive,
+                 San Jose, CA 95110 
+                 U.S.A
+         Tel: +1-408-392-6061
+         E-mail: support@Brocade.com 
+         web: www.brocade.com.";
+         
+    description      
+        "This management module is an instrumentation to manage the 
+        'Multicast Listener Discovery (MLD) Snooping'.";
+        
+    revision "2013-07-29" {
+        description     
+            "Initial version of this module.";
+    }         
+
+	/* Module Definition */
+      container mld-snooping {
+              /*tailf:sort-priority   RUNNCFG_LEVEL_GLOBAL_MLD_SNOOPING;*/
+              container ipv6 {
+
+		      container mld {
+                /*tailf:sort-priority   RUNNCFG_LEVEL_GLOBAL_MLD_SNOOPING;*/
+
+			    container snooping {
+
+				    leaf enable {
+					    type empty;
+				    }
+
+				    /*leaf restrict-unknown-multicast {
+					    type empty;
+				    }*/
+
+			    }
+		    }
+	    }
+   }
+
+    typedef lmqt-type {
+        type uint32 {
+            range "100..25500";
+        }
+    }
+
+    typedef qi-type {
+		type uint32 {
+			range "1..18000";
+		}
+    }
+
+    typedef qmrt-type {
+		type uint32 {
+			range "1..25";
+		}
+    }
+
+    typedef lmqc-type {
+        type uint32 {
+            range "2..10";
+        }
+    }
+
+    typedef rob-type {
+        type uint32 {
+            range "2..10";
+        }
+    }
+
+    typedef sqc-type {
+        type uint32 {
+            range "1..10";
+        }
+    }
+
+    typedef sqi-type {
+        type uint32 {
+            range "1..450";
+        }
+    }
+
+    typedef mrti-type {
+		type uint32 {
+			range "1..60000";
+		}
+    }
+
+    typedef string-type {
+        type string {
+			length "1..10";
+		}
+    }
+
+	augment "/interface:interface-vlan/interface:interface/interface:vlan/interface:ipv6" {
+		description "Internet Protocol v6 (IPv6)";
+
+		container mldVlan {
+            /*tailf:sort-priority RUNNCFG_INTERFACE_LEVEL_L3_MLD_CONFIG;*/
+
+			leaf last-member-query-interval {
+				type lmqt-type;
+                units "milliSeconds";
+			}
+
+            leaf last-member-query-count {
+                type lmqc-type;
+            }
+
+
+            leaf startup-query-interval {
+                type sqi-type;
+                units "Seconds";
+            }
+
+            leaf startup-query-count {
+                type sqc-type;
+                units "Seconds";
+            }
+
+			leaf query-max-response-time {
+                type qmrt-type;
+                units "Seconds";
+			}
+
+            leaf query-interval {
+                 type qi-type;
+                 units "Seconds";
+
+           }
+
+			container snooping {
+
+			    leaf enable {
+					type empty;
+				}
+
+				leaf fast-leave {
+					type empty;
+				}
+
+                leaf restrict-unknown-multicast-vlan {
+                     type empty;
+                }
+
+                /*Added later as per Pani's email : moved one level above
+                for TR000492672
+                leaf query-interval {
+                    type qi-type;
+                    units "Seconds";
+                }*/
+
+                leaf robustness-variable {
+                    type rob-type;
+                }
+
+				container querier {
+
+					leaf qenable {
+						type empty;
+					}
+				}
+
+				container mrouter {
+                    //tailf:cli-incomplete-command;
+                    //presence true;
+
+					list interface {
+						
+						key "if-type value";
+
+						leaf if-type {
+							type enumeration {
+								enum GigabitEthernet {
+                                    value 0;
+								}
+								enum TenGigabitEthernet {
+                                    value 1;
+								}
+								enum FortyGigabitEthernet {
+                                    value 2;
+								}
+								enum Port-channel {
+                                    value 3;
+								}
+                                enum HundredGigabitEthernet {
+                                    value 4;
+                                }
+
+							}
+						}
+
+						leaf value {
+							type string-type;
+						}
+					}
+				}
+			}
+
+			list static-group {
+
+				key "mcast-address interface if-type value";
+
+				leaf mcast-address {
+					type inet:ipv6-address;
+				}
+
+				leaf interface {
+					type enumeration {
+						enum interface {
+						}
+					}
+				}
+
+				leaf if-type {
+					type enumeration {
+						enum GigabitEthernet {
+                            value 0;
+						}
+						enum TenGigabitEthernet {
+                            value 1;
+						}
+						enum FortyGigabitEthernet {
+                            value 2;
+						}
+						enum Port-channel {
+                            value 3;
+						}
+                        enum HundredGigabitEthernet {
+                            value 4;
+                        }
+
+					}
+				}
+
+				leaf value {
+                    type string-type;
+				}
+			}
+		}
+	}
+
+    /*** TYPE DEFINITIONS ***/
+    grouping intf-phy-ipv6-mlds
+    {
+        container ipv6-phy-intf-cmds
+        {
+
+            leaf hop-by-hop-trap {
+                type empty;
+            }            
+        }        
+    }    
+
+    grouping intf-ve-ipv6-mlds
+    {
+        container ipv6-ve-intf-cmds
+        {
+            leaf hop-by-hop-trap {
+                type empty;
+            }
+        }
+    }
+
+    augment "/interface:interface/interface:tengigabitethernet/interface:ipv6" {
+                uses intf-phy-ipv6-mlds;
+    }
+
+    augment "/interface:interface/interface:fortygigabitethernet/interface:ipv6" {
+                uses intf-phy-ipv6-mlds ;
+    }
+
+    augment "/interface:interface/interface:gigabitethernet/interface:ipv6" {
+                uses intf-phy-ipv6-mlds;
+    }
+    augment "/interface:interface/interface:hundredgigabitethernet/interface:ipv6" {
+        uses intf-phy-ipv6-mlds;
+    }
+    augment "/rbridge:rbridge-id/interface:interface/interface:ve/ipv6-config:ipv6" {
+            uses intf-ve-ipv6-mlds;
+    }
+    
+}
+

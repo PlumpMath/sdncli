@@ -1,0 +1,1443 @@
+module brocade-ip-policy {
+    namespace "urn:brocade.com:mgmt:brocade-ip-policy";
+    prefix ip-policy;
+
+    import brocade-rbridge { prefix rbridge; }
+    import brocade-interface { prefix interface;}
+    import brocade-intf-loopback { prefix loopback-intf;}
+    import brocade-common-def {prefix common-def; }
+    import tailf-common { prefix "tailf"; }
+    import ietf-inet-types  { prefix "inet"; }
+	import brocade-ip-access-list { prefix "ip-access-list";  }
+	import brocade-ipv6-access-list { prefix "ipv6-access-list";  }
+    import brocade-ipv6-config { prefix ipv6-config; }
+
+    organization
+        "Brocade Communications Systems, Inc.";
+    
+    contact           
+        "Brocade Communications Systems, Inc.
+         Postal: 1745 Technology Drive,
+                 San Jose, CA 95110 
+                  U.S.A
+         Tel: +1-408-392-6061
+         E-mail: support@Brocade.com 
+         web: www.brocade.com.";
+
+    description       
+        "This management module is an instrumentation to manage 
+        different IP routing protocols.";
+
+    revision "2011-03-19" {
+        description     
+            "Initial version of this IP policy sub-module.";
+    }
+
+    typedef metric-t {
+    	type uint32 {
+    		range "0..4294967295" {
+    		    description "Number:0-4294967295;;Route metric value";
+    		}
+    	}
+    }
+
+    typedef extcommunitylist-expr {
+        type string {
+            pattern '(\s*(\d+))*' {
+                description "match extcommunity numbers";
+            }
+        }
+    }
+
+
+    typedef extcommunitylist-instance {
+        type uint16 {
+            range "0..99" {
+                description "Extended Community list Instance number";
+            }
+        }
+    }
+    typedef tag-t {
+    	type uint32 {
+    		range "0..4294967295" {
+    			description "Number:0-4294967295;;Route tag value";
+    		}
+    	}
+    }
+    
+    typedef distance-t {
+    	type uint32 {
+    		range "1..254" {
+    			description "Number:1-254;;Route distance value";
+    		}
+    	}
+    }
+       
+    typedef action-t {
+    	type enumeration {
+    		enum permit {
+    			value 1;
+    			description "Allow matching pattern";
+    		}
+    		enum deny {
+    			value 2;
+    			description "Disallow matching pattern";
+    		}
+    	}
+    }
+
+	typedef instance-id-t {
+		type uint16 {
+			range "1..65535" {
+				description "1-65535;;Instance number";
+			}
+		}
+	}
+
+	typedef ipv6-prefix-len-t {
+		type uint32 {
+			range "1..128" {
+				description "1-128;;IPv6 Prefix length";
+			}
+		}
+	}
+
+	typedef prefix-len-t {
+		type uint32 {
+			range "1..32" {
+				description "1-32;;IP Prefix length";
+			}
+		}
+	}
+
+	typedef set-route-type-t {
+		type enumeration {
+			enum internal {
+				value 1;
+				description "Internal route type";
+			}
+			enum type-1 {
+				value 2;
+				description "OSPF external route type 1";
+			}
+			enum type-2 {
+				value 3;
+				description "OSPF external route type 2";
+			}
+		}
+	}
+	
+	typedef match-route-type-t {
+		type enumeration {
+			enum internal {
+				value 1;
+				description "Internal route type";
+			}
+			enum type-1 {
+				value 2;
+				description "OSPF external route type 1";
+			}
+			enum type-2 {
+				value 3;
+				description "OSPF external route type 2";
+			}
+			
+			/*
+			// not supported for now.
+			enum level-1 {
+				value 4;
+			}
+		
+			enum level-2 {
+				value 5;
+			}
+			*/
+		}
+	}
+	
+    typedef ext-community-soo-expr-t {
+        type string {
+            pattern '((\s*(((([1-9][0-9]{0,3})|([1-5][0-9]{4})|(6[0-4][0-9]{3})|'
+                +   '(65[0-4][0-9]{2})|(655[0-2][0-9])|(6553[0-5])):(([0-9][0-9]{0,8})'
+                +   '|(4[0-1][0-9]{8})|(42[0-8][0-9]{7})|(429[0-3][0-9]{6})|'
+                +   '(4294[0-8][0-9]{5})|(42949[0-5][0-9]{4})|(429496[0-6][0-9]{3})|'
+                +   '(4294967[0-1][0-9]{2})|(42949672[0-8][0-9])|(429496729[0-5])))|'
+                +   '((([1-9][0-9]{0,8})|(4[0-1][0-9]{8})|(42[0-8][0-9]{7})|'
+                +   '(429[0-3][0-9]{6})|(4294[0-8][0-9]{5})|(42949[0-5][0-9]{4})|'
+                +   '(429496[0-6][0-9]{3})|(4294967[0-1][0-9]{2})|(42949672[0-8][0-9]))'
+                +   ':(([1-9][0-9]{0,3})|([1-5][0-9]{4})|(6[0-4][0-9]{3})|(65[0-4][0-9]{2})|'
+                +   '(655[0-2][0-9])|(6553[0-5])))|(((([1-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|'
+                +   '25[0-5])\.)(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){2}'
+                +   '([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])):(([1-9][0-9]{0,3})|'
+                +   '([1-5][0-9]{4})|(6[0-4][0-9]{3})|(65[0-4][0-9]{2})|(655[0-2][0-9])|(6553[0-5])))))*)';
+        }
+    }
+
+    typedef ext-community-rt-expr-t {
+        type string {
+            pattern '((\s*(((([1-9][0-9]{0,3})|([1-5][0-9]{4})|(6[0-4][0-9]{3})'
+                +   '|(65[0-4][0-9]{2})|(655[0-2][0-9])|(6553[0-5])):(([0-9][0-9]{0,8})'
+                +   '|(4[0-1][0-9]{8})|(42[0-8][0-9]{7})|(429[0-3][0-9]{6})|(4294[0-8][0-9]{5})'
+                +   '|(42949[0-5][0-9]{4})|(429496[0-6][0-9]{3})|(4294967[0-1][0-9]{2})'
+                +   '|(42949672[0-8][0-9])|(429496729[0-5])))|((([1-9][0-9]{0,8})|(4[0-1][0-9]{8})'
+                +   '|(42[0-8][0-9]{7})|(429[0-3][0-9]{6})|(4294[0-8][0-9]{5})|(42949[0-5][0-9]{4})'
+                +   '|(429496[0-6][0-9]{3})|(4294967[0-1][0-9]{2})|(42949672[0-8][0-9]))'
+                +   ':(([1-9][0-9]{0,3})|([1-5][0-9]{4})|(6[0-4][0-9]{3})|(65[0-4][0-9]{2})'
+                +   '|(655[0-2][0-9])|(6553[0-5])))|(((([1-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.)'
+                +   '(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){2}([0-9]|[1-9][0-9]|1[0-9]{2}'
+                +   '|2[0-4][0-9]|25[0-5])):(([1-9][0-9]{0,3})|([1-5][0-9]{4})|(6[0-4][0-9]{3})'
+                +   '|(65[0-4][0-9]{2})|(655[0-2][0-9])|(6553[0-5])))))*)(( (additive))?)';
+        }
+    }
+
+    typedef ext-rt-not-interface-expr-t {
+        type string {
+            pattern '([^i].*)|(i[^n].*)|(in[^t].*)(int[^e].*)|(inte[^r].*)|(inter[^f].*)|(interf[^a].*)|(interfa[^c].*)|(interface..*)';
+        }
+    }
+
+    typedef set-community-expr-t {
+	    type string {
+				pattern '((\s*)|(\s*((local\-as)|(internet)|(no\-export)|(no\-advertise)|((([1-9][0-9]{0,3})|'
+                     +  '([1-5][0-9]{4})|(6[0-4][0-9]{3})|(65[0-4][0-9]{2})|(655[0-2][0-9])|(6553[0-5])):'
+                     +  '(([0-9][0-9]{0,3})|([1-5][0-9]{4})|(6[0-4][0-9]{3})|(65[0-4][0-9]{2})|(655[0-2][0-9])|'
+                     +  '(6553[0-5])))|([1-9][0-9]{0,8})|([1-3][0-9]{9})|(4[0-1][0-9]{8})|(42[0-8][0-9]{7})|'
+                     +  '(429[0-3][0-9]{6})|(4294[0-8][0-9]{5})|(42949[0-5][0-9]{4})|(429496[0-6][0-9]{3})|'
+                     +  '(4294967[0-1][0-9]{2})|(42949672[0-8][0-9])|(429496729[0-5])))((\s+((local\-as)|(internet)'
+                     +  '|(no\-export)|(no\-advertise)|'
+                     +  '((([1-9][0-9]{0,3})|([1-5][0-9]{4})|(6[0-4][0-9]{3})|(65[0-4][0-9]{2})|(655[0-2][0-9])|'
+                     +  '(6553[0-5])):(([0-9][0-9]{0,3})|([1-5][0-9]{4})|(6[0-4][0-9]{3})|(65[0-4][0-9]{2})|'
+                     +  '(655[0-2][0-9])|(6553[0-5])))|([1-9][0-9]{0,8})|([1-3][0-9]{9})|(4[0-1][0-9]{8})|'
+                     +  '(42[0-8][0-9]{7})|(429[0-3][0-9]{6})|(4294[0-8][0-9]{5})|(42949[0-5][0-9]{4})|'
+                     +  '(429496[0-6][0-9]{3})|(4294967[0-1][0-9]{2})|(42949672[0-8][0-9])|(429496729[0-5])))*)(( (additive))?))|(none)';		   
+	    }    
+    }
+    
+    typedef match-community-expr-t {
+	    type string {
+		   pattern '((\s*([a-zA-Z0-9_]+))*)(( (exact-match))?)';
+	    }    
+    }
+
+    typedef ip-std-community-expr-t {
+            type string {
+				pattern '(\s*)|(\s*((local\-as)|(internet)|(no\-export)|(no\-advertise)|((([1-9][0-9]{0,3})|'
+                     +  '([1-5][0-9]{4})|(6[0-4][0-9]{3})|(65[0-4][0-9]{2})|(655[0-2][0-9])|(6553[0-5])):'
+                     +  '(([0-9][0-9]{0,3})|([1-5][0-9]{4})|(6[0-4][0-9]{3})|(65[0-4][0-9]{2})|(655[0-2][0-9])|'
+                     +  '(6553[0-5])))|([1-9][0-9]{0,8})|([1-3][0-9]{9})|(4[0-1][0-9]{8})|(42[0-8][0-9]{7})|'
+                     +  '(429[0-3][0-9]{6})|(4294[0-8][0-9]{5})|(42949[0-5][0-9]{4})|(429496[0-6][0-9]{3})|'
+                     +  '(4294967[0-1][0-9]{2})|(42949672[0-8][0-9])|(429496729[0-5])))((\s+((local\-as)|(internet)'
+                     +  '|(no\-export)|(no\-advertise)|'
+                     +  '((([1-9][0-9]{0,3})|([1-5][0-9]{4})|(6[0-4][0-9]{3})|(65[0-4][0-9]{2})|(655[0-2][0-9])|'
+                     +  '(6553[0-5])):(([0-9][0-9]{0,3})|([1-5][0-9]{4})|(6[0-4][0-9]{3})|(65[0-4][0-9]{2})|'
+                     +  '(655[0-2][0-9])|(6553[0-5])))|([1-9][0-9]{0,8})|([1-3][0-9]{9})|(4[0-1][0-9]{8})|'
+                     +  '(42[0-8][0-9]{7})|(429[0-3][0-9]{6})|(4294[0-8][0-9]{5})|(42949[0-5][0-9]{4})|'
+                     +  '(429496[0-6][0-9]{3})|(4294967[0-1][0-9]{2})|(42949672[0-8][0-9])|(429496729[0-5])))*)';
+            }
+    }
+
+    typedef extcommunity-list-expr-t {
+        type string {
+                pattern '(\s*)|(\s*((rt)|(soo)|((([1-9][0-9]{0,8})|([1-3][0-9]{9})|(4[0-1][0-9]{8})|(42[0-8][0-9]{7})|(429[0-3][0-9]{6})|'
+                + '(4294[0-8][0-9]{5})|(42949[0-5][0-9]{4})|(429496[0-6][0-9]{3})|(4294967[0-1][0-9]{2})|(42949672[0-8][0-9])|'
+                + '(429496729[0-5])):(([1-9][0-9]{0,8})|([1-3][0-9]{9})|(4[0-1][0-9]{8})|(42[0-8][0-9]{7})|(429[0-3][0-9]{6})|'
+                + '(4294[0-8][0-9]{5})|(42949[0-5][0-9]{4})|(429496[0-6][0-9]{3})|(4294967[0-1][0-9]{2})|(42949672[0-8][0-9])|'
+                + '(429496729[0-5])))|((([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]):(([1-9][0-9]{0,8})|'
+                + '([1-3][0-9]{9})|(4[0-1][0-9]{8})|(42[0-8][0-9]{7})|(429[0-3][0-9]{6})|(4294[0-8][0-9]{5})|(42949[0-5][0-9]{4})|(429496[0-6][0-9]{3})|'
+                + '(4294967[0-1][0-9]{2})|(42949672[0-8][0-9])|(429496729[0-5])))))((\s+((rt)|(soo)|((([1-9][0-9]{0,8})|([1-3][0-9]{9})|(4[0-1][0-9]{8})|'
+                + '(42[0-8][0-9]{7})|(429[0-3][0-9]{6})|(4294[0-8][0-9]{5})|(42949[0-5][0-9]{4})|(429496[0-6][0-9]{3})|(4294967[0-1][0-9]{2})|(42949672[0-8][0-9])|'
+                + '(429496729[0-5])):(([1-9][0-9]{0,8})|([1-3][0-9]{9})|(4[0-1][0-9]{8})|(42[0-8][0-9]{7})|(429[0-3][0-9]{6})|(4294[0-8][0-9]{5})|(42949[0-5][0-9]{4})|'
+                + '(429496[0-6][0-9]{3})|(4294967[0-1][0-9]{2})|(42949672[0-8][0-9])|(429496729[0-5])))|(((([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|'
+                + '[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])):(([1-9][0-9]{0,8})|([1-3][0-9]{9})|(4[0-1][0-9]{8})|(42[0-8][0-9]{7})|(429[0-3][0-9]{6})|(4294[0-8][0-9]{5})|'
+                + '(42949[0-5][0-9]{4})|(429496[0-6][0-9]{3})|(4294967[0-1][0-9]{2})|(42949672[0-8][0-9])|(429496729[0-5])))))*)';
+        }
+    }
+
+	typedef ipv6-prefix-name-t {
+	    type common-def:name-string32; 
+	    description "Word:1-32;;IPv6 prefix-list name";
+	}
+	typedef ip-prefix-name-t {
+	    type common-def:name-string32; 
+	    description "Word:1-32;;IP prefix-list name";
+	}
+
+    typedef ip-prefix-open-bracket-t {
+        type string {
+            pattern '\[';
+        }
+    }    
+    
+    typedef ip-prefix-close-bracket-t {
+        type string {
+            pattern '\]';
+        }
+    }
+
+    typedef dscp-precedence { 
+        type uint32 {
+            range "0..63" {
+                description "0-63;;DSCP values";
+            }
+        }
+    }
+
+    grouping ipv6_policy_group {
+          container route-map {
+              description "Enable PBR";
+
+              leaf ipv6-route-map-name {
+                  type common-def:name-string63;
+                  description "Word:1-63;;Route map name";
+              }
+          }
+    }
+
+    grouping ip_policy_group {
+          container route-map {
+              description "Enable PBR";
+
+              leaf route-map-name {
+                  type common-def:name-string63;
+                  description "Word:1-63;;Route map name";
+              }
+          }
+    }
+    
+	typedef ip-as-path-name-t {
+	    type string {
+	    	length "1..32";
+	    } 
+	    description "Word:1-32;;AS Path Access List Name";
+	}
+	
+	typedef ip-match-as-path-name-t {
+        type string;
+	    description "Word:1-32;;AS Path Access List Name, values inside \" \" with spaces";
+	}	
+	
+	typedef ip-as-path-reg-expr-t {
+	    type string; 
+	    description "Word;;A regular expression to match BGP AS Paths";
+	}
+	
+	typedef ip-community-reg-expr-t {
+	    type string; 
+	    description "Regular expression string;;A ordered community list regular expression";
+	}
+	
+    typedef aspath-number-t {
+        type string;
+        description "0-4294967295;;AS numbers, values inside \" \" with spaces";
+    }
+    
+    typedef ip-community-list-name-t {
+	    type string; 
+	    description "Word:1-32;;Community List Name";
+	}
+	
+	typedef match-community-list-name-t {
+	    type string;
+	    description "Word:1-32;;BGP Community Access List Name, values inside \" \" with spaces";
+	}    
+	
+	typedef AA-NN-community-number-t {
+    	type string {
+        	pattern '(\d+:\d+)' {
+        	}				            	
+		}			
+	}
+	
+    typedef DECIMAL-community-number-t {
+        type string {
+            pattern '(\d+)' {
+            }
+        }
+    }
+	    
+    grouping route-map-rules {
+
+    	container match {
+			description "Matches conditions.";
+
+			container interface {
+				description "Interface name, maxinum 3 values in '[]'";
+				
+				
+				leaf-list tengigabitethernet-rmm {
+					// tailf:cli-flat-list-syntax;
+					description "TengigabitEthernet";
+					type interface:interface-type;
+					max-elements 3;
+				}
+				
+				leaf-list gigabitethernet-rmm {
+					// tailf:cli-flat-list-syntax;
+					description "GigabitEthernet";
+					type interface:interface-type;
+					max-elements 3;
+				}
+
+				leaf-list fortygigabitethernet-rmm {
+					description "FortygigabitEthernet";
+					type interface:interface-type;
+					max-elements 3;
+				}
+				leaf-list hundredgigabitethernet-rmm {
+					// tailf:cli-flat-list-syntax;
+					description "HundredgigabitEthernet";
+					type interface:interface-type;
+					max-elements 3;
+				}
+				leaf-list port-channel-rmm {
+					description "Port_channel";
+					type interface:channel-group-type;
+					max-elements 3;
+				}
+				
+				leaf-list vlan-rmm {
+					description "Vlan";
+					type interface:vlan-type;
+					max-elements 3;
+				}
+
+				leaf-list loopback {
+					description "Loopback port";
+					type loopback-intf:intf-loopback-port-type;
+				}
+
+				leaf-list ve {
+					description "Virtual port";
+					type interface:ve-type;
+				}				
+			}
+
+			container ipv6 {
+				description "Internet Protocol (IPv6).";
+
+				container address {
+					description "Route address";
+					leaf ipv6-prefix-list-rmm {
+                        description "IPv6 prefix-list";
+                        type ipv6-prefix-name-t;
+       				}
+                    leaf ipv6-acl-rmm {
+                        description "IPv6 ACL";
+                        type ipv6-access-list:ipv6-l3-acl-policy-name;
+                    }
+				}
+       			
+				container next-hop {
+					description "Route next hop address";
+					leaf ipv6-prefix-list-rmm-n {
+                        description "IPv6 prefix-list";
+                        type ipv6-prefix-name-t;
+					}
+				}
+
+				container route-source {
+					description "Source address of route";
+					
+					leaf ipv6-prefix-list-rmrs {
+	                    description "IPv6 prefix-list";
+			            type string {
+							 pattern '(\s*([a-zA-Z0-9_-]+))*';
+			            }
+					}				
+				}
+			}
+
+			container ip {
+				description "Internet Protocol (IP).";
+
+				container address {
+					description "Route address";
+					leaf prefix-list-rmm {
+                        description "IP prefix-list";
+                        type ip-prefix-name-t;
+       				}
+                    leaf acl-rmm { //PBR not supported in nos4.0.0
+                        description "IP ACL";
+                        type ip-access-list:l3-acl-policy-name;
+                    }
+
+				}
+       			
+				container next-hop {
+					description "Route next hop address";
+					leaf prefix-list-rmm-n {
+                        description "IP prefix-list";
+                        type ip-prefix-name-t;
+					}
+				}
+				
+				container route-source {
+					description "Source address of route";
+					
+					leaf prefix-list-rmrs {
+	                    description "IP prefix-list";
+			            type string {
+							 pattern '(\s*([a-zA-Z0-9_-]+))*';
+			            }
+					}				
+				}
+			}
+
+            container extcommunity {
+                description "Match BGP/VPN extended community list";
+                leaf extcommunity-num {
+                    type extcommunitylist-expr;
+                }
+            }
+
+
+            container metric {
+                description "metric, maximum 5 metric values in '[]'";
+                leaf metric-rmm {
+                    type metric-t {
+                    }    
+                }
+            }
+
+            container route-type {
+                description "Route type.";
+                leaf route-type-rmm {
+                    type match-route-type-t;
+                }
+            }
+
+            container tag {
+                description "Route tag.";
+                leaf-list tag-rmm {
+                    max-elements 5;
+                    type tag-t;
+                }            
+            }    
+
+            container as-path {
+                description "IP AS Path Access Lists.";
+                leaf as-path-access-list-name {
+		            type string {		            
+		            	pattern '(\s*)|(\s*(([a-zA-Z0-9_\^]{1,30})))((\s+(([a-zA-Z0-9_\^]{1,30})))*)';
+		            }      
+                }
+            }
+            
+			container community {
+				description "Community Access List Name.";
+				
+                leaf community-access-list-name {
+		            type match-community-expr-t;					
+				}                
+            }    		
+   
+            container next-hop {
+				description "Next hop address filter";
+            
+                leaf next-hop-filter-val {
+                    type uint32 {
+                    }
+                }
+            }
+ 
+            container protocol {
+                description "Match route on protocol type and sub-type.";
+                //tailf:cli-sequence-commands;
+
+				container protocol-static-container {
+	            	leaf static {
+						description "static";
+						type empty;
+					}
+				}
+
+				//tailf:cli-sequence-commands;
+
+				container bgp-protocol-container {
+        	    	leaf protocol-bgp {
+		                description "BGP protocol.";
+						//tailf:cli-sequence-commands;
+    	        		type empty;
+	            	}
+            	
+					leaf bgp-route-type {
+						type enumeration
+						{
+							enum external {
+								value 1;
+							}
+								
+							enum static-network {
+								value 2;
+							}
+						
+							enum internal {
+								value 3;
+							}        
+						}            	
+					}
+				}
+            }
+	   	}
+		
+    	container set {
+    	     when "(../../action-rm!='deny')" {
+            }
+			description "Set values.";
+
+    		container ip {
+    			description "Internet Protocol (IP).";
+
+                container dscp { 
+                      description "Dscp";
+                      leaf dscp-rms {
+                          type dscp-precedence;
+                      }
+                  }
+				  
+
+                  container interface {
+                      description "Interface";
+                      leaf null0 {
+                          type empty;
+                      }
+                  }
+
+                  container next-hop {
+                    leaf peer-address {
+                        description "BGP peer IP address";
+                        type empty;
+                    }
+                  }
+
+				  container global { 
+                    list next-global-hop {
+                        key "next-hop";
+                        leaf next-hop {
+                            type inet:ipv4-address {
+                            }
+                        }
+                    }
+				  }
+
+                  container  next-ip {
+                    list next-hop {
+						//max-elements 1;
+                        key "next-hop";
+                        leaf next-hop {
+                            type inet:ipv4-address {
+                            }
+                        }
+                    }
+                  }
+                  container next-vrf {  
+                        list next-vrf-list {
+                        key "vrf  next-hop";
+                        leaf vrf {
+                            type string {
+                            }
+                        }
+                        leaf next-hop{
+                            type inet:ipv4-address {
+                            }
+                        }
+                    }
+                  }
+
+/*
+				  list next-hop-peer {
+					  key "next-hop";
+					  leaf next-hop {
+					  	  type inet:ipv4-address;
+						  type inet:ipv4-address {
+						  }
+					  }
+					  leaf peer-address {
+					  	  description "BGP peer IP address";
+						  type empty;
+					  }
+				  }
+
+				  list vrf-next-hop {
+					  key "vrf next-hop";
+					  leaf vrf {
+						  type string {
+						  }
+					  }
+					  leaf next-hop {
+						  type inet:ipv4-address;
+						  type inet:ipv4-address {
+						  }
+					  }
+				  } */
+				  /*
+				  container dummy {
+					  leaf vrf {
+					  	  type string;
+					  }
+	                  container next-hop {
+      		              description "Next hop IP address";
+
+	                      leaf addr-rms {
+                  		      type inet:ipv4-address {
+                        	  }
+                    	  }
+
+	                      leaf peer-address {
+      		                  description "BGP peer IP address";
+                        	  type empty;
+                    	  }
+                	  }
+
+				  } */
+
+    		}
+	
+    		container ipv6 {
+    			description "Internet Protocol (IPv6).";
+
+				  container global {
+                    list next-global-hop {
+                        key "next-hop";
+                        leaf next-hop {
+                            type inet:ipv6-address {
+                            }
+                        }
+                    }
+				  }
+                  container  next-ip {
+                    list next-hop {
+                        key "next-hop";
+                        leaf next-hop {
+                            type inet:ipv6-address {
+                            }
+                        }
+                    }
+                  }
+                  container next-vrf {
+                        list next-vrf-list {
+                        key "vrf  next-hop";
+                        leaf vrf {
+                            type string {
+                            }
+                        }
+                        leaf next-hop{
+                            type inet:ipv6-address {
+                            }
+                        }
+                    }
+                  }
+            }
+
+    		container extcommunity {
+    			description "BGP extended community attribute";
+    			
+    			container rt {
+	    			description "Route Target extended community";
+	                
+	                leaf ASN-NN-rt {
+			            type ext-community-rt-expr-t;
+					}					
+   			    }	
+    			   
+    			container soo {
+	    			description "Site-of-Origin extended community";
+	                leaf ASN-NN-soo {
+                        type ext-community-soo-expr-t;
+					}	                
+   			   }
+    			   
+    		}
+    		
+			container community {
+				
+                leaf set-community-expr {
+					type set-community-expr-t;
+				}
+                
+            }    		
+    		
+    		container metric {
+    			description "Route metric.";
+
+    			leaf delta-rms {
+    				
+        			type enumeration {
+                        enum assign {
+                            value 3;
+                            description "Replace current metric value with";
+                        }
+        				enum add {
+        					value 1;
+        					description "Add to current metric value";
+        				}
+        				enum sub {
+        					value 2;
+        					description "Subtract from current metric value";
+        				}
+						enum none {
+						    value 4;
+						    description "Remove metric value";
+						}
+        			}
+					//tailf:cli-incomplete-command;
+    			}
+    			
+    			leaf metric-rms {
+	                when "((../delta-rms ='assign') or 
+	                 (../delta-rms ='add') or 
+	                 (../delta-rms ='sub'))" {
+	                 }
+        			
+        			type metric-t {
+                    }    
+    			}    			
+    		}
+    		
+            container distance {
+                 description "Distance";
+                 
+                 leaf dist-rms {
+                     type distance-t;
+                 }
+             }
+
+            container route-type {
+                 description "Route type";
+                 leaf route-type-rms {
+                      type set-route-type-t;
+                  }
+              }
+
+              container tag{
+                  description "Route tag";
+
+                  leaf tag-rms {
+                      type tag-t;
+                  }
+              }
+              
+              container weight {
+                  description "BGP weight for routing table";
+				  
+                  leaf weight-value {
+			    	type uint32 {
+			    		range "0..65535" {
+			    			description "0-65535;;Weight value";
+			    		}
+			    	}
+                 }
+    	     }
+            
+             container as-path {
+                  description "Prepend string for a BGP AS-path attribute";
+                  
+				  leaf aspath-tag {
+					description "Tag as an AS-path attribute";
+					type empty;
+				  }
+				  
+				  leaf prepend {          
+		            type string {
+						 pattern '(\s*(\d+))*';
+		            }      
+				  }					
+             }
+             
+              container automatic-tag {
+                  description "Automatically compute TAG value";
+
+                  leaf tag-empty {
+                      type empty;
+                  }
+              }
+              
+              container comm-list {
+                  description "BGP community list for deletion";
+                  
+                  leaf comm-list-name {
+                   	  type ip-community-list-name-t;                  
+                  }
+					
+				  leaf match-comm-delete {
+				  	type empty;
+				  }              
+              }
+             
+              container dampening {
+				  
+					leaf half-life {
+                        type uint32 {
+                            range "1 .. 45" {
+                            }
+                        }					
+					}
+					
+					leaf reuse {
+                        type uint32 {
+                            range "1 .. 20000" {
+                            }
+                        }					
+					}
+					
+					leaf suppress {
+                        type uint32 {
+                            range "1 .. 20000" {
+                            }
+                        }					
+					}
+					
+					leaf max-suppress-time {
+                        type uint32 {
+                            range "1 .. 255" {
+                            }
+                        }					
+					}
+              
+              }
+
+              container local-preference {
+                  description "BGP local preference path attribute";
+
+                  leaf local-preference-value {
+                        type uint32 {
+                            range "0 .. 4294967295" {
+                            }
+                        }
+                 }
+            }
+
+			container origin {
+				description "BGP origin code";
+				
+				leaf origin-igp {
+					type empty;
+				}
+		
+				leaf origin-incomplete {
+					type empty;
+				}
+			}
+			                        
+            container metric-type {
+                  description "Type of metric for destination routing protocol";
+             	  
+             	  leaf external {
+					 description "IS-IS external metric";
+             	  	 type empty;
+             	  }
+             	  
+             	  leaf internal {
+					 description "IGP internal metric to BGP MED";
+             	  	 type empty;
+             	  }
+             	  
+             	  leaf type-1 {
+					 description "OSPF external type 1 metric";
+             	  	 type empty; 
+             	  } 
+					
+				  leaf type-2 {
+					 description "OSPF external type 2 metric";
+				     type empty;
+				  }             	
+             } 
+    	}
+    	
+		container continue-holder {
+												
+			leaf continue {
+				type empty;
+			}
+			
+			leaf continue-val {
+		    	type uint32 {
+		    		range "0..65535" {
+		    		}			    	
+		    	}            			
+			}			
+		}    	
+    }
+    
+    grouping route_map_cmds {
+        list route-map {
+            
+            description "Configure a route-map instance";
+    
+            key "name action-rm instance";
+                
+            leaf name {
+                type common-def:name-string63;
+                description "Word:1-63;;Route map name";
+            }
+    
+            leaf action-rm {
+                type action-t;
+            }
+
+            leaf instance {
+                type instance-id-t;
+            }
+    
+             container content {
+                uses route-map-rules;
+             } 
+        }
+    }
+
+    augment "/rbridge:rbridge-id" {
+    	uses route_map_cmds;
+    }
+    
+	container hide-routemap-holder {
+		uses route_map_cmds;
+	}
+    
+    grouping ipv6-prefix-rule {
+    	leaf action-ipp {
+    		type action-t;
+    	}
+    	
+    	leaf ipv6-prefix-ipp {
+            type inet:ipv6-prefix;
+    	}
+    	
+    	leaf ge-ipp {
+    		description "Minimum IPv6 prefix length.";
+    		type ipv6-prefix-len-t;
+    	}
+    	
+    	leaf le-ipp {
+    		description "Maximum IPv6 prefix length.";
+    		type ipv6-prefix-len-t;
+    	}
+    }
+
+    grouping ip-prefix-rule {
+    	leaf action-ipp {
+    		type action-t;
+    	}
+    	
+    	leaf prefix-ipp {
+            type inet:ipv4-prefix;
+    	}
+    	
+    	leaf ge-ipp {
+    		description "Minimum IP prefix length.";
+    		type prefix-len-t;
+    	}
+    	
+    	leaf le-ipp {
+    		description "Maximum IP prefix length.";
+    		type prefix-len-t;
+    	}
+    }
+    
+	augment "/rbridge:rbridge-id/rbridge:ipv6" {
+		uses ipv6_prefix_cmds;
+	}
+
+	augment "/common-def:ipv6" {
+	    container hide-prefix-holder {
+	        uses ipv6_prefix_cmds;
+	    }
+	}
+    grouping ipv6_prefix_cmds {
+    	list prefix-list {
+
+
+			description "IPv6 address prefix list.";
+			
+			key "name seq-keyword instance";
+            
+			leaf name {
+	    		type ipv6-prefix-name-t;
+			}
+
+            leaf seq-keyword {
+                type enumeration {
+                    enum seq {
+                        value 1;
+                    }
+                }
+            }    
+
+			leaf instance {
+			    type instance-id-t;
+			}
+
+    		uses ipv6-prefix-rule;
+    	}
+    }
+    grouping ip_prefix_cmds {
+    	list prefix-list {
+
+
+			description "IP address prefix list.";
+			
+			key "name seq-keyword instance";
+            //unique "prefix-ipp";
+            
+			leaf name {
+	    		type ip-prefix-name-t;
+			}
+
+            leaf seq-keyword {
+                type enumeration {
+                    enum seq {
+                        value 1;
+                    }
+                }
+            }    
+
+			leaf instance {
+			    type instance-id-t;
+			}
+
+    		uses ip-prefix-rule;
+    	}
+    }
+    
+	augment "/rbridge:rbridge-id/rbridge:ip" {
+		uses ip_prefix_cmds;
+	}
+	
+	augment "/common-def:ip" {
+	    container hide-prefix-holder {
+	        uses ip_prefix_cmds;
+	    }
+	}
+
+    grouping ipv6-config-holder {
+        container policy {
+            description "Configure PBR";
+            uses ipv6_policy_group;      
+        }
+    }
+
+    augment "/interface:interface/interface:tengigabitethernet/interface:ipv6" {
+        uses ipv6-config-holder {
+            refine "policy" {
+            }
+        }
+    }
+
+    augment "/interface:interface/interface:hundredgigabitethernet/interface:ipv6" {
+        uses ipv6-config-holder {
+            refine "policy" {
+            }
+        }
+     }
+    augment "/interface:interface/interface:fortygigabitethernet/interface:ipv6" {
+        uses ipv6-config-holder {
+            refine "policy" {
+            }
+        }
+     }
+
+    augment "/interface:interface/interface:gigabitethernet/interface:ipv6" {
+        uses ipv6-config-holder {
+            refine "policy" {
+            }
+        }
+     }
+
+     augment "/rbridge:rbridge-id/interface:interface/interface:ve/ipv6-config:ipv6" {
+         uses ipv6-config-holder {
+             refine "policy" {
+             }
+         }
+     }
+
+     augment "/interface:interface/interface:tengigabitethernet" {
+        container ip-pbr-interface {
+            // commenting the PBR 
+        	//tailf:hidden full; 
+			container ip {
+	            description "Internet Protocol (IP).";
+
+            	container policy {
+                	description "Configure PBR";
+					uses ip_policy_group;                
+				}
+            }
+        }
+    }
+
+    augment "/interface:interface/interface:gigabitethernet" {
+        container ip-pbr-interface {
+        	// commenting the PBR 
+        	//tailf:hidden full;
+            container ip {
+                description "Internet Protocol (IP).";
+
+                container policy {
+                    description "Configure PBR";
+                    uses ip_policy_group;
+                }
+           }
+        }
+    }
+
+    augment "/interface:interface/interface:fortygigabitethernet" {
+        container ip-pbr-interface {
+        	// commenting the PBR 
+        	//tailf:hidden full;
+            container ip {
+                description "Internet Protocol (IP).";
+
+                container policy {
+                    description "Configure PBR";
+                    uses ip_policy_group;
+                }
+           }
+        }
+    }
+
+    augment "/interface:interface/interface:hundredgigabitethernet" {
+        container ip-pbr-interface {
+            container ip {
+                description "Internet Protocol (IP).";
+
+                container policy {
+                    description "Configure PBR";
+                    uses ip_policy_group;
+                }
+           }
+        }
+    }
+    
+	 // Commenting PBR support on port-channel
+ /*   augment "/interface:interface/interface:port-channel" {
+        container ip-pbr-interface {
+        	// commenting the PBR 
+            //tailf:hidden full;
+            container ip {
+                description "Internet Protocol (IP).";
+
+                container policy {
+                    description "Configure PBR";
+                    uses ip_policy_group;
+                }
+           }
+			container ipv6 {
+	            description "Internet Protocol (IPv6).";
+
+            	container policy {
+                	description "Configure PBR";
+					uses ipv6_policy_group;      
+				}
+           }
+        }
+    } */
+    
+    augment "/rbridge:rbridge-id/interface:interface/interface:ve" {
+        container ip-pbr-interface {
+        	// commenting the PBR 
+        	//tailf:hidden full;
+            container ip {
+                description "Internet Protocol (IP).";
+
+                container policy {
+                    description "Configure PBR";
+                    uses ip_policy_group;
+                }
+           }
+        }
+    }
+	
+    grouping ip_as_path_cmds {
+	    container as-path {
+		    list access-list {
+	
+	
+				description "BGP AS Path Access List";
+				key "name seq-keyword instance";
+	
+				leaf name {
+		    		type ip-as-path-name-t;
+				}
+				
+	            leaf seq-keyword {
+	                type enumeration {
+	                    enum seq {
+	                        value 1;
+	                    }
+	                }
+	            }
+	            
+				leaf instance {
+				    type instance-id-t;
+				}           
+				
+				uses ip-aspath-rule; 
+	    	}
+	    }    
+    }
+    
+    grouping ip-aspath-rule {    
+    	leaf ip-action {
+    		type action-t;
+    	}
+    	    
+    	leaf ip-reg-expr {
+    		type ip-as-path-reg-expr-t;
+    	}    	
+    }    
+	
+	augment "/rbridge:rbridge-id/rbridge:ip" {
+		uses ip_as_path_cmds;
+	}
+
+	augment "/common-def:ip" {
+	    container hide-as-path-holder {
+	        uses ip_as_path_cmds;
+	    }	
+	}
+	
+    grouping ip_extcommunity_list_cmds {
+        list extcommunity-list {
+            key "extcommunity-list-num";
+            leaf extcommunity-list-num {
+                type extcommunitylist-instance;
+            }
+            uses extcommunity-list-rules;
+        }
+    }
+
+    grouping extcommunity-list-rules {
+    	leaf ext-community-action {
+    		type action-t;
+    	}
+
+        leaf ext-community-expr {
+        }
+
+    }
+
+	grouping ip_community_list_cmds {
+		container community-list {
+			list standard {
+				
+
+				description "Standard community list.";
+				key "name seq-keyword instance";
+
+				leaf name {
+					type ip-community-list-name-t;
+				}
+
+				leaf seq-keyword {
+					type enumeration {
+						enum seq {
+							value 1;
+						}
+					}
+				}
+
+				leaf instance {
+					type instance-id-t;
+				}           
+				
+				uses ip-community-std-rule;
+			}
+			
+			list extended {
+				
+
+				description "Extended community list.";
+				key "name seq-keyword instance";
+
+				leaf name {
+					type ip-community-list-name-t;
+				}
+
+				leaf seq-keyword {
+					type enumeration {
+						enum seq {
+							value 1;
+						}
+					}
+				}
+
+				leaf instance {
+					type instance-id-t;
+				}           
+				
+				uses ip-community-ext-rule;
+			}						
+		}
+	}
+	
+	
+	grouping ip-community-std-rule {
+	
+		leaf ip-action {
+			type action-t;
+		}
+	    
+        leaf std-community-expr {
+			type ip-std-community-expr-t;   
+			default "";      		            
+        }
+	}
+	
+    grouping ip-community-ext-rule {    
+    	leaf ip-action {
+    		type action-t;
+    	}
+    	    
+    	leaf ip-community-reg-expr {
+    		type ip-community-reg-expr-t;
+    	}    	
+    }    
+	
+
+	augment "/rbridge:rbridge-id/rbridge:ip" {
+		uses ip_community_list_cmds;
+	}
+
+	augment "/common-def:ip" {
+		container hide-community-list-holder {
+			uses ip_community_list_cmds;
+		}	
+	}	
+	
+	augment "/rbridge:rbridge-id/rbridge:ip" {
+		uses ip_extcommunity_list_cmds;
+	}
+
+	augment "/common-def:ip" {
+		container hide-ext-community-list-holder {
+			uses ip_extcommunity_list_cmds;
+		}
+	}
+    
+    grouping filter_change_update_delay_cmds {
+    	
+	    list filter-change-update-delay {
+			
+
+			description "Change filter change update delay timer";
+			key "filter-delay-value";
+
+			leaf filter-delay-value {
+		    	type uint32 {
+		    		range "0..600" {
+		    			description "0-600;;Delay time (0-600 secs; default-10 secs, 0-disable)";
+		    		}
+		    	}
+			}
+		}	    
+	}
+	
+	
+	augment "/rbridge:rbridge-id" {
+		uses filter_change_update_delay_cmds;
+	}
+
+    container hide-filter-change-update-delay-holder {
+        uses filter_change_update_delay_cmds;
+    }
+	    
+}

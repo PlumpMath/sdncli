@@ -1,0 +1,858 @@
+/***********************************************************************
+ * brocade-firmware.yang:Brocade Firmware Data model
+ *
+ * April 2011,Aditya Munjal
+ *
+ * Copyright (c) 2010-2013 by Brocade Communications Systems, Inc.
+ * All rights reserved.
+ *
+ **********************************************************************/
+module brocade-firmware {
+  namespace "urn:brocade.com:mgmt:brocade-firmware";
+  prefix "firmware";
+
+  import tailf-common {
+    prefix tailf;
+  }
+
+	import brocade-common-def {
+		prefix common-def;
+	}
+
+  organization
+      "Brocade Communications Systems, Inc.";
+
+  contact
+      "Brocade Communications Systems, Inc.
+       Postal: 130 Holger Way
+               San Jose, CA 95134
+                U.S.A
+       Tel: +1-408-333-8000
+       E-mail: support@Brocade.com
+       web: www.brocade.com.";
+
+  description
+      "This management module is an instrumentation to firmware level
+       level commands";
+
+  revision "2011-04-11" {
+      description
+          "Initial version of this management module.";
+    }
+
+
+	typedef rbridge-ids-all-type {
+		description
+			"The unique identifier for a switch.  The usage of `all'
+			refers to `all' rbridge-id's in the cluster.";
+		type union {
+			type common-def:ui32-range;
+            type string {
+				pattern "all";
+			}
+		}
+	}
+
+grouping fwdl-parameters {
+	leaf user {
+		type string;
+		mandatory true;
+	}
+	leaf password {
+		type string;
+		mandatory false;
+	}
+	leaf host {
+		type string;
+		mandatory true;
+	}
+	leaf directory {
+		type string;
+		mandatory true;
+	}
+	leaf file {
+		type string;
+		mandatory false;
+	}
+}
+
+grouping fwdl-local-options {
+	choice options {
+		case manual {
+			leaf manual {
+				type empty;
+				mandatory false;
+			}
+			leaf noreboot {
+				type empty;
+				mandatory false;
+			}
+			leaf nocommit {
+				type empty;
+				mandatory false;
+			}
+		}
+		case noactivate {
+			leaf noactivate {
+				type empty;
+				mandatory false;
+			}
+		}
+		case coldboot {
+			leaf coldboot {
+				type empty;
+				mandatory false;
+			}
+		}
+	}
+}
+
+grouping fwdl-default-config-options {
+	leaf manual {
+		type empty;
+		mandatory false;
+	}
+	leaf noreboot {
+		type empty;
+		mandatory false;
+	}
+	leaf rbridgeid {
+		type common-def:rbridge-id-type {
+			range 1..239 {
+				error-message "Invalid rbridgeid (must be in the range 1 - 239)";
+			}
+		}
+		mandatory false;
+	}		
+	leaf vcs-id {
+		type uint32 {
+			range 1..8192 {
+				error-message "Invalid vcs-id (must be in the range 1 - 8192)";
+			}
+		}
+		mandatory false;
+	} 
+	leaf vcs-mode {
+		type uint32 {
+			range 0..2 {
+				error-message "Invalid vcs-mode (must be 0 (FC), 1 (LC), 2 (SA)";
+			}
+		}
+		mandatory false;
+	}
+}
+
+grouping fwdl-cluster-options {
+	leaf rbridge-id {
+		type rbridge-ids-all-type;
+		mandatory true;
+	}
+	choice cluster-options {
+		case auto-activate {
+			leaf auto-activate {
+				type empty;
+				mandatory false;
+			}
+		}
+		case coldboot {
+			leaf coldboot {
+				type empty;
+				mandatory false;
+			}
+		}
+	}			
+}
+
+grouping fwdl-output {
+    leaf fwdl-tid {
+        type int32;
+    }
+    leaf fwdl-status {
+        type int32;
+    }
+    leaf fwdl-msg {
+        type string;
+    }
+}
+
+grouping fwdl-cluster-output {
+    leaf fwdl-cmd-status {
+        type int32;
+    }
+    leaf fwdl-cmd-msg {
+        type string;
+    }
+    list cluster-output {
+        leaf rbridge-id {
+            type uint32;
+        }
+        leaf fwdl-status {
+           /* Return status 0-Success but disruptive/non-ISSU upgrade, 1-Success and ISSU upgrade,  Any negative value is error */
+            type int32;
+        }
+        leaf fwdl-msg {
+            type string;
+        }
+    }
+}
+
+grouping fwdl-sftp-options {
+        leaf port {
+                type int32;
+                mandatory false;
+        }
+
+        leaf host-key-check {
+                type empty;
+                mandatory false;
+        }
+
+}
+
+grouping vcs-config {
+	leaf rbridgeid {
+		type common-def:rbridge-id-type {
+			range 1..239 {
+				error-message "Invalid rbridgeid (must be in the range 1 - 239)";
+			}
+		}
+		mandatory false;
+	}		
+	leaf vcs-id {
+		type uint32 {
+			range 1..8192 {
+				error-message "Invalid vcs-id (must be in the range 1 - 8192)";
+			}
+		}
+		mandatory false;
+	} 
+	leaf vcs-mode {
+		type uint32 {
+			range 0..2 {
+				error-message "Invalid vcs-mode (must be 0 (FC), 1 (LC), 2 (SA)";
+			}
+		}
+		mandatory false;
+	}
+}
+
+grouping firmware-clean-install-config {
+	leaf manual {
+		type empty;
+		mandatory false;
+	}
+	uses vcs-config;
+}
+
+container firmware {
+	container download {
+		tailf:action ftp {
+			input {
+				uses fwdl-parameters;
+				uses fwdl-local-options;
+			}
+			output {
+                uses fwdl-output;
+			}
+		}
+		tailf:action scp {
+			input {
+				uses fwdl-parameters;
+				uses fwdl-local-options;
+			}
+			output {
+                uses fwdl-output;
+			}
+		}
+		tailf:action sftp {
+			input {
+				uses fwdl-parameters;
+				uses fwdl-local-options;
+				uses fwdl-sftp-options;
+			}
+			output {
+				uses fwdl-output;
+			}
+		}
+		tailf:action usb {
+			input {
+				leaf directory {
+					type string;
+					mandatory true;
+				}
+				uses fwdl-local-options;
+			}
+			output {
+                uses fwdl-output;
+			}
+		}
+		tailf:action interactive {
+			input { }
+			output {
+				leaf result {
+					type string;
+				}
+			}
+		}
+		container default-config {
+			tailf:action ftp {
+				input {
+					uses fwdl-parameters;
+					uses fwdl-default-config-options;
+				}
+				output {
+	                uses fwdl-output;
+				}
+			}
+			tailf:action scp {
+				input {
+					uses fwdl-parameters;
+					uses fwdl-default-config-options;
+				}
+				output {
+            	    uses fwdl-output;
+				}
+			}
+			tailf:action sftp {
+				input {
+					uses fwdl-parameters;
+					uses fwdl-default-config-options;
+				}
+				output {
+					uses fwdl-output;
+				}
+			}
+			tailf:action usb {
+				input {
+					leaf directory {
+						type string;
+						mandatory true;
+					}	
+					uses fwdl-default-config-options;
+				}
+				output {
+	                uses fwdl-output;
+				}
+			}
+		}
+		container logical-chassis {
+			tailf:action ftp {
+				input {
+					uses fwdl-parameters;
+					uses fwdl-cluster-options;
+				}
+				output {
+					uses fwdl-cluster-output;
+				}
+			}
+			tailf:action scp {
+				input {
+					uses fwdl-parameters;
+					uses fwdl-cluster-options;
+				}
+				output {
+					uses fwdl-cluster-output;
+				}
+			}
+
+			tailf:action sftp {
+				input {
+					uses fwdl-parameters;
+					uses fwdl-cluster-options;
+				}
+				output {
+					uses fwdl-cluster-output;
+				}
+			}
+			/*tailf:action usb {
+						type string;
+						mandatory true;
+					}
+					uses fwdl-cluster-options;
+				}
+				output {
+					uses fwdl-cluster-output;
+				}
+			}*/
+			container default-config {
+				tailf:action ftp {
+					input {
+						uses fwdl-parameters;
+						leaf rbridge-id {
+							type rbridge-ids-all-type;
+							mandatory true;
+						}
+					}
+					output {
+						uses fwdl-cluster-output;
+					}
+				}
+				tailf:action scp {
+					input {
+						uses fwdl-parameters;
+						leaf rbridge-id {
+							type rbridge-ids-all-type;
+							mandatory true;
+						}
+					}
+					output {
+						uses fwdl-cluster-output;
+					}
+				}
+
+				tailf:action sftp {
+					input {
+						uses fwdl-parameters;
+						leaf rbridge-id {
+							type rbridge-ids-all-type;
+							mandatory true;
+						}
+					}
+					output {
+						uses fwdl-cluster-output;
+					}
+				}
+			}
+		}
+		tailf:action sanity-check {
+			input {
+				uses fwdl-parameters;
+				leaf protocol {
+					type string;
+					mandatory true;
+				}
+				leaf rbridge-id {
+					type rbridge-ids-all-type;
+					mandatory true;
+				}
+			}
+			output {
+                uses fwdl-output;
+			}
+		}
+	}
+	container install {
+		tailf:action ftp {
+			input {
+				uses fwdl-parameters;
+				uses firmware-clean-install-config;
+			}
+			output {
+                uses fwdl-output;
+			}
+		}
+		tailf:action scp {
+			input {
+				uses fwdl-parameters;
+				uses firmware-clean-install-config;
+			}
+			output {
+                uses fwdl-output;
+			}
+		}
+	}
+
+	tailf:action commit {
+		input {}
+		output {
+			leaf result {
+				type string;
+			}
+		}
+    }
+	tailf:action restore {
+		input {}
+		output {
+			leaf result {
+				type string;
+			}
+		}
+	}
+
+	tailf:action sync {
+		input {}
+		output {
+			leaf result {
+				type string;
+			}
+		}
+	}
+
+	tailf:action activate {
+		input {
+			leaf rbridge-id {
+				type rbridge-ids-all-type;
+				mandatory false;
+			}
+		}
+		output {
+			leaf overall-status {
+				type int32;
+				/* 0 - Overall sanity check Status: 0 - Success, 1 - Failed */
+			}
+			leaf overall-error-msg {
+				type string;	
+			}
+			list activate-output {
+				key rbridge-id;
+				leaf rbridge-id {
+					type common-def:rbridge-id-type;
+					mandatory false;
+				}
+				leaf status {
+					type int32;
+					/* 0 - Not ready to be activated, 1 - disruptive, 2 -ISSU/non-disruptive */
+				}
+			}
+		}
+	}
+
+	tailf:action recover {
+		input {
+			leaf rbridge-id {
+				type rbridge-ids-all-type;
+				mandatory false;
+			}
+		}
+		output {
+			leaf result {
+				type string;
+			}
+		}
+	}
+
+	container auto-sync {
+		tailf:action enable {
+			input {}
+			output {
+				leaf result {
+					type string;
+				}
+			}
+		}
+		tailf:action disable {
+			input {}
+			output {
+				leaf result {
+					type string;
+				}
+			}
+		}
+	}
+
+	container autoupgrade {
+		/*tailf:cli-incomplete-command;*/
+		leaf enable {
+			type empty;
+		}
+	}
+	container autoupgrade-params {
+		/*tailf:cli-incomplete-command;*/
+		leaf path {
+			type string;
+			/*tailf:cli-incomplete-command;*/
+		}
+		leaf protocol {
+			type enumeration {
+				/*enum usb {
+					value 0;
+				}*/
+				enum ftp {
+					value 1;
+				}
+				enum scp {
+					value 2;
+				}
+				enum sftp {
+					value 3;
+				}
+			}
+			/*tailf:cli-incomplete-command;*/
+		}
+		leaf ipaddress {
+			type string;
+			/*tailf:cli-incomplete-command;*/
+		}
+		leaf username {
+			type string;
+			/*tailf:cli-incomplete-command;*/
+		}
+		leaf pass {
+			type string;
+			/*tailf:cli-incomplete-command;*/
+		}
+	}
+}
+
+container write {
+	tailf:action erase {
+		input {
+			uses vcs-config;
+		}
+		output {
+			uses fwdl-output;
+		}
+	}
+}
+
+rpc fwdl-status {
+    input {
+        leaf fwdl-tid {
+            type int32;
+        }
+    }
+    output {
+        leaf number-of-entries {
+            type uint32;
+        }
+        leaf fwdl-state {
+            type enumeration {
+                enum in-progress {
+                    value 1;
+                }
+                enum downloaded {
+                    value 2;
+                }
+                enum failed {
+                    value 3;
+                }
+                enum completed {
+                    value 4;
+                }
+            }
+        }
+        list fwdl-entries {
+            leaf index {
+                type uint32;
+            }
+            leaf message-id {
+                type int32;
+            }
+            leaf date-and-time-info {
+                type string;
+            }
+            leaf message {
+                type string;
+            }
+            leaf blade-slot {
+                type int32;
+            }
+            leaf blade-swbd {
+                type int32;
+            }
+            leaf blade-name {
+                type string;
+            }
+            leaf blade-state {
+                type enumeration {
+                    enum active {
+                        value 0;
+                    }
+                    enum standby {
+                        value 1;
+                    }
+                }
+            }
+            leaf blade-app {
+                type string;
+            }
+
+		}
+	}
+}
+
+rpc activate-status {
+	input {
+		leaf rbridge-id {
+			type rbridge-ids-all-type;
+			mandatory false;
+		}
+	}
+	output {
+		leaf overall-status {
+			type int32;
+			/* 0 - Overall sanity check Status: 0 - Success, 1 - Failed */
+		}
+		leaf overall-error-msg {
+			type string;
+		}
+		list activate-entries {                                                                                 
+			leaf rbridge-id {
+				type common-def:rbridge-id-type;
+				mandatory false;
+			}
+			leaf status {
+				type int32;
+				/*
+					0 => Firmware download has completed or not running.
+					1 => Firmware download in progress.
+					2 => Could not get status
+					3 => Firmware download has failed.
+				*/
+			}
+		}
+	}
+}
+
+rpc logical-chassis-fwdl-sanity {
+	input {
+		uses fwdl-parameters;
+		uses fwdl-cluster-options;
+		leaf protocol {
+			mandatory true;
+			type enumeration {
+				enum ftp {
+					value 1;
+				}
+				enum scp {
+					value 2;
+				}
+				enum sftp {
+					value 3;
+				}
+			}
+		}
+	}
+	output {
+		uses fwdl-cluster-output;
+	}
+}
+
+rpc logical-chassis-fwdl-status {
+	input {
+		leaf rbridge-id {
+			type rbridge-ids-all-type;
+			mandatory false;
+		}
+	}
+	output {
+		leaf overall-status {
+			type int32;
+		}
+		list cluster-fwdl-entries {
+			leaf rbridge-id {
+				type uint32;
+				mandatory false;
+			}
+			leaf fwdl-state {
+				type enumeration {
+					enum completed {
+						value 0;
+					}
+					enum in-progress {
+						value 1;
+					}
+					enum complete-no-reboot {
+						value 2;
+					}
+					enum complete-no-activate {
+						value 3;
+					}
+					enum commit-in-progress {
+						value 4;
+					}
+				}
+			}
+			list fwdl-entries {
+				leaf index {
+					type uint32;
+				}
+				leaf message-id {
+					type int32;
+				}
+				leaf date-and-time-info {
+					type string;
+				}
+				leaf message {
+					type string;
+				}
+				leaf blade-slot {
+					type int32;
+				}
+				leaf blade-swbd {
+					type int32;
+				}
+				leaf blade-name {
+					type string;
+				}
+				leaf blade-state {
+					type enumeration {
+						enum active {
+							value 0;
+						}
+						enum standby {
+							value 1;
+						}
+					}
+				}
+				leaf blade-app {
+					type string;
+				}
+
+			}
+		}
+	}
+}
+
+container reboot {
+	tailf:action fastboot {
+		input {}
+	}
+}
+
+container dhcp {
+	container auto-deployment {
+		tailf:action enable {
+			input {}
+			output {
+				leaf dad-cmd-msg {
+					type string;
+				}
+			}
+		}
+	}
+}
+
+augment "/common-def:show" {
+    container dhcp-auto-deployment {
+        tailf:action dadstatus {
+			input {}
+			output {
+				leaf result {
+					type string;
+				}
+			}
+		}
+	}
+}
+
+rpc dad-status {
+    output {
+        leaf dad-last-state {
+            type enumeration {
+                enum dad-in-progress {
+                    value 0;
+                }
+                enum dad-failed {
+                    value 1;
+                }
+                enum dad-completed {
+                    value 2;
+                }
+            }
+        }
+        list dad-status-entries {
+            leaf index {
+                type uint32;
+            }
+            leaf date-and-time-info {
+                type string;
+            }
+            leaf message {
+                type string;
+            }
+        }
+    }
+}
+
+}
