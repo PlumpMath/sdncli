@@ -4,18 +4,18 @@ import pprint
 import uuid
 import json
 import netconflib
-import logging
 from requests.auth import HTTPBasicAuth
 from prettytable import PrettyTable
 
+# import logging
 # logging.basicConfig()
 # logging.getLogger().setLevel(logging.DEBUG)
 # requests_log = logging.getLogger("requests")
 # requests_log.setLevel(logging.DEBUG)
 # requests_log.propagate = True
 
-API = {'NODEOPER': 'http://{server}:8181/restconf/operational/opendaylight-inventory:nodes',
-       'NODECONFIG': 'http://{server}:8181/restconf/config/opendaylight-inventory:nodes',
+API = {'OPER': 'http://{server}:8181/restconf/operational/opendaylight-inventory:nodes',
+       'CONFIG': 'http://{server}:8181/restconf/config/opendaylight-inventory:nodes',
        'TOPOLOGY': 'http://{server}:8181/restconf/operational/network-topology:network-topology/',
        'FLOWMOD': 'http://{server}:8181/restconf/config/opendaylight-inventory:nodes/node/{node}/flow-node-inventory:table/{table}/flow/{flow}',
        'FLOW': 'http://{server}:8181/restconf/config/opendaylight-inventory:nodes/node/{node}/flow-node-inventory:table/{table}/flow/{flow}',
@@ -34,42 +34,20 @@ class Controller(object):
         self.session = requests.Session()
         self.headers = {'content-type': 'application/json'}
 
-    def get_bvc_nodes_oper(self, dumpjson=False):
+    def get_bvc_nodes(self, ds, dumpjson=False):
+            #TODO fix key in output
             nodetable = {}
-            resource = API['NODEOPER'].format(server=self.server)
+            filter_keys = ('controller-config')
+            resource = API[ds].format(server=self.server)
             try:
                 retval = self.session.get(resource, auth=self.auth, params=None, headers=self.headers, timeout=5)
-            except requests.exceptions.ConnectionError as e:
+            except requests.exceptions.ConnectionError:
                 return(("Error connecting to BVC {}").format(self.server), False)
             if str(retval.status_code)[:1] == "2":
                 data = retval.json()
                 if dumpjson:
                     pprint.pprint(data)
-                nodes = data['nodes']['node']
-                for node in sorted(nodes):
-                    if "cont" not in node['id']:
-                        nodetable.update({node['id']: 'oper'})
-            if len(nodetable) > 0:
-                return (nodetable, True)
-            else:
-                return (("No Nodes Found").format(retval.status_code), False)
-
-    def get_bvc_nodes_config(self, dumpjson=False):
-            nodetable = {}
-            resource = API['NODECONFIG'].format(server=self.server)
-            try:
-                retval = self.session.get(resource, auth=self.auth, params=None, headers=self.headers, timeout=5)
-            except requests.exceptions.ConnectionError as e:
-                    print "Error here"
-                    return(("Error connecting to BVC {}").format(self.server), False)
-            if str(retval.status_code)[:1] == "2":
-                data = retval.json()
-                if dumpjson:
-                    pprint.pprint(data)
-                nodes = data['nodes']['node']
-                for node in sorted(nodes):
-                    if "cont" not in node['id']:
-                        nodetable.update({node['id']: 'config'})
+                [nodetable.update({line['id']: ds.lower()}) for line in data['nodes']['node'] if line['id'] not in filter_keys]
             if len(nodetable) > 0:
                 return (nodetable, True)
             else:
@@ -78,13 +56,13 @@ class Controller(object):
     def http_get(self, uri):
         try:
             retval = self.session.get(uri, auth=self.auth, params=None, headers=self.headers, timeout=5)
-        except requests.exceptions.ConnectionError as e:
+        except requests.exceptions.ConnectionError:
             return(("Error connecting to BVC {}").format(self.server), False)
         if str(retval.status_code)[:1] == "2":
             try:
                 data = retval.json()
-            except ValueError, e:
-                return("Bad Json found", False)
+            except ValueError:
+                return("Bad JSON found", False)
             return(data, True)
         else:
             return (("Unknown Status Code").format(retval.status_code), False)
@@ -96,7 +74,7 @@ class Controller(object):
         resource = API['NETCONF'].format(server=self.server, resource=r, ds=ds, node=node)
         try:
             retval = self.session.get(resource, auth=self.auth, params=None, headers=self.headers, data=data)
-        except requests.exceptions.ConnectionError as e:
+        except requests.exceptions.ConnectionError:
             return (("Error connecting to BVC {}").format(self.server), False)
         if str(retval.status_code)[:1] == "2":
             return (retval.json(), True)
@@ -110,7 +88,7 @@ class Controller(object):
         resource = API['TOPOLOGY'].format(server=self.server)
         try:
             retval = self.session.get(resource, auth=self.auth, params=None, headers=self.headers, timeout=5)
-        except requests.exceptions.ConnectionError as e:
+        except requests.exceptions.ConnectionError:
             return(("Error connecting to BVC {}").format(self.server), False)
         if str(retval.status_code)[:1] == "2":
             hosttable = {}
@@ -139,7 +117,7 @@ class Controller(object):
         headers = {'content-type': 'application/xml'}
         try:
             retval = self.session.get(resource, auth=self.auth, params=None, headers=headers)
-        except requests.exceptions.ConnectionError as e:
+        except requests.exceptions.ConnectionError:
             return(("Error connecting to BVC {}").format(self.server), False)
         if str(retval.status_code)[:1] == "2":
             data = retval.json()
@@ -147,8 +125,6 @@ class Controller(object):
                 pprint.pprint(data)
             root = data['modules']['module']
             for line in root:
-                # if line['type'] in keys:
-                print line
                 modulemap = {'name':     line['name'],
                              'namespace': line['namespace'],
                              'revision':  line['revision']}
@@ -170,7 +146,7 @@ class Controller(object):
             headers = {'content-type': 'application/xml'}
             try:
                 retval = self.session.get(resource, auth=self.auth, params=None, headers=headers)
-            except requests.exceptions.ConnectionError as e:
+            except requests.exceptions.ConnectionError:
                 return(("Error connecting to BVC {}").format(self.server), False)
             if str(retval.status_code)[:1] == "2":
                 data = retval.json()
@@ -197,11 +173,11 @@ class Controller(object):
     def _get_mount_status(self, dumpjson=False):
         stats = {}
         # keys = {"netconf-node-inventory"}
-        resource = API['NODEOPER'].format(server=self.server)
+        resource = API['OPER'].format(server=self.server)
         headers = {'content-type': 'application/xml'}
         try:
             retval = self.session.get(resource, auth=self.auth, params=None, headers=headers)
-        except requests.exceptions.ConnectionError as e:
+        except requests.exceptions.ConnectionError:
             return(("Error connecting to BVC {}").format(self.server), False)
         if str(retval.status_code)[:1] == "2":
             data = retval.json()
@@ -226,7 +202,7 @@ class Controller(object):
         headers = {'content-type': 'application/xml'}
         try:
             retval = self.session.post(resource, auth=self.auth, params=None, headers=headers, data=data)
-        except requests.exceptions.ConnectionError as e:
+        except requests.exceptions.ConnectionError:
             return(("Error connecting to BVC {}").format(self.server), False)
         if str(retval.status_code)[:1] == "2":
             return(("Mounted Node {} on {}").format(name, node), True)
@@ -238,7 +214,7 @@ class Controller(object):
         headers = {'content-type': 'application/xml'}
         try:
             retval = self.session.delete(resource, auth=self.auth, params=None, headers=headers)
-        except requests.exceptions.ConnectionError as e:
+        except requests.exceptions.ConnectionError:
             print("Error connecting to BVC {}").format(self.server)
             return None
         if str(retval.status_code)[:1] == "2":
@@ -250,7 +226,7 @@ class Controller(object):
     #     resource = API['DELETEFLOW'].format(server=self.server, node=node, table=table, flow=flow)
     #     try:
     #         retval = self.session.delete(resource, auth=self.auth, params=None, headers=self.headers)
-    #     except requests.exceptions.ConnectionError as e:
+    #     except requests.exceptions.ConnectionError:
     #         return(("Error connecting to BVC {}").format(self.server), False)
     #     if str(retval.status_code)[:1] == "2":
     #         return(retval.text, True)
@@ -261,7 +237,7 @@ class Controller(object):
     #     resource = API['FLOW'].format(server=self.server, node=node, table=table, flow=flow)
     #     try:
     #         retval = self.session.get(resource, auth=self.auth, params=None, headers=self.headers)
-    #     except requests.exceptions.ConnectionError as e:
+    #     except requests.exceptions.ConnectionError:
     #         return(("Error connecting to BVC {}").format(self.server), False)
     #     if str(retval.status_code)[:1] == "2":
     #         return(retval.text, True)
@@ -273,7 +249,7 @@ class Controller(object):
     #     headers = {'content-type': 'application/xml'}
     #     try:
     #         resource = API['FLOW'].format(server=self.server, node=node, table=table, flow=flow)
-    #     except requests.exceptions.ConnectionError as e:
+    #     except requests.exceptions.ConnectionError:
     #         print("Error connecting to BVC {}").format(self.server)
     #         return None
     #     retval = self.session.post(resource, auth=self.auth, params=None, headers=headers, data=actions, timeout=5)
@@ -282,50 +258,49 @@ class Controller(object):
     #     else:
     #         return (("Unexpected Status Code {}").format(retval.status_code), False)
 
-
-    def get_bvc_flow_entries(self, api, dumpjson):
-        new_flow_entry = {}
-        flowdb = {}
-        resource = API[api].format(server=self.server)
-        try:
-            retval = self.session.get(resource, auth=self.auth, params=None, headers=self.headers, timeout=5)
-        except requests.exceptions.ConnectionError as e:
-            return(("Error connecting to BVC {}").format(self.server), False)
-        if str(retval.status_code)[:1] == "2":
-            data = retval.json()
-            if dumpjson:
-                pprint.pprint(data)
-            nodes = data['nodes']['node']
-            for node in nodes:
-                if "cont" not in node.get('id'):
-                    _nodeid = node.get('id')
-                    if _nodeid is not None:
-                        print "Nodeid: %s" % _nodeid
-                        if "flow-node-inventory:table" in node:
-                            table = node['flow-node-inventory:table']
-                            for table_entry in table:
-                                if 'flow' in table_entry:
-                                    for flow_entry in table_entry.get('flow'):
-                                        s = self.extract(flow_entry, new_flow_entry)
-                                        flowmap = {'nodeid': _nodeid,
-                                                   # 'flowname': s['flow-name'],
-                                                   'hardtimeout': s['hard-timeout'],
-                                                   'idletimeout': s['idle-timeout'],
-                                                   'flowid': s['id'],
-                                                   'in_port': s['in-port'],
-                                                   'ipv4destination': s['ipv4-destination'],
-                                                   'order': s['order'],
-                                                   #TODO get index of nodes to dereference
-                                                   'outputnode': s['output-node-connector'],
-                                                   'priority': s['priority'],
-                                                   'table_id': s['table_id'],
-                                                   'ethertype': s['type']}
-                                                    #'vlanid': s['vlan-id']}
-                                                    #TODO  u'vlan-id-present': True}
-                                        flowdb.setdefault(str(uuid.uuid4()), []).append(flowmap)
-            return (flowdb, True)
-        else:
-            return (("Unexpected Status Code {}").format(retval.status_code), False)
+    # def get_bvc_flow_entries(self, api, dumpjson):
+    #     new_flow_entry = {}
+    #     flowdb = {}
+    #     resource = API[api].format(server=self.server)
+    #     try:
+    #         retval = self.session.get(resource, auth=self.auth, params=None, headers=self.headers, timeout=5)
+    #     except requests.exceptions.ConnectionError:
+    #         return(("Error connecting to BVC {}").format(self.server), False)
+    #     if str(retval.status_code)[:1] == "2":
+    #         data = retval.json()
+    #         if dumpjson:
+    #             pprint.pprint(data)
+    #         nodes = data['nodes']['node']
+    #         for node in nodes:
+    #             if "cont" not in node.get('id'):
+    #                 _nodeid = node.get('id')
+    #                 if _nodeid is not None:
+    #                     print "Nodeid: %s" % _nodeid
+    #                     if "flow-node-inventory:table" in node:
+    #                         table = node['flow-node-inventory:table']
+    #                         for table_entry in table:
+    #                             if 'flow' in table_entry:
+    #                                 for flow_entry in table_entry.get('flow'):
+    #                                     s = self.extract(flow_entry, new_flow_entry)
+    #                                     flowmap = {'nodeid': _nodeid,
+    #                                                # 'flowname': s['flow-name'],
+    #                                                'hardtimeout': s['hard-timeout'],
+    #                                                'idletimeout': s['idle-timeout'],
+    #                                                'flowid': s['id'],
+    #                                                'in_port': s['in-port'],
+    #                                                'ipv4destination': s['ipv4-destination'],
+    #                                                'order': s['order'],
+    #                                                #TODO get index of nodes to dereference
+    #                                                'outputnode': s['output-node-connector'],
+    #                                                'priority': s['priority'],
+    #                                                'table_id': s['table_id'],
+    #                                                'ethertype': s['type']}
+    #                                                 #'vlanid': s['vlan-id']}
+    #                                                 #TODO  u'vlan-id-present': True}
+    #                                     flowdb.setdefault(str(uuid.uuid4()), []).append(flowmap)
+    #         return (flowdb, True)
+    #     else:
+    #         return (("Unexpected Status Code {}").format(retval.status_code), False)
 
     # def _get_flows1(self, dumpjson=False):
     #     #TODO Better management of match and action types
@@ -334,7 +309,7 @@ class Controller(object):
     #     resource = API['NODEINVENTORY'].format(server=self.server)
     #     try:
     #         retval = self.session.get(resource, auth=self.auth, params=None, headers=self.headers, timeout=5)
-    #     except requests.exceptions.ConnectionError as e:
+    #     except requests.exceptions.ConnectionError:
     #         print("Error connecting to BVC {}").format(self.server)
     #         return None
 
@@ -423,49 +398,48 @@ class Controller(object):
     #         print("Error: {}").format(resource.error)
     #     return None
 
-    
         #     for k, v in l.items():
         #         mac = v[5:22]
         #         node_port = v[23:].split(':')
         #         mapping = {'port': node_port[2],
         #                    'switch': node_port[0] + ":" + node_port[1]}
-    def _extract(self, ind, outd):
-        for key, value in ind.viewitems():
-            # print("Key: {key}, Value: {value}, Type: {type}").format(key=key, value=value, type=type(value))
-            if isinstance(value, dict):
-                self.extract(value, outd)
-            elif isinstance(value, list):
-                for i in value:
-                    self.extract(i, outd)
-            else:
-                outd[key] = value
-        return outd
 
-    def _extractkeys(self, ks, inputitems, outputitems):
-        for key, value in inputitems.viewitems():
-            # print("Key: {key}, Value: {value}, Type: {type}").format(key=key, value=value, type=type(value))
-            if isinstance(value, dict):
-                self.extractkeys(ks, value, outputitems)
-            elif isinstance(value, list):
-                for i in value:
-                    if i['type'] in ks:
-                        self.extractkeys(ks, i, outputitems)
-            else:
-                outputitems[key] = value
-        return outputitems
+    # def _extract(self, ind, outd):
+    #     for key, value in ind.viewitems():
+    #         # print("Key: {key}, Value: {value}, Type: {type}").format(key=key, value=value, type=type(value))
+    #         if isinstance(value, dict):
+    #             self.extract(value, outd)
+    #         elif isinstance(value, list):
+    #             for i in value:
+    #                 self.extract(i, outd)
+    #         else:
+    #             outd[key] = value
+    #     return outd
+
+    # def _extractkeys(self, ks, inputitems, outputitems):
+    #     for key, value in inputitems.viewitems():
+    #         # print("Key: {key}, Value: {value}, Type: {type}").format(key=key, value=value, type=type(value))
+    #         if isinstance(value, dict):
+    #             self.extractkeys(ks, value, outputitems)
+    #         elif isinstance(value, list):
+    #             for i in value:
+    #                 if i['type'] in ks:
+    #                     self.extractkeys(ks, i, outputitems)
+    #         else:
+    #             outputitems[key] = value
+    #     return outputitems
 
     def print_table(self, text, table, sortkey=None):
-        self.table_banner(text)
+        self.print_table_banner(text)
         self.print_table_detail(table, sortkey)
 
-    def table_banner(self, text):
+    def print_table_banner(self, text):
         print("+-------------------------+")
         print text
 
     def print_table_detail(self, table, sortkey=None):
         p = PrettyTable()
-        col_head = table.get(table.keys()[0])[0].keys()
-        p.field_names = col_head
+        p.field_names = table.get(table.keys()[0])[0].keys()
         p.sortby = sortkey
         p.padding_width = 1
         p.align = "l"
@@ -478,4 +452,3 @@ class Controller(object):
 
         print p
         print("Total Records: {}").format(len(table))
-

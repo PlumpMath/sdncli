@@ -21,7 +21,7 @@ Options :
             --help              This help screen
 """
 
-from lib.docopt import docopt
+from lib.docopt.docopt import docopt
 from lib.bvclib import Controller
 import uuid
 import pprint
@@ -31,10 +31,14 @@ def show_nodes(args):
     dumpjson = (args["--json"])
     nodemap = {}
     nodetable = {}
-    (retval, status) = ctl.get_bvc_nodes_oper(dumpjson)
+
+    # (retval, status) = ctl.get_bvc_nodes_oper(dumpjson)
+    (retval, status) = ctl.get_bvc_nodes('OPER', dumpjson)
     node_ops = retval
     if status:
-        (node_config, status) = ctl.get_bvc_nodes_config(dumpjson)
+        (retval, status) = ctl.get_bvc_nodes('CONFIG', dumpjson)
+        node_config = retval
+        # (node_config, status) = ctl.get_bvc_nodes_config(dumpjson)
         if status:
             nodemap = node_ops.copy()
             nodemap.update(node_config)
@@ -76,7 +80,7 @@ def show_hosts(args):
             print "No hosts found"
             return None
     else:
-        print("Error: {}").format(retval)     
+        print("Error: {}").format(retval)
 
     # node_port = v[23:].split(':')
     #                         mapping = {'port': node_port[2],

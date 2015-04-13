@@ -2,119 +2,39 @@ import unittest
 import requests
 import sys
 import os
+import uuid
 from requests.auth import HTTPBasicAuth
-sys.path.insert(0,os.path.abspath(__file__+"/../.."))
-from lib import bvc
 
-RESTAPI = {'NODEINVENTORY': 'http://{server}:8181/restconf/operational/opendaylight-inventory:nodes',
-           'TOPOLOGY': 'http://{server}:8181/restconf/operational/network-topology:network-topology/',
-           'B': 'http://{server}:8181/restconf/operational/opendaylight-inventory:',
-           'C': 'http://{server}:8181/restconf/operational/opendaylight-inventory:'}
+import pprint
+
+sys.path.insert(0, os.path.abspath(__file__+"/../.."))
+from lib.bvclib import Controller
+
+API = {'OPER': 'http://{server}:8181/restconf/operational/opendaylight-inventory:nodes',
+       'CONFIG': 'http://{server}:8181/restconf/config/opendaylight-inventory:nodes',
+       'TOPOLOGY': 'http://{server}:8181/restconf/operational/network-topology:network-topology/',
+       'FLOWMOD': 'http://{server}:8181/restconf/config/opendaylight-inventory:nodes/node/{node}/flow-node-inventory:table/{table}/flow/{flow}',
+       'FLOW': 'http://{server}:8181/restconf/config/opendaylight-inventory:nodes/node/{node}/flow-node-inventory:table/{table}/flow/{flow}',
+       'MODULES': 'http://{server}:8181/restconf/modules',
+       'MOUNTS': 'http://{server}:8181/restconf/config/opendaylight-inventory:nodes/node/controller-config/yang-ext:mount/',
+       'NETCONF': 'http://{server}:8181/restconf/{ds}/opendaylight-inventory:nodes/node/{node}/yang-ext:mount/{resource}',
+       'UNMOUNT': 'http://{server}:8181/restconf/config/opendaylight-inventory:nodes/node/controller-config/yang-ext:mount/config:modules/module/odl-sal-netconf-connector-cfg:sal-netconf-connector/{name}',
+       }
 
 
-class TestGetFlow(unittest.TestCase):
-        ctl = bvc.Controller()
-        _flows = ctl._get_flows()
-        s = lambda x: x.viewitems()
-        print s(_flows)
-
-# class TestODL(unittest.TestCase):
-#     def test_request(self):
-#         nodes = set()
-#         server = "localhost"
-#         session = requests.Session()
-#         headers = {'content-type': 'application/xml'}
-#         auth = HTTPBasicAuth('admin', 'admin')
-#         # params = {'depth': '0'}
-#         resource = RESTAPI['NODEINVENTORY'].format(server=server)
-#         retval = session.get(resource, auth=auth, params=None, headers=headers)
-#         self.assertTrue(retval.status_code, 200)
-#         data = retval.json()
-#         node_count = len(data["nodes"]["node"])
-#         for i in range(node_count):
-#             if "config" not in data["nodes"]["node"][i]["id"]:
-#                 new_node = data["nodes"]["node"][i]["id"]
-#                 nodes.add(new_node)
-#         print nodes
-
-# class TestJsonRequests(unittest.TestCase):
-#     def test_request(self):
-#         #Get List of Nodes
-#         #Then use more specific scope iterator
-#         nodes = set()
-#         server = "localhost"
-#         session = requests.Session()
-#         auth = HTTPBasicAuth('admin', 'admin')
-#         resource = RESTAPI['NODEINVENTORY'].format(server=server)
-#         retval = session.get(resource, auth=auth, params=None, headers=None)
-#         self.assertTrue(retval.status_code, 200)
-#         data = retval.json()
-#         nodes = data.get('nodes').get('node')
-#         for i in nodes:
-#             table = i.get("flow-node-inventory:table")
-#             print("Table type: {}").format(type(table))
-#             for flow in table:
-#                 # print flow
-#                 if flow is not None:
-#                     s = flow.get('id')
-#                     y = flow.get('match')
-#                 # print(flow)
-#                 # s = table.get("flow")
-#                 # print("s type: {}").format(type(s))
-#                 # for t in s:
-#                 #     print t
-
-#             # for x in n:
-#             #     y = x.get("flow")
-#             #     for z in y:
-#             #         print y
-
-#         # node_count = len(data["nodes"]["node"])
-#         # for i in range(node_count):
-#         #     if "config" not in data["nodes"]["node"][i]["id"]:
-#         #         new_node = data["nodes"]["node"][i]["id"]
-#         #         nodes.add(new_node)
-#         # print nodes class TestJsonRequests(unittest.TestCase):
-
-# class TestGetFlows(unittest.TestCase):
-#     def test_request(self):
-#         #Get List of Nodes
-#         #Then use more specific scope iterator
-#         nodes = set()
-#         flowtable = {}
-#         server = "localhost"
-#         session = requests.Session()
-#         auth = HTTPBasicAuth('admin', 'admin')
-#         resource = RESTAPI['NODEINVENTORY'].format(server=server)
-#         try:
-#             retval = session.get(resource, auth=auth, params=None, headers=None)
-#         except Exception, e:
-#             raise e
-    
-#         self.assertTrue(retval.status_code, 200)
-#         data = retval.json()
-#         nodes = data.get('nodes').get('node')
-#         for node in nodes:
-#             if "cont" not in node['id']:
-#                 table = node['flow-node-inventory:table']
-#                 for table_entry in table:
-#                     if 'flow' in table_entry:
-#                         #TODO check this list
-#                         flow_rule = table_entry.get('flow')[0]
-#                         flowmap = {'node': node['id'],
-#                                    'flow_id': flow_rule.get('id'),
-#                                    'table_id': flow_rule.get('table_id'),
-#                                    'hard_timeout': flow_rule.get('hard-timeout'),
-#                                    'idle_timeout': flow_rule.get('idle-timeout'),
-#                                    'match': flow_rule.get('match'),
-#                                    'instructions': flow_rule.get('instructions')
-#                                    }
-#                         flowtable.setdefault(flow_rule.get('cookie'), []).append(flowmap)
-
-                        
-                        
-#         pprint.pprint(flowtable)
-
+class TestListExp(unittest.TestCase):
+        ctl = Controller("localhost")
+        moduletable = {}
+        u = []
+        # keys = {"netconf-node-inventory"}
+        resource = API['MODULES'].format(server="localhost")
+        headers = {'content-type': 'application/xml'}
+        retval = ctl.session.get(resource, auth=ctl.auth, params=None, headers=headers)
+        filter_keys = ('controller-config')
+        if str(retval.status_code)[:1] == "2":
+            data = retval.json()
+            [moduletable.setdefault(str(uuid.uuid4()), [].append({'name': 'foo'})) for m in data['modules']['module']]
+            pprint.pprint(moduletable)
 
 # class TestGetHosts(unittest.TestCase):
 #     def test_request(self):
