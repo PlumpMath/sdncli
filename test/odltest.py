@@ -3,7 +3,10 @@ import requests
 import sys
 import os
 import uuid
+import shlex
+import json
 from requests.auth import HTTPBasicAuth
+
 
 import pprint
 
@@ -22,19 +25,75 @@ API = {'OPER': 'http://{server}:8181/restconf/operational/opendaylight-inventory
        }
 
 
-class TestListExp(unittest.TestCase):
-        ctl = Controller("localhost")
-        moduletable = {}
-        u = []
-        # keys = {"netconf-node-inventory"}
-        resource = API['MODULES'].format(server="localhost")
-        headers = {'content-type': 'application/xml'}
-        retval = ctl.session.get(resource, auth=ctl.auth, params=None, headers=headers)
-        filter_keys = ('controller-config')
-        if str(retval.status_code)[:1] == "2":
-            data = retval.json()
-            [moduletable.setdefault(str(uuid.uuid4()), [].append({'name': 'foo'})) for m in data['modules']['module']]
-            pprint.pprint(moduletable)
+class mod(object):
+    def __init__(self, name, revision, namespace):
+        self.name = name
+        self.revision = revision
+        self.namespace = namespace
+
+
+def extract(ind, outd):
+    for key, value in ind.viewitems():
+        print("Key: {key}, Value: {value}, Type: {type}").format(key=key, value=value, type=type(value))
+        if isinstance(value, dict):
+            extract(value, outd)
+        elif isinstance(value, list):
+            for i in value:
+                extract(i, outd)
+        else:
+          s =  mod(key, value)
+
+          # outd.update({value: key})
+    return outd
+
+
+# class TestCapGet(unittest.TestCase):
+#     ctl = Controller('localhost')
+#     (retval, status) = ctl.get_capabilities('vr5600', False)
+#     for v in retval.viewitems():
+#         n = v[1][0].get('namespace', None).rsplit(':', 1)
+#         print n
+#         uri = (API['NETCONF'].format(server=ctl.server, ds='config', node='vr5600', resource=n[1]))
+#         print uri
+#         ctl.http_get(uri)
+
+
+class TestGetSchema(unittest.TestCase):
+    ctl = Controller('localhost')
+    module = 'vyatta-interfaces'
+    d = {'input': {'identifier': module}}
+    (retval, status) = ctl.netconf_get_schema('vr5600', d)
+    if status:
+        print retval.json()['get-schema']['output']['data']
+
+
+
+
+
+#     ctl = Controller("localhost")
+#     moduletable = {}
+#     u = []
+#     # keys = {"netconf-node-inventory"}
+#     resource = API['MODULES'].format(server="localhost")
+#     headers = {'content-type': 'application/xml'}
+#     retval = ctl.session.get(resource, auth=ctl.auth, params=None, headers=headers)
+#     filter_keys = ('controller-config')
+#     if str(retval.status_code)[:1] == "2":
+#         data = retval.json()
+#         # for i in data['modules']['module']:
+#         #     for j, k in i.iteritems():
+#         #         print ""
+#         m = {}
+#         # [(moduletable.setdefault(str(uuid.uuid4()), [].append({k: v}))) for i in data['modules']['module'] for k, v in i.iteritems()]
+#         o = [(k,v) for i in data['modules']['module'] for k, v in i.iteritems()]
+#         pprint.pprint(o)
+#         p = [(m.setdefault(str(uuid.uuid4()), []).append({k:v})) for i in data['modules']['module'] for k, v in i.iteritems()]
+#         pprint.pprint(m)
+#         # extract(data, moduletable)
+#         # pprint.pprint(moduletable)
+
+            # [moduletable.setdefault(str(uuid.uuid4()), [].append({'name': 'foo'})) for m in data['modules']['module']]
+            # pprint.pprint(moduletable)
 
 # class TestGetHosts(unittest.TestCase):
 #     def test_request(self):

@@ -1,1 +1,6 @@
 .pyc
+.DS_Store
+lib/.pyc
+lib/.DS_Store
+yangs
+

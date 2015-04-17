@@ -7,12 +7,12 @@ import netconflib
 from requests.auth import HTTPBasicAuth
 from prettytable import PrettyTable
 
-# import logging
-# logging.basicConfig()
-# logging.getLogger().setLevel(logging.DEBUG)
-# requests_log = logging.getLogger("requests")
-# requests_log.setLevel(logging.DEBUG)
-# requests_log.propagate = True
+import logging
+logging.basicConfig()
+logging.getLogger().setLevel(logging.DEBUG)
+requests_log = logging.getLogger("requests")
+requests_log.setLevel(logging.DEBUG)
+requests_log.propagate = True
 
 API = {'OPER': 'http://{server}:8181/restconf/operational/opendaylight-inventory:nodes',
        'CONFIG': 'http://{server}:8181/restconf/config/opendaylight-inventory:nodes',
@@ -20,9 +20,12 @@ API = {'OPER': 'http://{server}:8181/restconf/operational/opendaylight-inventory
        'FLOWMOD': 'http://{server}:8181/restconf/config/opendaylight-inventory:nodes/node/{node}/flow-node-inventory:table/{table}/flow/{flow}',
        'FLOW': 'http://{server}:8181/restconf/config/opendaylight-inventory:nodes/node/{node}/flow-node-inventory:table/{table}/flow/{flow}',
        'MODULES': 'http://{server}:8181/restconf/modules',
+       'UNMOUNTDEVICE': 'http://{server}:8181/restconf/config/opendaylight-inventory:nodes/node/controller-config/yang-ext:mount/config:modules/module/odl-sal-netconf-connector-cfg:sal-netconf-connector/{name}',
+       'MOUNTDEVICE': 'http://{server}:8181/restconf/config/opendaylight-inventory:nodes/node/controller-config/yang-ext:mount/config:modules',
        'MOUNTS': 'http://{server}:8181/restconf/config/opendaylight-inventory:nodes/node/controller-config/yang-ext:mount/',
-       'NETCONF': 'http://{server}:8181/restconf/{ds}/opendaylight-inventory:nodes/node/{node}/yang-ext:mount/{resource}',
-       'UNMOUNT': 'http://{server}:8181/restconf/config/opendaylight-inventory:nodes/node/controller-config/yang-ext:mount/config:modules/module/odl-sal-netconf-connector-cfg:sal-netconf-connector/{name}',
+       'NETCONF': 'http://{server}:8181/restconf/{ds}/opendaylight-inventory:nodes/node/{node}/yang-ext:mount',
+       'CAPABILITIES': 'http://{server}:8181/restconf/{ds}/opendaylight-inventory:nodes/node/{node}/yang-ext:mount/ietf-netconf-monitoring:netconf-state',
+       'GETSCHEMA' : 'http://{server}:8181/restconf/{ds}/opendaylight-inventory:nodes/node/{node}/yang-ext:mount/ietf-netconf-monitoring:get-schema'
        }
 
 
@@ -54,26 +57,57 @@ class Controller(object):
                 return (("No Nodes Found").format(retval.status_code), False)
 
     def http_get(self, uri):
+        headers = {'content-type': 'application/xml'}
         try:
-            retval = self.session.get(uri, auth=self.auth, params=None, headers=self.headers, timeout=5)
+            retval = self.session.get(uri, auth=self.auth, params=None, headers=headers, timeout=120)
         except requests.exceptions.ConnectionError:
             return(("Error connecting to BVC {}").format(self.server), False)
         if str(retval.status_code)[:1] == "2":
             try:
                 data = retval.json()
-            except ValueError:
-                return("Bad JSON found", False)
+            except ValueError, e:
+                return(("Bad JSON found: {} {}").format(e, retval.text), False)
             return(data, True)
         else:
             return (("Unknown Status Code").format(retval.status_code), False)
 
-    def netconf_get(self, r, ds, payload, node):
+    def netconf_get_schema(self, node, payload):
+        data = json.dumps(payload)
+        ds = 'operations'
+        resource = API['GETSCHEMA'].format(server=self.server, node=node, ds=ds)
+        try:
+            retval = self.session.post(resource, auth=self.auth, params=None, headers=self.headers, data=data)
+        except requests.exceptions.ConnectionError:
+            return (("Error connecting to BVC {}").format(self.server), False)
+        if str(retval.status_code)[:1] == "2":
+            return (retval, True)
+        else:
+            return (("Unexpected Status Code {}").format(retval.status_code), False)
+
+    def netconf_get(self, r, ds, api):
+        headers = {'content-type': 'application/yang.data+xml'}
+        resource = API[api].format(server=self.server, node=r, ds=ds)
+        try:
+            retval = self.session.get(resource, auth=self.auth, params=None, headers=headers)
+            print(retval.headers['content-type'])
+        except requests.exceptions.ConnectionError:
+            return (("Error connecting to BVC {}").format(self.server), False)
+        if str(retval.status_code)[:1] == "2":
+            try:
+                data = retval.json()
+            except ValueError, e:
+                return(("Bad JSON found: {} {}").format(e, retval.text), False)
+            return(data, True)
+        else:
+            return (("Unexpected Status Code {}").format(retval.status_code), False)
+
+    def netconf_post(self, r, ds, payload, node):
         data = json.dumps(json.loads(payload))
         if node is None:
             node = "controller-config"
         resource = API['NETCONF'].format(server=self.server, resource=r, ds=ds, node=node)
         try:
-            retval = self.session.get(resource, auth=self.auth, params=None, headers=self.headers, data=data)
+            retval = self.session.post(resource, auth=self.auth, params=None, headers=self.headers, data=data)
         except requests.exceptions.ConnectionError:
             return (("Error connecting to BVC {}").format(self.server), False)
         if str(retval.status_code)[:1] == "2":
@@ -136,6 +170,34 @@ class Controller(object):
         else:
             return (("Unexpected Status Code {}").format(retval.status_code), False)
 
+    def get_capabilities(self, node, dumpjson=False):
+        moduledb = {}
+        ds = "operational"
+        resource = API['CAPABILITIES'].format(server=self.server, ds=ds, node=node)
+        headers = {'content-type': 'application/xml'}
+        try:
+            retval = self.session.get(resource, auth=self.auth, params=None, headers=headers)
+        except requests.exceptions.ConnectionError:
+            return(("Error connecting to BVC {}").format(self.server), False)
+        if str(retval.status_code)[:1] == "2":
+            data = retval.json()
+            if dumpjson:
+                pprint.pprint(data)
+            try:
+                root = data['netconf-state']['schemas']['schema']
+                for line in root:
+                    modulemap = {'namespace': line['namespace'],
+                                 'revision':  line['version']}
+                    moduledb.setdefault(str(uuid.uuid4()), []).append(modulemap)
+                if len(moduledb) > 0:
+                    return(moduledb, True)
+                else:
+                    return(("No Modules found for Node: {}").format(node), False)
+            except KeyError:
+                return(("Error in schema for Node: {}").format(node), False)
+        else:
+            return (("Unexpected Status Code {}").format(retval.status_code), False)
+
     def get_mounts(self, dumpjson=False):
         mountdb = {}
         (retval, status) = self._get_mount_status(dumpjson)
@@ -150,6 +212,8 @@ class Controller(object):
                 return(("Error connecting to BVC {}").format(self.server), False)
             if str(retval.status_code)[:1] == "2":
                 data = retval.json()
+                if dumpjson:
+                    pprint.pprint(data)
                 root = data['config:modules']['module']
                 for line in root:
                     if line['type'] in keys:
@@ -194,11 +258,11 @@ class Controller(object):
     def mount_netconf_device(self, name, node, user, pw, port, vdx=None):
         if not port:
             port = 830
-        if vdx is not None:
+        if vdx:
             data = netconflib.netconf_mount_vdx(name, node, port, user, pw)
         else:
             data = netconflib.netconf_mount(name, node, port, user, pw)
-        resource = API['MODULES'].format(server=self.server)
+        resource = API['MOUNTDEVICE'].format(server=self.server)
         headers = {'content-type': 'application/xml'}
         try:
             retval = self.session.post(resource, auth=self.auth, params=None, headers=headers, data=data)
@@ -210,7 +274,7 @@ class Controller(object):
             return (("Unexpected Status Code {}").format(retval.status_code), False)
 
     def unmount_netconf_device(self, name):
-        resource = API['UNMOUNT'].format(server=self.server, name=name)
+        resource = API['UNMOUNTDEVICE'].format(server=self.server, name=name)
         headers = {'content-type': 'application/xml'}
         try:
             retval = self.session.delete(resource, auth=self.auth, params=None, headers=headers)
