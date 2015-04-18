@@ -1,0 +1,159 @@
+module vyatta-system-alg {
+	namespace "urn:vyatta.com:mgmt:vyatta-system-alg";
+	prefix system-alg;
+
+	import vyatta-system {
+		prefix system;
+	}
+	import configd {
+		prefix configd;
+	}
+
+	organization "Brocade Communications Systems, Inc.";
+	contact
+		"Brocade Communications Systems, Inc.
+		 Postal: 130 Holger Way
+		         San Jose, CA 95134
+		 E-mail: support@Brocade.com
+		 Web: www.brocade.com";
+
+	revision 2014-10-28 {
+		description "Update for 3.2.1R1";
+	}
+	
+	revision 2014-08-27 {
+		description "Initial revision.";
+		configd:migration 1;
+	}
+
+	augment /system:system {
+		container alg {
+			presence "true";
+			configd:help "Connection tracking modules settings";
+			container icmp {
+				presence "true";
+				configd:help "ICMP connection tracking settings";
+				leaf disable {
+					type empty;
+					configd:help "Disable ICMP connection tracking";
+					configd:create "/opt/vyatta/share/tmplscripts/system/alg/icmp/disable/configd_create.sh";
+					configd:delete "/opt/vyatta/share/tmplscripts/system/alg/icmp/disable/configd_delete.sh";
+				}
+			}
+			container pptp {
+				presence "true";
+				configd:help "PPTP connection tracking settings";
+				leaf disable {
+					type empty;
+					configd:help "Disable PPTP connection tracking";
+					configd:create "/opt/vyatta/share/tmplscripts/system/alg/pptp/disable/configd_create.sh";
+					configd:delete "/opt/vyatta/share/tmplscripts/system/alg/pptp/disable/configd_delete.sh";
+				}
+			}
+			container tftp {
+				presence "true";
+				configd:help "TFTP connection tracking settings";
+				configd:end "/opt/vyatta/sbin/vyatta-dp-npf-alg.pl --module=tftp";
+				leaf disable {
+					type empty;
+					configd:help "Disable TFTP connection tracking";
+				}
+				leaf-list port {
+					max-elements 32;
+					configd:help "Configure TFTP control ports";
+					type uint16 {
+						range 1..65535;
+					}
+				}
+			}
+			container ftp {
+				presence "true";
+				configd:help "FTP connection tracking settings";
+				configd:end "/opt/vyatta/sbin/vyatta-dp-npf-alg.pl --module=ftp";
+				leaf disable {
+					type empty;
+					configd:help "Disable FTP connection tracking";
+				}
+				leaf-list port {
+					max-elements 32;
+					configd:help "Configure FTP control ports";
+					type uint16 {
+						range 1..65535;
+					}
+				}
+			}
+			container sip {
+				presence "true";
+				configd:help "SIP connection tracking settings";
+				configd:end "/opt/vyatta/sbin/vyatta-dp-npf-alg.pl --module=sip";
+				leaf disable {
+					type empty;
+					configd:help "Disable SIP connection tracking";
+				}
+				leaf-list port {
+					max-elements 32;
+					configd:help "Configure SIP control ports";
+					type uint16 {
+						range 1..65535;
+					}
+				}
+				leaf enable-indirect-media {
+					type empty;
+					configd:help "Enable SIP indirect media mode";
+				}
+				leaf enable-indirect-signaling {
+					type empty;
+					configd:help "Enable SIP indirect signaling mode";
+				}
+			}
+			container h323 {
+				presence "true";
+				configd:help "H323 connection tracking settings";
+				configd:end "/opt/vyatta/sbin/vyatta-dp-npf-alg.pl --module=h323";
+				leaf disable {
+					type empty;
+					configd:help "Disable H323 connection tracking";
+				}
+				container port {
+					configd:help "Configure H323 control ports";
+					leaf-list ras {
+						max-elements 32;
+						configd:help "Configure H323 RAS control ports";
+						type uint16 {
+							range 1..65535;
+						}
+					}
+					leaf-list call-setup {
+						max-elements 32;
+						configd:help "Configure H323 call-setup control ports";
+						type uint16 {
+							range 1..65535;
+						}
+					}
+				}
+				leaf enable-indirect-media {
+					type empty;
+					configd:help "Enable H323 indirect media mode";
+				}
+				leaf enable-indirect-signaling {
+					type empty;
+					configd:help "Enable H323 indirect signaling mode";
+				}
+			}
+			container rpc {
+				presence "true";
+				configd:help "RPC connection tracking settings";
+				configd:end "/opt/vyatta/sbin/vyatta-dp-npf-alg.pl --module=rpc";
+				leaf disable {
+					type empty;
+					configd:help "Disable RPC connection tracking";
+				}
+				leaf-list program {
+					type uint32;
+					max-elements 32;
+					configd:help "Configure allowed RPC programs";
+				}
+			}
+		}
+	}
+}

@@ -1,0 +1,189 @@
+/***********************************************************************
+ * brocade-dai-access.yang: Brocade IP Forwarding data model.
+ *
+ *
+ * Copyright (c) 2011 by Brocade Communications Systems, Inc.
+ * All rights reserved.
+ *
+ **********************************************************************/
+module brocade-dai{
+    namespace "urn:brocade.com:mgmt:brocade-dai";
+    prefix dai;
+    import tailf-common {
+        prefix tailf;
+    }
+   import brocade-interface {
+       prefix interface;
+    }
+    import ietf-inet-types {
+        prefix "inet";
+    }
+
+
+
+    organization
+        "Brocade Communications Systems, Inc.";
+
+    contact
+        "Brocade Communications Systems, Inc.
+        Postal: 130 Holger Way
+                San Jose, CA 95134
+                U.S.A
+        Tel: +1-408-333-8000
+        E-mail: support@Brocade.com
+        Web: www.brocade.com";
+
+    description
+        "This management sub-module contains the configuration
+        and rpc implementaion for IP Access-list.";
+
+    revision "2012-07-01" {
+       description "Initial version";
+    }
+
+    typedef dai-acl-policy-name {
+        type string {
+            pattern '[a-zA-Z0-9]{1}([-a-zA-Z0-9_]{0,62})' {
+            }
+            length 1..63;
+        }
+    }
+
+    grouping arp-config {
+      container arp {
+                container inspection {
+                    leaf trust {
+                        //tailf:code-name trust-internal;
+                        //tailf:code-name dai-trust-internal;
+                        //tailf:alt-name trust;
+
+                        //tailf:callpoint interface_po;
+                        type empty;
+                    }
+                }
+            }
+    }
+
+    container arp {
+        list access-list {
+            key "acl-name";
+            leaf acl-name {
+                type dai-acl-policy-name;
+            }
+
+            container permit {
+                list permit-list {
+                    key "ip-type host-ip mac-type host-mac";
+                    leaf ip-type  {
+                        type enumeration {
+                            enum host {
+                                value 1;
+                            }
+                        }
+                    }
+
+                    leaf host-ip {
+                        type inet:ipv4-address;
+                    }
+
+                    leaf mac-type {
+                        type enumeration {
+                           enum host {
+                               value 1;
+                           }
+                        }
+                    }
+
+                    leaf host-mac {
+                        type string;
+                    }
+
+                    leaf log {
+                        type empty;
+                    }
+                }
+            }
+        }
+    }
+
+    augment "/interface:interface/interface:gigabitethernet/interface:ip" {
+        container arp-node-config {
+            uses arp-config;
+        }
+
+
+    }
+
+    augment "/interface:interface/interface:tengigabitethernet/interface:ip" {
+        container arp-node-config {
+            uses arp-config;
+        }
+
+    }
+
+    augment "/interface:interface/interface:fortygigabitethernet/interface:ip" {
+        container arp-node-config {
+            uses arp-config;
+        }
+
+    }
+    augment "/interface:interface/interface:hundredgigabitethernet/interface:ip" {
+        container arp-node-config {
+            uses arp-config;
+        }
+
+    }
+
+    augment /interface:interface/interface:port-channel/interface:ip {
+      container arp {
+                container inspection {
+                    leaf trust {
+                        //tailf:code-name trust-internal;
+                        //tailf:alt-name trust;
+                        type empty;
+                    }
+                }
+            }
+    }
+
+    augment /interface:interface-vlan/interface:interface/interface:vlan/interface:ip {
+       container arp {
+                container inspection {
+                    leaf trust {
+                        //tailf:code-name trust-internal;
+                        //tailf:alt-name trust;
+                        //tailf:callpoint intf-po-ip-cfg-cp;
+                        type empty;
+                    }
+
+                   container filter {
+                    leaf acl-name {
+                        type dai-acl-policy-name;
+                        }
+                    }
+
+                   container logging {
+                    leaf acl-match {
+                        type enumeration {
+                            enum matchlog {
+                                value 1;
+                            }
+                            enum none {
+                                value 2;
+                            }
+
+                        }
+                        mandatory false;
+                   }
+
+                    }
+
+
+
+                }
+            }
+        }
+
+
+	
+}

@@ -1,0 +1,318 @@
+module vyatta-interfaces-l2tpeth {
+	namespace "urn:vyatta.com:mgmt:vyatta-interfaces-l2tpeth";
+	prefix interfaces-l2tpeth;
+
+	import vyatta-interfaces {
+		prefix if;
+	}
+	import vyatta-interfaces-dataplane {
+		prefix interfaces-dataplane;
+	}
+	import vyatta-types {
+		prefix types;
+	}
+	import configd {
+		prefix configd;
+	}
+
+	organization "Brocade Communications Systems, Inc.";
+	contact
+		"Brocade Communications Systems, Inc.
+		 Postal: 130 Holger Way
+		         San Jose, CA 95134
+		 E-mail: support@Brocade.com
+		 Web: www.brocade.com";
+
+	revision 2015-02-10 {
+	        description "Perform address validation at the interface level
+                            rather than at the address level";
+	}
+
+	revision 2014-10-28 {
+		description "Update for 3.2.1R1";
+	}
+	
+	revision 2014-08-27 {
+		description "Initial revision.";
+		configd:migration 1;
+	}
+
+	augment /if:interfaces {
+		list l2tpeth {
+			configd:priority "500";
+			configd:help "L2TPv3 static tunnel interface";
+			key "tagnode";
+			leaf tagnode {
+				type string {
+					pattern "lttp[0-9]+";
+					configd:pattern-help "<lttpN>";
+				}
+				configd:help "L2TPv3 static tunnel interface";
+			}
+			leaf description {
+				type string {
+					pattern ".{1,256}" {
+						error-message "interface description is too long (limit 256 characters)";
+					}
+				}
+				configd:help "Description";
+				configd:update "/opt/vyatta/share/tmplscripts/interfaces/l2tpeth/description/configd_update.sh";
+				configd:delete "/opt/vyatta/share/tmplscripts/interfaces/l2tpeth/description/configd_delete.sh";
+				configd:validate "/opt/vyatta/share/tmplscripts/interfaces/l2tpeth/description/configd_validate1.cli";
+			}
+			container ip {
+				leaf enable-proxy-arp {
+					type empty;
+					configd:help "Enable proxy-arp on this interface";
+					configd:create "/opt/vyatta/share/tmplscripts/interfaces/l2tpeth/ip/enable-proxy-arp/configd_create.sh";
+					configd:delete "/opt/vyatta/share/tmplscripts/interfaces/l2tpeth/ip/enable-proxy-arp/configd_delete.sh";
+				}
+				leaf disable-forwarding {
+					type empty;
+					configd:help "Disable IPv4 forwarding on this interface";
+					configd:create "/opt/vyatta/share/tmplscripts/interfaces/l2tpeth/ip/disable-forwarding/configd_create.sh";
+					configd:delete "/opt/vyatta/share/tmplscripts/interfaces/l2tpeth/ip/disable-forwarding/configd_delete.sh";
+				}
+			}
+			container ipv6 {
+				configd:help "IPv6 parameters";
+			}
+			leaf mtu {
+				type uint32 {
+					range 64..9000;
+				}
+				configd:priority "510";
+				configd:help "Maximum Transmission Unit (MTU)";
+				configd:create "/opt/vyatta/share/tmplscripts/interfaces/l2tpeth/mtu/configd_create.sh";
+				configd:update "/opt/vyatta/share/tmplscripts/interfaces/l2tpeth/mtu/configd_update.sh";
+				configd:delete "/opt/vyatta/share/tmplscripts/interfaces/l2tpeth/mtu/configd_delete.sh";
+				configd:validate "/opt/vyatta/share/tmplscripts/interfaces/l2tpeth/mtu/configd_validate1.cli";
+			}
+			leaf disable {
+				type empty;
+				configd:priority "510";
+				configd:help "Disable interface";
+				configd:create "/opt/vyatta/share/tmplscripts/interfaces/l2tpeth/disable/configd_create.sh";
+				configd:delete "/opt/vyatta/share/tmplscripts/interfaces/l2tpeth/disable/configd_delete.sh";
+				configd:validate "/opt/vyatta/share/tmplscripts/interfaces/l2tpeth/disable/configd_validate1.cli";
+			}
+			list vif {
+				configd:priority "510";
+				configd:help "Virtual Interface (VIF) ID";
+				configd:create "/opt/vyatta/share/tmplscripts/interfaces/l2tpeth/vif/configd_create.sh";
+				configd:delete "/opt/vyatta/share/tmplscripts/interfaces/l2tpeth/vif/configd_delete.sh";
+				configd:validate "/opt/vyatta/share/tmplscripts/interfaces/l2tpeth/vif/configd_validate1.cli";
+				configd:validate "/opt/vyatta/share/tmplscripts/interfaces/l2tpeth/vif/configd_validate2.cli";
+				key "tagnode";
+				leaf tagnode {
+					type uint32 {
+						range 1..4094;
+					}
+					configd:help "Virtual Interface (VIF) ID";
+				}
+				leaf vlan {
+					type uint32 {
+						range 1..4094;
+					}
+					configd:help "Virtual Local Area Network (VLAN) ID";
+				}
+				leaf description {
+					type string;
+					configd:help "Description";
+					configd:update "/opt/vyatta/share/tmplscripts/interfaces/l2tpeth/vif/description/configd_update.sh";
+					configd:delete "/opt/vyatta/share/tmplscripts/interfaces/l2tpeth/vif/description/configd_delete.sh";
+				}
+				container ip {
+					leaf enable-proxy-arp {
+						type empty;
+						configd:help "Enable proxy-arp on this interface";
+						configd:create "/opt/vyatta/share/tmplscripts/interfaces/l2tpeth/vif/ip/enable-proxy-arp/configd_create.sh";
+						configd:delete "/opt/vyatta/share/tmplscripts/interfaces/l2tpeth/vif/ip/enable-proxy-arp/configd_delete.sh";
+					}
+				}
+				container ipv6 {
+					configd:help "IPv6 parameters";
+				}
+				leaf mtu {
+					type uint32 {
+						range 68..9000;
+					}
+					configd:help "Maximum Transmission Unit (MTU)";
+					configd:create "/opt/vyatta/share/tmplscripts/interfaces/l2tpeth/vif/mtu/configd_create.sh";
+					configd:update "/opt/vyatta/share/tmplscripts/interfaces/l2tpeth/vif/mtu/configd_update.sh";
+					configd:delete "/opt/vyatta/share/tmplscripts/interfaces/l2tpeth/vif/mtu/configd_delete.sh";
+				}
+				leaf disable {
+					type empty;
+					configd:help "Disable interface";
+					configd:update "/opt/vyatta/share/tmplscripts/interfaces/l2tpeth/vif/disable/configd_update.sh";
+					configd:delete "/opt/vyatta/share/tmplscripts/interfaces/l2tpeth/vif/disable/configd_delete.sh";
+				}
+				leaf-list address {
+					type if:address;
+					ordered-by "user";
+					configd:help "IP address";
+					configd:create "/opt/vyatta/share/tmplscripts/interfaces/l2tpeth/vif/address/configd_create.sh";
+				}
+				container bridge-group {
+					configd:help "Add this interface to a bridge group";
+					configd:end "/opt/vyatta/share/tmplscripts/interfaces/l2tpeth/vif/bridge-group/configd_end.sh";
+					leaf bridge {
+						type string {
+							pattern "br[0-9]+" {
+								configd:error-message "$VAR(@): not a valid name for a bridge";
+							}
+						}
+						configd:help "Bridge group name";
+						configd:allowed "/opt/vyatta/share/tmplscripts/interfaces/l2tpeth/vif/bridge-group/bridge/configd_allowed.sh";
+						configd:validate "/opt/vyatta/share/tmplscripts/interfaces/l2tpeth/vif/bridge-group/bridge/configd_validate1.cli";
+					}
+				}
+			}
+			leaf-list address {
+				type if:address;
+				ordered-by "user";
+				configd:priority "510";
+				configd:help "IP address";
+				configd:create "/opt/vyatta/share/tmplscripts/interfaces/l2tpeth/address/configd_create.sh";
+				configd:validate "/opt/vyatta/share/tmplscripts/interfaces/l2tpeth/address/configd_validate1.cli";
+			}
+			container l2tp-session {
+				configd:priority "501";
+				configd:help "L2TPv3 static tunnel interface";
+				configd:begin "/opt/vyatta/share/tmplscripts/interfaces/l2tpeth/l2tp-session/configd_begin.sh";
+				configd:validate "/opt/vyatta/share/tmplscripts/interfaces/l2tpeth/l2tp-session/configd_validate.cli";
+				leaf local-ip {
+					type union {
+						type types:ipv4-address;
+						type types:ipv6-address;
+					}
+					configd:help "Local IP address for this tunnel [REQUIRED]";
+				}
+				leaf remote-cookie {
+					type string {
+						pattern "([0-9A-Fa-f]{8}|[0-9A-Fa-f]{16})" {
+							error-message "Cookie must be 8 or 16 hex characters";
+						}
+						configd:pattern-help "<8 or 16 byte hex string (e.g. abcdef01)>";
+					}
+					configd:help "Optional remote cookie for this session";
+				}
+				leaf remote-udp-port {
+					type uint32 {
+						range 1..65535;
+					}
+					configd:help "Remote UDP port for this tunnel";
+				}
+				leaf local-cookie {
+					type string {
+						pattern "([0-9A-Fa-f]{8}|[0-9A-Fa-f]{16})" {
+							error-message "Cookie must be 8 or 16 hex characters";
+						}
+						configd:pattern-help "<8 or 16 byte hex string (e.g. abcdef01)>";
+					}
+					configd:help "Optional local cookie for this session";
+				}
+				leaf local-udp-port {
+					type uint32 {
+						range 1..65535;
+					}
+					configd:help "Local UDP port for this tunnel";
+				}
+				leaf remote-ip {
+					type union {
+						type types:ipv4-address;
+						type types:ipv6-address;
+					}
+					configd:help "Remote IP address for this tunnel [REQUIRED]";
+				}
+				leaf local-session-id {
+					type uint32;
+					configd:help "Local session ID for this tunnel [REQUIRED]";
+					configd:validate "/opt/vyatta/share/tmplscripts/interfaces/l2tpeth/l2tp-session/local-session-id/configd_validate1.cli";
+				}
+				leaf encapsulation {
+					type string;
+					configd:help "Encapsulation of this tunnel interface [REQUIRED]";
+					configd:allowed "/opt/vyatta/share/tmplscripts/interfaces/l2tpeth/l2tp-session/encapsulation/configd_allowed.sh";
+				}
+				leaf remote-session-id {
+					type uint32;
+					configd:help "Remote session ID for this tunnel [REQUIRED]";
+				}
+			}
+			container bridge-group {
+				configd:priority "510";
+				configd:help "Add this interface to a bridge group";
+				configd:end "/opt/vyatta/share/tmplscripts/interfaces/l2tpeth/bridge-group/configd_end.sh";
+				configd:validate "/opt/vyatta/share/tmplscripts/interfaces/l2tpeth/bridge-group/configd_validate1.cli";
+				leaf priority {
+					type uint32 {
+						range 0..63;
+					}
+					configd:help "Bridge port priority";
+				}
+				leaf bridge {
+					type string {
+						pattern "br[0-9]+" {
+							configd:error-message "$VAR(@): not a valid name for a bridge";
+						}
+					}
+					configd:help "Bridge group name";
+					configd:allowed "/opt/vyatta/share/tmplscripts/interfaces/l2tpeth/bridge-group/bridge/configd_allowed.sh";
+					configd:validate "/opt/vyatta/share/tmplscripts/interfaces/l2tpeth/bridge-group/bridge/configd_validate1.cli";
+				}
+				leaf cost {
+					type uint32 {
+						range 1..65535;
+					}
+					configd:help "Bridge port cost";
+				}
+			}
+		}
+	}
+	augment /if:interfaces/interfaces-dataplane:dataplane {
+		container xconnect {
+			configd:priority "525";
+			configd:help "Specify the parameters for cross-connect";
+			configd:end "/opt/vyatta/share/tmplscripts/interfaces/dataplane/xconnect/configd_end.sh";
+			configd:validate "/opt/vyatta/share/tmplscripts/interfaces/dataplane/xconnect/configd_validate.cli";
+			leaf ttl {
+				type uint8 {
+					range 1..127;
+				}
+				configd:help "TTL value";
+			}
+			leaf l2tpeth {
+				type string {
+					pattern "lttp[0-9]+";
+					configd:pattern-help "<lttpN>";
+				}
+				configd:help "L2tpeth interface name";
+				configd:validate "/opt/vyatta/share/tmplscripts/interfaces/dataplane/xconnect/l2tpeth/configd_validate1.cli";
+			}
+		}
+	}
+	augment /if:interfaces/interfaces-dataplane:dataplane/interfaces-dataplane:vif {
+		container xconnect {
+			configd:priority "525";
+			configd:help "L2tpeth interface name";
+			configd:end "/opt/vyatta/share/tmplscripts/interfaces/dataplane/vif/xconnect/configd_end.sh";
+			configd:validate "/opt/vyatta/share/tmplscripts/interfaces/dataplane/vif/xconnect/configd_validate.cli";
+			leaf ttl {
+				type uint8 {
+					range 1..127;
+				}
+				configd:help "TTL value";
+			}
+			leaf l2tpeth {
+				type string {
+					pattern "lttp[0-9]+";
+					configd:pattern-help "lttpN";
+				}
+				configd:help "L2tpeth interface name";
+				configd:validate "/opt/vyatta/share/tmplscripts/interfaces/dataplane/vif/xconnect/l2tpeth/configd_validate1.cli";
+			}
+		}
+	}
+}

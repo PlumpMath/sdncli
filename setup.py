@@ -7,8 +7,12 @@ setup(
     author_email='gberger@brocade.com',
     maintainer='gberger@brocade.com',
     packages=find_packages(),
-    scripts=['bvc',
-             'lib/flow_parse.py'],
     install_requires=['docopt',
-                      'ncclient'],
+                      'requests',
+                      'prettytable'],
+    entry_points={
+        'console_scripts': [
+            'bvccli = bvccli.__main__:main',
+        ],
+    },
     license="Apache License")

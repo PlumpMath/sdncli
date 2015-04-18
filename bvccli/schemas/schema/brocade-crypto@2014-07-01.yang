@@ -1,0 +1,112 @@
+/***************************************************************************
+ *   Copyright (C) 2014 Brocade Communications Systems, Inc.               *
+ *   All rights reserved.                                                  *
+ *   Author : Soundarya Ravi                                               *
+ ***************************************************************************/
+
+module brocade-crypto {
+    namespace "urn:brocade.com:mgmt:brocade-crypto";
+    prefix "brcd-crypto";
+
+    import tailf-common {
+        prefix tailf;
+    }
+
+    import brocade-common-def {
+        prefix common-def;
+    }
+
+    import brocade-rbridge {
+        prefix rbridge;
+    }
+
+    organization
+        "Brocade Communications Systems, Inc.";
+
+        contact
+        "Brocade Communications Systems, Inc.
+         Postal: 130 Holger Way
+                 San Jose, CA 95134
+                  U.S.A
+         Tel: +1-408-333-8000
+         E-mail: support@Brocade.com
+         web: www.brocade.com.";
+
+        description
+        "Instrument to configure Crypto services for HTTPS Certificate Management";
+
+        revision "2014-07-01" {
+        description
+            "Initial version of this module.";
+        }
+
+    
+
+    typedef key-type {
+        type enumeration {
+            enum rsa {
+                value 0;
+            }
+             enum dsa {
+                value 1;
+            }
+             enum ecdsa {
+                value 2;
+            }
+        }
+    }
+
+    grouping crypto-group {
+        container crypto {
+            list key {
+                key "label";
+                max-elements 1;
+                leaf label {
+                    type string {
+                        length "1..64" {
+                            error-message "Key Label length should be in the
+                                           range 1-64";
+                         }
+                   }
+                }
+                leaf type {
+                    type key-type;
+                }
+                leaf modulus {
+                    type uint32 {
+                        range "256..2048" {
+                            error-message "Key Size should be in the
+                                           range 256-2048";
+                         }
+                   }
+                }
+            }
+            list ca {
+                key "trustpoint";
+                max-elements 1;
+                leaf trustpoint {
+                    type string {
+                        length "1..64" {
+                            error-message "Trustpoint name length should be in the
+                                           range 1-64";
+                         }
+                   }
+                }
+                leaf keypair {
+                     type string {
+                        length "0..64" {
+                            error-message "Keypair label length should be in the
+                                           range 0-64";
+                         }
+                     }
+                     default "";
+                }
+            }
+         }
+    }
+
+    augment "/rbridge:rbridge-id" {
+        uses crypto-group;
+    }
+}
+

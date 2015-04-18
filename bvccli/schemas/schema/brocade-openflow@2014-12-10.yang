@@ -1,0 +1,268 @@
+/***********************************************************************
+ * brocade-openflow.yang: Brocade openflow data model
+ *
+ * December 2014, Sachin Rastogi
+ * Copyright (c) 2014 by Brocade Communications Systems, Inc.
+ * All rights reserved.
+ *
+ **********************************************************************/
+module brocade-openflow {
+	namespace "urn:brocade.com:mgmt:brocade-openflow";
+	prefix "openflow";
+
+	import tailf-common {
+        prefix tailf;
+    }
+
+	import ietf-inet-types {
+        prefix "inet";
+    }
+
+	import brocade-rbridge {
+        prefix rbridge;
+    }
+
+	import brocade-interface {
+        prefix interface;
+    }
+
+    organization
+        "Brocade Communications Systems, Inc.";
+
+    contact
+        "Brocade Communications Systems, Inc.
+         Postal: 1745 Technology Drive,
+                 San Jose, CA 95110
+                  U.S.A
+         Tel: +1-408-392-6061
+         E-mail: support@Brocade.com
+         web: www.brocade.com.";
+
+    description
+         "This module describes the data model for OpenFlow";
+
+    revision "2014-12-10" {
+        description
+            "Initial version of this management module.";
+    }
+
+	typedef name32-type {
+        description
+            "Defines common type for names. Name can contain maximum of
+            32 characters. Alphabets, digits, hyphen and underscore
+            charcters are allowed.";
+        type string {
+            pattern '[-_a-zA-Z0-9]{1,32}';
+        }
+    }
+
+	typedef openflow-controller-name-type {
+        type name32-type {
+        }
+    }
+
+	list openflow-controller {
+        //tailf:cli-full-command;
+
+        key "controller-name";
+        //max-elements 1;
+        description
+            "OpenFlow controller configuration";
+
+        leaf controller-name {
+            type openflow-controller-name-type;
+            description
+                "OpenFlow controller name";
+        }
+
+		container connection-address {
+            description
+                "IP address, connection method and port configuration";
+
+            leaf controller-address {
+                type inet:ip-address {
+                }
+                description
+                    "IP address of the OpenFlow controller. Only IPv4 address
+                    is supported.";
+            }
+
+            leaf connection-method {
+                type enumeration {
+                    enum no-ssl {
+                        value 1;
+                    }
+                    enum ssl {
+                        value 2;
+                    }
+                }
+                description
+                    "This parameter defines the connection method to be
+                    used to connect to OpenFlow controller. By default no-ssl is
+                    used";
+                default no-ssl;
+            }
+
+            leaf connection-port {
+                //tailf:cli-break-sequence-commands;
+                type uint32 {
+                    range "1..65535" {
+                    }
+                }
+                description
+                    "TCP port number for the OpenFlow controller.";
+                //default 6632;
+            }
+        }
+	}
+
+	augment /rbridge:rbridge-id {
+		container openflow {
+			description
+				"OpenFlow configuration.";
+
+			list logical-instance {
+				description
+					"OpenFlow logical instance configuration. There can be multiple
+					 logical instances under a physical switch.";
+        		key "instance-id";
+                max-elements 1; /* Currently only 1 logical-instance is allowed */
+
+        		leaf instance-id {
+            		type uint32;
+            		description
+                		"OpenFlow logical instance id";
+        		}
+
+				list version {
+					description "OpenFlow version";
+					key "version-name";
+
+					leaf version-name {
+                		type enumeration {
+                    		enum ofv130 {
+                        		value 1;
+                    		}
+                		}
+					}
+				}
+
+				list controller {
+					description "OpenFlow controller name";
+					key "controller-name";
+                    //max-elements 1;
+
+					leaf controller-name {
+						description
+							"OpenFlow controller name";
+            			type openflow-controller-name-type;
+					}
+				}
+
+				container passive {
+					description
+						"Passive controller connection";
+
+					container no-ssl {
+						description "No ssl connection";
+
+						leaf passive-controller-flag {
+                			type empty;
+            			}
+
+						leaf passive-controller-ip-address {
+							//tailf:cli-full-no;
+                			type inet:ip-address {
+                			}
+                			description
+                    			"IP address of the OpenFlow controller. Only IPv4 address
+                    			is supported.";
+						}
+
+						leaf passive-controller-port {
+                			type uint32 {
+                    			range "1..65535" {
+                    			}
+                			}
+						}
+					}
+				}
+
+				leaf default-forwarding-action {
+					description
+						"Default MISS behavior for this logical instance";
+                	type enumeration {
+                    	enum send-to-controller {
+                        	value 1;
+                    	}
+                    	enum drop {
+                        	value 2;
+                    	}
+					}
+					default drop;
+				}
+
+				leaf activate {
+					description
+						"Activate this logical instance";
+					type empty;
+				}
+			}
+		}
+    }
+
+	grouping openflow-interface-config {
+		container openflow-interface-cfg {
+			description
+				"OpenFlow configuration.";
+
+			leaf logical-instance-id {
+				//tailf:cli-suppress-mode;
+				description
+					"OpenFlow logical instance configuration. There can be multiple
+					 logical instances under a physical switch.";
+            	type uint32;
+			}
+
+            container openflow-enable {
+         
+			    leaf enable {
+				    description
+					    "OpenFlow enable";
+                    type empty;
+				    //presence true;
+                }
+
+				leaf match-profile {
+       				description "OpenFlow match profile";
+               		type enumeration {
+                   	    enum Layer2 {
+                       	    value 1;
+                   		}
+
+                   		enum Layer3 {
+                       	    value 2;
+                   		}
+               	    }
+					default Layer2;
+				}
+            }
+		}
+	}
+
+    augment /interface:interface/interface:gigabitethernet {
+        uses openflow-interface-config;
+    }
+
+    augment /interface:interface/interface:tengigabitethernet {
+        uses openflow-interface-config;
+    }
+
+	augment /interface:interface/interface:fortygigabitethernet {
+        uses openflow-interface-config;
+    }
+
+    augment /interface:interface/interface:hundredgigabitethernet {
+        uses openflow-interface-config;
+    }
+}

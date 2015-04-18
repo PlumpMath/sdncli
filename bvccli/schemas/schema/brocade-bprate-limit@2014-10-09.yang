@@ -1,0 +1,87 @@
+/***********************************************************************
+ * brocade-bprate-limit.yang: Brocade BP rate-limit Management Module
+ *
+ * July 2011, Srikanth Mulakaluri
+ * Revision by Ankit Jindal
+ *
+ * Copyright (c) 2011, 2012 by Brocade Communications Systems, Inc.
+ * All rights reserved.
+ *
+ **********************************************************************/
+module brocade-bprate-limit {
+    namespace "urn:brocade.com:mgmt:brocade-bprate-limit";
+    prefix bprate-limit;
+
+	/* Linkage Statements */
+
+    import tailf-common {
+	   prefix tailf;
+    }
+
+    import brocade-rbridge {
+        prefix rbridge;
+    }
+
+	organization
+		"Brocade Communications Systems, Inc.";
+
+	contact
+		"Brocade Communications Systems, Inc.
+		Postal: 130 Holger way,
+		San Jose, CA 95134,
+		U.S.A
+			Tel: +1-408-333-8000
+			E-mail: support@Brocade.com
+			web: www.brocade.com.";
+
+	description
+		"This management module is an instrumentation to manage
+		 Bp Ratelimit module";
+
+    revision "2014-10-09" {
+        description     
+            "Initial version of this management module.";
+    }         
+
+    typedef ui32-slot-range {
+        type string {
+                    pattern '(([0-9][0-9]{0,1})|(1[0-9]{2})|(2[0-3][0-9]))'
+                    + '(-((1[0-9]{0,1})|([2-9][0-9]{0,1})|(1[0-9]{2})|(2[0-3][0-9])))?'
+                    + '((,((1[0-9]{0,1})|([2-9][0-9]{0,1})|(1[0-9]{2})|(2[0-3][0-9]))'
+                    + '(-((1[0-9]{0,1})|([2-9][0-9]{0,1})|(1[0-9]{2})|(2[0-3][0-9])))?)?)*'
+                    {
+                        error-message "Invalid slot/module number or range. Slot number must be in the range 1..16";
+                    }
+                }
+    }    
+
+    typedef slotnumber {
+        type uint32 {
+            range 0..16 {
+                error-message "Invalid slot/module number.";
+            }
+        }
+    }
+
+    grouping rbridge-cmds {
+      container bp-rate-limit {
+          container heavy {
+              leaf bp-rate-limit-slot-range {
+                    type ui32-slot-range;   
+              }
+
+              /*list bp-rate-limit-slot {
+                  key bp-rate-limit-slot-num;
+                  leaf bp-rate-limit-slot-num {
+                      type slotnumber;
+                  }
+              }*/
+          }
+      } 
+    }
+
+    augment "/rbridge:rbridge-id" {
+            uses rbridge-cmds;
+        }
+
+}

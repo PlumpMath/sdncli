@@ -1,0 +1,276 @@
+/************************************************************
+ * brocade-rtm.yang: Brocade RTM data model.
+ *
+ * 28/09/2011 - DCE L3 Team
+ *
+ * Copyright (c) 2010 by Brocade Communications Systems, Inc.
+ * All rights reserved.
+ *
+ ************************************************************/
+
+module brocade-rtm {
+    namespace "urn:brocade.com:mgmt:brocade-rtm";
+    prefix rtm;
+
+    import brocade-rbridge {
+        prefix rbridge;
+    }
+
+    import brocade-common-def {
+        prefix common-def;
+    }
+
+    import brocade-vcs {
+        prefix "vcs";
+    }
+
+    import tailf-common {
+        prefix "tailf";
+    }
+
+    import ietf-inet-types {
+        prefix "inet";
+    }
+    import brocade-vrf { prefix vrf; }
+
+    /* Meta Information */
+
+    organization
+        "Brocade Communications Systems, Inc.";
+    
+    contact 
+        "Brocade Communications Systems, Inc.
+         Postal: 130 Holger Way
+                 San Jose, CA 95134
+                  U.S.A
+         Tel: +1-408-333-8000
+         E-mail: support@Brocade.com 
+         web: www.brocade.com.";
+
+    description
+        "This management module is for IP Routes.";
+
+
+    revision "2011-09-28" {
+        description
+            "Initial version of this management module.";
+    }
+
+
+    typedef nexthop-id-type {
+        description
+            "Nexthop entry ID";
+        type uint32;
+    }
+
+    grouping dynamic-leak-config
+    {
+        container import 
+        {
+            list routes
+            {
+                description "import IPV4 routes";
+                key "src-vrf route-map";
+                leaf src-vrf {
+                    type common-def:vrf-name;
+                }
+                leaf route-map {
+                    type common-def:name-string63;
+                }
+             }
+        }
+    }
+
+
+    grouping route-attrib {
+        container route-attributes {
+            leaf metric {
+                type uint32 {
+                    range "1..16" {
+                        error-message 
+                            "% Error: Value out of range at '^' marker";
+                    }
+                }
+            }
+            leaf distance {
+                type uint32 {
+                    range "1..254" {
+                        error-message
+                            "% Error: Value out of range at '^' marker";
+                    }
+                }
+            }  
+            leaf tag {
+                type uint32 {
+                }
+                description
+                    "Tag can be configured to filter the static routes
+                     for route redistribution.
+                     Default value is 0, indicating no tag.";
+            }
+        }
+    }
+
+    grouping bfd-static-route-config {
+        list bfd-static-route {
+            key "bfd-static-route-dest bfd-static-route-src";
+            leaf bfd-static-route-dest {
+                type inet:ipv4-address;
+            }
+
+            leaf bfd-static-route-src {
+                type inet:ipv4-address;
+            }
+
+            container  bfd-interval-attributes {
+                leaf interval {
+                    type uint16 {
+                        range "50..30000" {
+                        }
+                    }
+                }
+                leaf min-rx {
+                    type uint16 {
+                        range "50..30000" {
+                        }
+                    }
+                }
+                leaf multiplier {
+                    type uint8 {
+                        range "3..50" {
+                        }
+                    }
+                }
+           }
+        }
+
+    }
+
+    grouping bfd-holdover-interval-config
+    {
+        leaf holdover-interval {
+            type uint8 {
+                range "0..30" {
+                }
+            }
+        } 
+    }
+
+    grouping rtm-cmds {
+        container rtm-config {
+            leaf router-id {  
+                type inet:ipv4-address;
+            }
+            leaf load-sharing {
+                type uint32 {
+                    range "1..32" {
+                        error-message
+                            "% Error: Value out of range at '^' marker";
+                    }
+                }
+            }
+
+            uses rtm-route-config;
+        }
+    }
+
+    grouping rtm-route-config {
+        container route {
+
+
+            list static-route-nh {
+                key "static-route-dest static-route-next-hop";
+                leaf static-route-dest {
+                    type inet:ipv4-prefix;
+                }
+
+                leaf static-route-next-hop {
+                    type inet:ipv4-address;
+                }
+                uses route-attrib;
+            }
+            list static-route-nh-vrf {
+                key "static-route-next-vrf-dest next-hop-vrf static-route-next-hop";
+                leaf static-route-next-vrf-dest {
+                    type inet:ipv4-prefix;
+                }
+                leaf next-hop-vrf {
+                   type string {
+                   }
+                }
+                leaf static-route-next-hop {
+                    type inet:ipv4-address;
+                }
+            }
+            list static-route-oif {
+                key "static-route-dest static-route-oif-type static-route-oif-name";
+                leaf static-route-dest {
+                    type inet:ipv4-prefix;
+                }
+                leaf static-route-oif-type {
+                    type enumeration {
+                        enum tengigabitethernet { 
+                            value 1; 
+                        }
+                        enum gigabitethernet { 
+                            value 2; 
+                        }
+                        enum ve {
+                            value 4; 
+                        }
+                        enum null {
+                            value 5; 
+                        }   
+                        enum fortygigabitethernet {
+                            value 6; 
+                        }
+                        enum hundredgigabitethernet {
+                            value 7;
+                        }
+
+                    }
+                }
+                leaf static-route-oif-name {
+                    // slot/port for physical interface. number for others 
+                    type string {
+                        length "1..16";
+                    }
+                }
+                uses route-attrib;
+            }
+
+            container static {
+                container bfd {
+                    uses bfd-static-route-config;
+                }
+           }
+        }            
+    }
+
+    augment "/rbridge:rbridge-id/rbridge:ip" {
+        when '/vcs:vcsmode/vcs:vcs-mode = "true"';
+        uses rtm-cmds;
+        uses dynamic-leak-config;
+    }
+
+    augment "/rbridge:rbridge-id/rbridge:ip/rtm:rtm-config/rtm:route/rtm:static/rtm:bfd" {
+        when '/vcs:vcsmode/vcs:vcs-mode = "true"';
+        uses bfd-holdover-interval-config;
+    }
+
+    augment "/common-def:ip" {
+        when '/vcs:vcsmode/vcs:vcs-mode = "false"';
+        uses rtm-cmds;
+    }
+
+    augment "/rbridge:rbridge-id/vrf:vrf/vrf:address-family/vrf:ip/vrf:unicast" {
+        container ip {
+            description "rtm commands";
+            uses rtm-route-config;
+            uses dynamic-leak-config;
+        }
+
+    }
+
+}
+

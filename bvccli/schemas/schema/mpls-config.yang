@@ -1,0 +1,379 @@
+// YANG submodule for MPLS configuration definitions.
+// Revisions:
+//     2011-04-20: Initial version.
+//
+
+submodule mpls-config
+{
+    belongs-to netiron-config 
+    {
+        prefix brcd;
+    }
+    
+    import common-defs
+    {
+        prefix "common";
+    }
+
+    
+    organization 
+        "Brocade Communications Inc.";
+
+    contact 
+             "Technical Support Center"+
+             "130 Holger Way,"+
+             "San Jose, CA  95134"+
+             "Email:  ipsupport@brocade.com"+
+             "Phone: 1-800-752-8061"+
+             "URL:  www.brocade.com";
+
+    description "This module defines the Router MPLS configuration. VERSION: V5.8.00a";
+    
+    revision 2011-04-20
+    {
+        description "Initial revision";
+    }
+
+    typedef hop-limit-type
+    {
+        type uint32
+        {
+            range "0..255";
+        }
+        description "Type for Limit of hops";
+    }
+
+    typedef mpls-path-type
+    {
+        type string
+        {
+            length "1..64";
+        }
+        description "Path Name";
+    }
+
+    grouping mpls-priority-grouping
+    {
+        description "MPLS Setup and hold priority group";
+        container mpls-priority
+        {
+            description "Setup and hold priority";
+            
+            leaf setup-priority
+            {
+                type uint32
+                {
+                    range "0..7";
+                }
+                mandatory "true";
+                description "Setup priority";
+            }
+
+            leaf hold-priority
+            {
+                type uint32
+                {
+                    range "0..7";
+                }
+                mandatory "true";
+                description "Hold priority";
+            }
+        } //end container mpls-priority
+        
+    } //end grouping mpls-priority-grouping
+
+    grouping mpls-traffic-eng-grouping
+    {
+        description "MPLS Traffic Engineering parameters group";
+        
+        container mpls-traffic-eng
+        {
+            description "MPLS Traffic Engineering parameters";
+            
+            leaf max-burst
+            {
+                type uint32
+                {
+                    range "0..2147483647";
+                }
+                units "Bytes";
+                description "Maximum burst";
+            }
+            
+            leaf max-rate
+            {
+                type uint32
+                {
+                    range "0..2147483647";
+                }
+                units "Kilobits per second";
+                description "Maximum traffic rate";
+            }
+            
+            leaf mean-rate
+            {
+                type uint32
+                {
+                    range "0..2147483647";
+                }
+                units "Kilobits per seconds";
+                description "Mean traffic rate";
+            }
+            
+        } // end container mpls-traffic-eng
+        
+    } //end grouping mpls-traffic-eng-grouping
+
+    grouping mpls-path-grouping
+    {
+        description "MPLS Explicit Path configuration group";
+        list path
+        {
+            key "name";
+            description "Explicit route path";
+            leaf name
+            {
+                type mpls-path-type;
+                description "Path Name";
+            }
+            leaf-list strict
+            {
+                type common:ipv4_address;
+                description "Strict node";
+            }
+
+            leaf-list loose
+            {
+                type common:ipv4_address;
+                description "Loose node";
+            }
+            
+            list insert-strict
+            {
+                key "addr before";
+                description "Insert Strict nodes";
+                leaf addr
+		{
+		    type common:ipv4_address;
+		    description "Strict node";
+		}
+		leaf before
+		{
+		    type common:ipv4_address;
+		   description "Insert before this node";
+		}
+            }
+
+            list insert-loose
+            {
+                key "addr before";
+                description "Insert Loose nodes";
+                leaf addr
+		{
+		    type common:ipv4_address;
+		    description "Loose node";
+		}
+		leaf before
+		{
+		    type common:ipv4_address;
+		   description "Insert before this node";
+		}
+            }
+
+        } //end list path
+
+    } //end grouping mpls-path-grouping
+
+    grouping mpls-lsp-grouping
+    {
+        description "MPLS LSP configuration group";
+        list lsp
+        {
+            key "name";
+            description "MPLS Signaled label switched "+
+                     "path configuration";
+            
+            leaf name
+            {
+                type string
+                {
+                    length "1..64";
+                }
+                description "LSP name";
+            }
+            
+            leaf adaptive
+            {
+                type empty;
+                description "Enable LSP to be modified on fly";
+            }
+
+            leaf commit
+            {
+                type empty;
+                description "Apply the parameter modifications to LSP";
+            }
+        
+            choice admin-status-choice
+            {
+                description "Enable/Tear down the LSP";
+                
+                case enable
+                {
+                    leaf enable
+                    {
+                        type empty;
+                        description "Enable the LSP";
+                    }
+                }
+                case disable
+                {
+                    leaf disable
+                    {
+                        type empty;
+                        description "Tear down the LSP";
+                    }
+                }
+            } // end choice admin-status-choice
+            
+            leaf from
+            {
+                type common:ipv4_address;
+                description "Ingress router of the LSP";
+            }
+            
+            leaf to
+            {
+                type common:ipv4_address;
+                description "Egress router of the LSP";
+            }
+
+            leaf hop-limit
+            {
+                type hop-limit-type;
+                description "Limit of hops the LSP can traverse";
+            }
+            
+            leaf ipmtu
+            {
+                type uint32
+                {
+                    range "576..9194";
+                }
+                description "IP Packet MTU size";
+            }
+            
+            leaf ldp-tunneling
+            {
+                type empty;
+                description " Enable LDP over RSVP tunneling";
+            }
+            
+            leaf metric
+            {
+                type uint32
+                {
+                    range "1..65535";
+                }
+                description "LSP metric";
+            }
+            
+            leaf primary-path
+            {
+                type mpls-path-type;
+                description "LSP Primary explicit path";
+            }
+            
+            uses mpls-priority-grouping;
+            
+            leaf record
+            {
+                type empty;
+                description "Enable recording path routes";
+            }
+            
+            leaf reoptimize-timer
+            {
+                type uint32
+                {
+                    range "300..65535";
+                }
+                units "seconds";
+                description "Reoptimize timer value";
+            }
+            
+            leaf revert-timer
+            {
+                type uint32
+                {
+                    range "1..65535";
+                }
+                units "seconds";
+                description "LSP revert timer";
+            }
+
+            uses mpls-traffic-eng-grouping;
+           
+            list secondary-path
+            {
+                key "name";
+                description "Secondary Path configuration";
+                leaf name
+                {
+                    type mpls-path-type;
+                    description "Name of the Secondary Path";
+                }
+            }     
+
+           
+        } //end list lsp
+        
+    }// end grouping mpls-lsp-grouping
+
+    grouping mpls-rsvp-grouping
+    {
+        description "MPLS RSVP configuration group";
+        container rsvp
+        {
+            description "MPLS RSVP configuration";
+            
+            leaf refresh-interval
+            {
+                type uint32
+                {
+                    range "1..360"; 
+                }
+                units "seconds";
+                description "Avg. interval between " + 
+                        "refresh path and resv msgs";
+            }
+            
+            leaf refresh-multiple
+            {
+                type uint32
+                {
+                   range "1..255";
+                }
+                description "Num of unresponded path " +
+                       "or resv before time out";
+            }
+            
+        }//end container rsvp    
+        
+    } //end grouping mpls-rsvp-grouping
+
+    grouping mpls-config-grouping
+    {
+        description "Router MPLS configuration group";
+        container mpls-config
+        {
+            description "Router MPLS configuration";
+            uses mpls-path-grouping;
+            uses mpls-lsp-grouping;
+            uses mpls-rsvp-grouping;
+
+        } //end container mpls-config
+        
+    } //end grouping mpls-config-grouping
+    
+} // end submodule mpls-config  

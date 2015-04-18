@@ -1,0 +1,659 @@
+module vyatta-security-vpn-ipsec {
+	namespace "urn:vyatta.com:mgmt:vyatta-security-vpn-ipsec";
+	prefix security-vpn-ipsec;
+
+	import vyatta-security {
+		prefix security;
+	}
+	import vyatta-types {
+		prefix types;
+	}
+	import configd {
+		prefix configd;
+	}
+
+	organization "Brocade Communications Systems, Inc.";
+	contact
+		"Brocade Communications Systems, Inc.
+		 Postal: 130 Holger Way
+		         San Jose, CA 95134
+		 E-mail: support@Brocade.com
+		 Web: www.brocade.com";
+
+	revision 2014-08-27 {
+		description "Initial revision.";
+		configd:migration 1;
+	}
+
+	augment /security:security {
+		container vpn {
+			presence "true";
+			configd:priority "900";
+			configd:help "Virtual Private Network (VPN)";
+			configd:end "/opt/vyatta/share/tmplscripts/security/vpn/configd_end.sh";
+			container rsa-keys {
+				presence "true";
+				configd:help "RSA keys";
+				list rsa-key-name {
+					configd:help "Name of remote RSA key";
+					key "tagnode";
+					leaf tagnode {
+						type string;
+						configd:help "Name of remote RSA key";
+					}
+					leaf rsa-key {
+						type string;
+						configd:help "Remote RSA key";
+					}
+				}
+				container local-key {
+					presence "true";
+					configd:help "Local RSA key";
+					leaf file {
+						type string {
+							configd:syntax "/opt/vyatta/share/tmplscripts/security/vpn/rsa-keys/local-key/file/configd_syntax1.cli";
+						}
+						configd:help "Local RSA key file location";
+						default "/opt/vyatta/etc/config/ipsec.d/rsa-keys/localhost.key";
+					}
+				}
+			}
+			container ipsec {
+				presence "true";
+				configd:help "VPN IP security (IPsec) parameters";
+				container logging {
+					presence "true";
+					configd:help "IPsec logging";
+					leaf-list log-modes {
+						type enumeration {
+							enum "raw" {
+								configd:help "Debug log option for pluto";
+							}
+							enum "crypt" {
+								configd:help "Debug log option for pluto";
+							}
+							enum "parsing" {
+								configd:help "Debug log option for pluto";
+							}
+							enum "emitting" {
+								configd:help "Debug log option for pluto";
+							}
+							enum "control" {
+								configd:help "Debug log option for pluto";
+							}
+							enum "all" {
+								configd:help "Debug log option for pluto";
+							}
+							enum "private" {
+								configd:help "Debug log option for pluto";
+							}
+						}
+						ordered-by "user";
+						configd:help "Log mode";
+					}
+				}
+				leaf auto-update {
+					type uint32 {
+						range 30..65535 {
+							error-message "auto-update interval must be between 30 and 65535";
+						}
+					}
+					configd:help "Set auto-update interval for IPsec daemon.";
+				}
+				leaf disable-uniqreqids {
+					type empty;
+					configd:help "Option to disable requirement for unique IDs in the Security Database";
+				}
+				container site-to-site {
+					presence "true";
+					configd:help "Site to site VPN";
+					list peer {
+						configd:help "VPN peer";
+						key "tagnode";
+						leaf tagnode {
+							type string;
+							configd:help "VPN peer";
+						}
+						container authentication {
+							presence "true";
+							configd:help "Peer authentication [REQUIRED]";
+							leaf rsa-key-name {
+								type string {
+									pattern "[-_a-zA-Z0-9\.]+" {
+										configd:error-message "invalid RSA key name \"$VAR(@)\"";
+									}
+								}
+								configd:help "RSA key name";
+							}
+							leaf pre-shared-secret {
+								type string {
+									pattern "[-\+&!@#$%\^\*\(\),\.:_a-zA-Z0-9]+" {
+										configd:error-message "invalid pre-shared secret key \"$VAR(@)\"
+
+Only these characters are allowed to be used for setting pre-shared secret key :
+alphanumeric characters      a-z A-Z 0-9
+special characters           - + & ! @ # $ % ^ * ( ) , . : _
+
+Use of single quotes to set pre-shared secret key is recommended.
+Example usage : 'aA1-&!@,.:_2Bb'
+";
+									}
+								}
+								configd:help "Pre-shared secret key";
+								configd:comp_help "/opt/vyatta/share/tmplscripts/security/vpn/ipsec/site-to-site/peer/authentication/pre-shared-secret/configd_comp_help.txt";
+							}
+							leaf remote-id {
+								type string {
+									pattern "[ -~]+" {
+										configd:error-message "invalid ID \"$VAR(@)\"";
+									}
+								}
+								configd:help "ID for remote authentication";
+							}
+							container x509 {
+								presence "true";
+								configd:help "X.509 certificate";
+								leaf ca-cert-file {
+									type string {
+										configd:syntax "/opt/vyatta/share/tmplscripts/security/vpn/ipsec/site-to-site/peer/authentication/x509/ca-cert-file/configd_syntax1.cli";
+									}
+									configd:help "File containing the X.509 certificate for the Certificate Authority (CA)";
+								}
+								container key {
+									presence "true";
+									configd:help "Key file and password to open it";
+									leaf password {
+										type string;
+										configd:secret "true";
+										configd:help "Password that protects the private key";
+									}
+									leaf file {
+										type string {
+											configd:syntax "/opt/vyatta/share/tmplscripts/security/vpn/ipsec/site-to-site/peer/authentication/x509/key/file/configd_syntax1.cli";
+										}
+										configd:help "File containing the private key for the X.509 certificate for this host";
+									}
+								}
+								leaf cert-file {
+									type string {
+										configd:syntax "/opt/vyatta/share/tmplscripts/security/vpn/ipsec/site-to-site/peer/authentication/x509/cert-file/configd_syntax1.cli";
+									}
+									configd:help "File containing the X.509 certificate for this host";
+								}
+								leaf crl-file {
+									type string {
+										configd:syntax "/opt/vyatta/share/tmplscripts/security/vpn/ipsec/site-to-site/peer/authentication/x509/crl-file/configd_syntax1.cli";
+									}
+									configd:help "File containing the X.509 Certificate Revocation List (CRL)";
+								}
+							}
+							leaf mode {
+								type enumeration {
+									enum "pre-shared-secret" {
+										configd:help "Use pre-shared secret key";
+									}
+									enum "x509" {
+										configd:help "Use X.509 certificate";
+									}
+									enum "rsa" {
+										configd:help "Use RSA key";
+									}
+								}
+								configd:help "Authentication mode";
+								default "pre-shared-secret";
+							}
+							leaf id {
+								type string {
+									pattern "[ -~]+" {
+										configd:error-message "invalid ID \"$VAR(@)\"";
+									}
+								}
+								configd:help "ID for peer authentication";
+							}
+						}
+						leaf description {
+							type string;
+							configd:help "VPN peer description";
+						}
+						list tunnel {
+							configd:help "Peer tunnel [REQUIRED]";
+							key "tagnode";
+							leaf tagnode {
+								type uint32;
+								configd:help "Peer tunnel [REQUIRED]";
+							}
+							container local {
+								presence "true";
+								configd:help "Local parameters for interesting traffic";
+								leaf prefix {
+									type union {
+										type types:ipv4-prefix;
+										type types:ipv6-prefix;
+									}
+									configd:help "Local IPv4 or IPv6 prefix";
+								}
+								leaf port {
+									type string;
+									configd:help "Any TCP or UDP port";
+								}
+							}
+							container remote {
+								presence "true";
+								configd:help "Remote parameters for interesting traffic";
+								leaf prefix {
+									type union {
+										type types:ipv4-prefix;
+										type types:ipv6-prefix;
+									}
+									configd:help "Remote IPv4 or IPv6 prefix";
+								}
+								leaf port {
+									type string;
+									configd:help "Any TCP or UDP port";
+								}
+							}
+							leaf allow-public-networks {
+								type enumeration {
+									enum "enable" {
+										configd:help "Enable public networks";
+									}
+									enum "disable" {
+										configd:help "Disable public networks (default)";
+									}
+								}
+								configd:help "Option to allow public networks";
+								default "disable";
+							}
+							leaf allow-nat-networks {
+								type enumeration {
+									enum "enable" {
+										configd:help "Enable NAT networks";
+									}
+									enum "disable" {
+										configd:help "Disable NAT networks (default)";
+									}
+								}
+								configd:help "Option to allow NAT networks";
+								default "disable";
+							}
+							leaf disable {
+								type empty;
+								configd:help "Option to disable vpn tunnel";
+							}
+							leaf esp-group {
+								type string;
+								configd:help "ESP group name";
+								configd:allowed "/opt/vyatta/share/tmplscripts/security/vpn/ipsec/site-to-site/peer/tunnel/esp-group/configd_allowed.sh";
+							}
+							leaf protocol {
+								type string {
+									configd:syntax "/opt/vyatta/share/tmplscripts/security/vpn/ipsec/site-to-site/peer/tunnel/protocol/configd_syntax1.cli";
+								}
+								configd:help "Protocol to encrypt";
+								configd:allowed "/opt/vyatta/share/tmplscripts/security/vpn/ipsec/site-to-site/peer/tunnel/protocol/configd_allowed.sh";
+							}
+						}
+						leaf local-address {
+							type string {
+								configd:syntax "/opt/vyatta/share/tmplscripts/security/vpn/ipsec/site-to-site/peer/local-address/configd_syntax1.cli";
+							}
+							configd:help "IPv4 or IPv6 address of a local interface to use for VPN";
+							configd:allowed "/opt/vyatta/share/tmplscripts/security/vpn/ipsec/site-to-site/peer/local-address/configd_allowed.sh";
+						}
+						leaf dhcp-interface {
+							type string;
+							configd:help "DHCP interface to listen on";
+							configd:allowed "/opt/vyatta/share/tmplscripts/security/vpn/ipsec/site-to-site/peer/dhcp-interface/configd_allowed.sh";
+						}
+						leaf default-esp-group {
+							type string;
+							configd:help "Defult ESP group name";
+							configd:allowed "/opt/vyatta/share/tmplscripts/security/vpn/ipsec/site-to-site/peer/default-esp-group/configd_allowed.sh";
+						}
+						container vti {
+							presence "true";
+							configd:help "Virtual tunnel interface [REQUIRED]";
+							leaf esp-group {
+								type string;
+								configd:help "ESP group name [REQUIRED]";
+								configd:allowed "/opt/vyatta/share/tmplscripts/security/vpn/ipsec/site-to-site/peer/vti/esp-group/configd_allowed.sh";
+							}
+							leaf bind {
+								type string;
+								configd:help "VTI tunnel interface associated with this configuration [REQUIRED]";
+								configd:allowed "/opt/vyatta/share/tmplscripts/security/vpn/ipsec/site-to-site/peer/vti/bind/configd_allowed.sh";
+							}
+						}
+						leaf connection-type {
+							type enumeration {
+								enum "initiate" {
+									configd:help "This endpoint can initiate or respond to a connection";
+								}
+								enum "respond" {
+									configd:help "This endpoint will only respond to a connection";
+								}
+							}
+							configd:help "Connection type";
+							default "initiate";
+						}
+						leaf ike-group {
+							type string;
+							configd:help "Internet Key Exchange (IKE) group name [REQUIRED]";
+							configd:allowed "/opt/vyatta/share/tmplscripts/security/vpn/ipsec/site-to-site/peer/ike-group/configd_allowed.sh";
+						}
+					}
+				}
+				container nat-networks {
+					presence "true";
+					configd:help "Network Address Translation (NAT) networks";
+					list allowed-network {
+						configd:help "NAT networks to allow";
+						key "tagnode";
+						leaf tagnode {
+							type types:ipv4-prefix;
+							configd:help "NAT networks to allow";
+						}
+						leaf-list exclude {
+							type types:ipv4-prefix;
+							ordered-by "user";
+							configd:help "NAT networks to exclude from allowed-networks";
+						}
+					}
+				}
+				list profile {
+					configd:help "VPN IPSec Profile";
+					key "tagnode";
+					leaf tagnode {
+						type string;
+						configd:help "VPN IPSec Profile";
+					}
+					container authentication {
+						presence "true";
+						configd:help "Authentication [REQUIRED]";
+						leaf pre-shared-secret {
+							type string {
+								pattern "[-\+&!@#$%\^\*\(\),\.:_a-zA-Z0-9]+" {
+									configd:error-message "invalid pre-shared secret key \"$VAR(@)\"
+
+Only these characters are allowed to be used for setting pre-shared secret key :
+alphanumeric characters      a-z A-Z 0-9
+special characters           - + & ! @ # $ % ^ * ( ) , . : _
+
+Use of single quotes to set pre-shared secret key is recommended.
+Example usage : 'aA1-&!@,.:_2Bb'
+";
+								}
+							}
+							configd:help "Pre-shared secret key";
+							configd:comp_help "/opt/vyatta/share/tmplscripts/security/vpn/ipsec/profile/authentication/pre-shared-secret/configd_comp_help.txt";
+						}
+						leaf mode {
+							type string {
+								configd:syntax "/opt/vyatta/share/tmplscripts/security/vpn/ipsec/profile/authentication/mode/configd_syntax1.cli";
+							}
+							configd:help "Authentication mode";
+							default "pre-shared-secret";
+						}
+					}
+					leaf esp-group {
+						type string {
+							configd:syntax "/opt/vyatta/share/tmplscripts/security/vpn/ipsec/profile/esp-group/configd_syntax1.cli";
+						}
+						configd:help "Esp group name [REQUIRED]";
+						configd:allowed "/opt/vyatta/share/tmplscripts/security/vpn/ipsec/profile/esp-group/configd_allowed.sh";
+					}
+					container bind {
+						presence "true";
+						configd:help "DMVPN crypto configuration";
+						list tunnel {
+							configd:help "Tunnel interface associated with this configuration profile";
+							configd:allowed "/opt/vyatta/share/tmplscripts/security/vpn/ipsec/profile/bind/tunnel/configd_allowed.sh";
+							configd:end "/opt/vyatta/share/tmplscripts/security/vpn/ipsec/profile/bind/tunnel/configd_end.sh";
+							configd:validate "/opt/vyatta/share/tmplscripts/security/vpn/ipsec/profile/bind/tunnel/configd_validate1.cli";
+							configd:validate "/opt/vyatta/share/tmplscripts/security/vpn/ipsec/profile/bind/tunnel/configd_validate2.cli";
+							configd:validate "/opt/vyatta/share/tmplscripts/security/vpn/ipsec/profile/bind/tunnel/configd_validate3.cli";
+							configd:validate "/opt/vyatta/share/tmplscripts/security/vpn/ipsec/profile/bind/tunnel/configd_validate4.cli";
+							key "tagnode";
+							leaf tagnode {
+								type string;
+								configd:help "Tunnel interface associated with this configuration profile";
+								configd:allowed "/opt/vyatta/share/tmplscripts/security/vpn/ipsec/profile/bind/tunnel/configd_allowed.sh";
+							}
+						}
+					}
+					leaf ike-group {
+						type string {
+							configd:syntax "/opt/vyatta/share/tmplscripts/security/vpn/ipsec/profile/ike-group/configd_syntax1.cli";
+						}
+						configd:help "Ike group name [REQUIRED]";
+						configd:allowed "/opt/vyatta/share/tmplscripts/security/vpn/ipsec/profile/ike-group/configd_allowed.sh";
+					}
+				}
+				leaf nat-traversal {
+					type enumeration {
+						enum "enable" {
+							configd:help "Enable NAT-T";
+						}
+						enum "disable" {
+							configd:help "Disable NAT-T";
+						}
+					}
+					configd:help "Network Address Translation (NAT) traversal";
+				}
+				list esp-group {
+					configd:help "Name of Encapsulating Security Payload (ESP) group";
+					key "tagnode";
+					leaf tagnode {
+						type string {
+							pattern "[-_a-zA-Z0-9\.]+" {
+								configd:error-message "invalid ESP group name \"$VAR(@)\"";
+							}
+						}
+						configd:help "Name of Encapsulating Security Payload (ESP) group";
+					}
+					list proposal {
+						configd:help "ESP-group proposal [REQUIRED]";
+						key "tagnode";
+						leaf tagnode {
+							type uint32 {
+								range 1..65535 {
+									error-message "must be between 1-65535";
+								}
+							}
+							configd:help "ESP-group proposal [REQUIRED]";
+						}
+						leaf hash {
+							type enumeration {
+								enum "md5" {
+									configd:help "MD5 hash";
+								}
+								enum "sha1" {
+									configd:help "SHA1 hash (default)";
+								}
+							}
+							configd:help "Hash algorithm";
+							default "sha1";
+						}
+						leaf encryption {
+							type enumeration {
+								enum "aes128" {
+									configd:help "AES-128 encryption (default)";
+								}
+								enum "aes256" {
+									configd:help "AES-256 encryption";
+								}
+								enum "3des" {
+									configd:help "3DES encryption";
+								}
+							}
+							configd:help "Encryption algorithm";
+							default "aes128";
+						}
+					}
+					leaf compression {
+						type enumeration {
+							enum "enable" {
+								configd:help "Enable ESP compression";
+							}
+							enum "disable" {
+								configd:help "Disable ESP compression (default)";
+							}
+						}
+						configd:help "ESP compression";
+						default "disable";
+					}
+					leaf mode {
+						type enumeration {
+							enum "tunnel" {
+								configd:help "Tunnel mode (default)";
+							}
+							enum "transport" {
+								configd:help "Transport mode";
+							}
+						}
+						configd:help "ESP mode";
+						default "tunnel";
+					}
+					leaf lifetime {
+						type uint32 {
+							range 30..86400 {
+								error-message "must be in the range 30 to 86400 seconds";
+							}
+						}
+						configd:help "ESP lifetime";
+						default "3600";
+					}
+					leaf pfs {
+						type enumeration {
+							enum "enable" {
+								configd:help "Enable PFS. Use ike-group's dh-group (default)";
+							}
+							enum "disable" {
+								configd:help "Disable PFS";
+							}
+							enum "dh-group2" {
+								configd:help "Enable PFS. Use Diffie-Hellman group 2";
+							}
+							enum "dh-group5" {
+								configd:help "Enable PFS. Use Diffie-Hellman group 5";
+							}
+						}
+						configd:help "ESP Perfect Forward Secrecy";
+						default "enable";
+					}
+					leaf disable-strict-mode {
+						type empty;
+						configd:help "Disable strict-mode proposal negotiation for ESP.";
+					}
+				}
+				list ike-group {
+					configd:help "Name of Internet Key Exchange (IKE) group";
+					key "tagnode";
+					leaf tagnode {
+						type string {
+							pattern "[-_a-zA-Z0-9\.]+" {
+								configd:error-message "invalid IKE group name \"$VAR(@)\"";
+							}
+						}
+						configd:help "Name of Internet Key Exchange (IKE) group";
+					}
+					list proposal {
+						configd:help "IKE-group proposal [REQUIRED]";
+						key "tagnode";
+						leaf tagnode {
+							type uint32 {
+								range 1..65535 {
+									error-message "must be between 1-65535";
+								}
+							}
+							configd:help "IKE-group proposal [REQUIRED]";
+						}
+						leaf hash {
+							type enumeration {
+								enum "md5" {
+									configd:help "MD5 hash";
+								}
+								enum "sha1" {
+									configd:help "SHA1 hash (default)";
+								}
+							}
+							configd:help "Hash algorithm";
+							default "sha1";
+						}
+						leaf encryption {
+							type enumeration {
+								enum "aes128" {
+									configd:help "AES-128 encryption (default)";
+								}
+								enum "aes256" {
+									configd:help "AES-256 encryption";
+								}
+								enum "3des" {
+									configd:help "3DES encryption";
+								}
+							}
+							configd:help "Encryption algorithm";
+							default "aes128";
+						}
+						leaf dh-group {
+							type uint32 {
+								configd:syntax "/opt/vyatta/share/tmplscripts/security/vpn/ipsec/ike-group/proposal/dh-group/configd_syntax1.cli";
+							}
+							configd:help "Diffie-Hellman (DH) key exchange group";
+						}
+					}
+					container dead-peer-detection {
+						presence "true";
+						configd:help "Dead Peer Detection (DPD)";
+						leaf action {
+							type enumeration {
+								enum "hold" {
+									configd:help "Set action to hold (default)";
+								}
+								enum "clear" {
+									configd:help "Set action to clear";
+								}
+								enum "restart" {
+									configd:help "Set action to restart";
+								}
+							}
+							configd:help "Keep-alive failure action";
+							default "hold";
+						}
+						leaf interval {
+							type uint32 {
+								range 15..86400 {
+									error-message "must be between 15-86400 seconds";
+								}
+							}
+							configd:help "Keep-alive interval";
+							default "30";
+						}
+						leaf timeout {
+							type uint32 {
+								range 30..86400 {
+									error-message "must be between 30-86400 seconds";
+								}
+							}
+							configd:help "Keep-alive timeout";
+							default "120";
+						}
+					}
+					leaf lifetime {
+						type uint32 {
+							range 30..86400 {
+								error-message "must between 30-86400 seconds";
+							}
+						}
+						configd:help "IKE lifetime";
+						default "28800";
+					}
+					leaf disable-strict-mode {
+						type empty;
+						configd:help "Disable strict-mode proposal negotiation for IKE.";
+					}
+				}
+			}
+		}
+	}
+}

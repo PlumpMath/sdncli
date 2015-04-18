@@ -1,0 +1,93 @@
+module paths {
+  
+    //Question - why are we choosing this namespace?
+    namespace "urn:com.brocade.apps.pathexplorer";
+  
+    prefix path;
+    
+    import ietf-inet-types {
+        prefix "inet";
+    }
+    
+    import opendaylight-inventory { prefix inv; revision-date "2013-08-19"; }
+    //import flow-node-inventory { prefix flow-node; revision-date "2013-08-19"; }
+    import network-topology { prefix topo; revision-date "2013-10-21"; }
+    
+    organization "Brocade Communications Inc.";
+    
+    contact "Brocade ODL group <>";
+    
+    description "This module contains a collection of YANG definitions 
+                 for managing OpenDaylight Paths";
+    
+    revision 2014-06-26 {
+        description "Modified via comments to reduce complexity.";
+    }
+    
+    revision 2014-06-20 {
+        description "Initial revision.";
+    }
+    
+    grouping traffic-matching-criteria {
+        
+        description "Describes how to match the traffic which should flow over this path.";
+        
+        leaf source-addr{
+            type inet:ipv4-address; //we really want these to be node refs (to a host) eventually
+            description "The IP address of the host which traffic is coming from.";
+        }
+        
+        leaf destination-addr{
+            type inet:ipv4-address;//we really want these to be node refs (to a host) eventually
+            description "The IP address of the host which traffic is going to.";
+        }
+        
+        leaf-list waypoints{
+                       
+            description "An order list of nodes that we want traffic, which matches the criteria, 
+                         to flow through. These waypoints must show up in the list of calculated hops for this path.";
+            
+            type topo:node-ref;
+        }
+    }
+    
+    grouping calculated-path {
+    
+        description "Definitions for an ODL Path";
+
+        list orderedHops {
+            //ordered-by user;
+            description "An order list of nodes (hops) that connect the source and destination ip addresses, and should include the defined .";
+            //key "sequence";
+            leaf sourceHop {
+              type inv:node-connector-ref;
+            }
+            leaf destHop {
+              type inv:node-connector-ref;
+            }
+        }
+    
+        leaf-list flows {
+        
+            type instance-identifier;
+        }
+    }
+    
+    
+    container paths {
+        description "Holds a list of defined paths which should be implemented in the network.";
+        
+        list path {
+            description "The defined paths which should be implemented in the network.";
+
+            leaf path-name {
+              type string;
+            }
+            //key "source-addr destination-addr";
+            key "path-name";
+
+            uses calculated-path;
+            uses traffic-matching-criteria;
+        }
+    }
+}

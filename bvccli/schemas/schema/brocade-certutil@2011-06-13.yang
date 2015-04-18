@@ -1,0 +1,310 @@
+/***********************************************************************
+ * certutil.yang-:icertificate Management operations data model
+ *
+ * June 2011,Kumar Ghanta
+ *
+ * Copyright (c) 2011 by Brocade Communications Systems, Inc.
+ * All rights reserved.
+ *
+ **********************************************************************/
+module brocade-certutil {
+  namespace "urn:brocade.com:mgmt:certutil";
+  prefix certutil;
+
+  import tailf-common {
+    prefix tailf;
+  }
+
+  import brocade-common-def {
+    prefix common-def;
+  }
+
+  organization
+      "Brocade Communications Systems, Inc.";
+
+  contact
+      "Brocade Communications Systems, Inc.
+       Postal: 130 Holger Way
+               San Jose, CA 95134
+                U.S.A
+       Tel: +1-408-333-8000
+       E-mail: support@Brocade.com
+       web: www.brocade.com.";
+
+  description
+      "This module is used to support certificate management operations"; 
+
+  revision "2011-06-13" {
+      description
+          "Initial version of this module.";
+    }
+
+    grouping import_cert_parameters {
+		leaf protocol {
+			description "Protocol";
+			type enumeration {
+				enum SCP;
+				enum FTP;
+			}
+			mandatory true;
+		}
+		leaf user {
+			description "Username";
+			type string;
+			mandatory true;
+		}
+		leaf password {
+			description "Password";
+			type string;
+		}
+		leaf host {
+			description "Host IPv4 address";
+			type string;
+			mandatory true;
+		}
+		leaf directory {
+			description "Remote Directory";
+			type string;
+			mandatory true;
+		}
+		leaf file {
+			description "Certificate file in PEM format";
+			type string;
+			mandatory true;
+		}
+        leaf rbridge-id {
+            mandatory false;
+            type common-def:rbridge-id-all-type;
+        }
+}
+
+    grouping export_cert_parameters {
+        leaf protocol {
+            description "Protocol";
+            type enumeration {
+                enum SCP;
+                enum FTP;
+            }
+            mandatory true;
+        }
+        leaf user {
+            description "Username";
+            type string;
+            mandatory true;
+        }
+        leaf password {
+            description "Password";
+            type string;
+        }
+        leaf host {
+            description "Host ipv4 address";
+            type string;
+            mandatory true;
+        }
+        leaf directory {
+            description "Directory";
+            type string;
+            mandatory true;
+        }
+    }
+
+    grouping import_sshkey_parameters {
+        leaf user {
+            description "Username";
+            type string;
+            mandatory true;
+        }
+        leaf host {
+            description "Host IPv4 address";
+            type string;
+            mandatory true;
+        }
+        leaf directory {
+            description "Remote Directory";
+            type string;
+            mandatory true;
+        }
+        leaf file {
+            description "SSH public key with .pub extension";
+            type string;
+            mandatory true;
+        }
+        leaf login {
+            description "Login name in the remote host";
+            type string;
+            mandatory true;
+        }
+        leaf password {
+            description "User password in the remote host";
+            type string;
+        }
+        leaf rbridge-id {
+            mandatory false;
+            type common-def:rbridge-id-all-type;
+        }
+    }
+
+/*
+    grouping gen_fcapcsr_parameters {
+        leaf country {
+            type string {
+                length "1..2";
+            }
+            mandatory true;
+        }
+        leaf state {
+            type string {
+                length "1..20";
+            }
+            mandatory true;
+        }
+        leaf locality {
+            type string {
+            }
+            mandatory true;
+        }
+        leaf organization {
+            type string {
+            }
+            mandatory true;
+        }
+        leaf orgunit {
+            type string {
+            }
+            mandatory true;
+        }
+        leaf common {
+            type common-def:wwn-type;
+            mandatory true;
+        }
+    }
+*/
+
+
+container certutil {
+    description "Security Certificate Management Operations";
+
+    container import {
+        description "Certificate import operation";
+        tailf:action ldapca {
+            description "LDAP CA certificate import operation";
+            input {
+                uses import_cert_parameters;
+            }
+            output {
+            }
+        }
+
+        tailf:action syslogca {
+            description "Syslog CA certificate import operation";
+            input {
+                uses import_cert_parameters;
+            }
+            output {
+            }
+        }
+        tailf:action sshkey {
+            description "SSH public key import operation";
+            input {
+                uses import_sshkey_parameters;
+            }
+            output {
+            }
+        }
+    }
+}
+
+augment "/common-def:no" {
+    container certutil {
+        tailf:action ldapca {
+            input {
+                leaf rbridge-id {
+                    mandatory false;
+                    type common-def:rbridge-id-all-type;
+                }
+            }
+            output {
+            }
+        }
+
+        tailf:action syslogca {
+            input {
+                leaf rbridge-id {
+                    mandatory false;
+                    type common-def:rbridge-id-all-type;
+                }
+            }
+            output {
+            }
+        }
+        tailf:action sshkey {
+            input {
+                leaf user {
+                    type string {
+                        length "1 .. 40" {
+                            error-message "The existing user name length
+                                   should be in the range 1-40";
+                        }
+                    }
+                    mandatory true;
+                }
+                leaf rbridge-id {
+                    mandatory false;
+                    type common-def:rbridge-id-all-type;
+                }
+            }
+            output {
+            }
+        }
+    }
+}
+
+augment "/common-def:show" {
+    container cert-util {
+        tailf:action ldapcacert {
+            input {
+                leaf rbridge-id {
+                    mandatory false;
+                    type common-def:rbridge-id-all-type;
+                }
+            }
+            output {
+            }
+        }
+
+        tailf:action syslogcacert {
+            input {
+                leaf rbridge-id {
+                    mandatory false;
+                    type common-def:rbridge-id-all-type;
+                }
+            }
+            output {
+            }
+        }
+
+        tailf:action sshkey {
+            input {
+                leaf user {
+                    type string {
+                        length "1 .. 40" {
+                            error-message "The existing user name length
+                                           should be in the range 1-40";
+                        }
+                    }
+                    mandatory true;
+                }
+                leaf rbridge-id {
+                    mandatory false;
+                    type common-def:rbridge-id-all-type;
+                }
+            }
+            output {
+            }
+        }
+    }
+}
+
+
+}
+

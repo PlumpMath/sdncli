@@ -1,0 +1,57 @@
+/******************************************************************
+* Logical Chassis CLI Yang model that will contain logical chassis clis
+*
+*  September 2011-2012, Anand Subramanian
+*
+* Copyright (c) 2012 by Brocade Communications Systems, Inc.
+* All rights reserved.
+*******************************************************************/
+
+module brocade-logical-chassis {
+    namespace "http://brocade.com/ns/brocade-logical-chassis";
+    prefix brocade-logical-chassis;
+
+    import tailf-common    { 
+        prefix "tailf";  
+    }
+
+    import brocade-rbridge {
+        prefix rbridge;
+    }
+
+	organization
+	"Brocade Communications Inc.";
+
+	contact
+	"Brocade Communications Systems, Inc.
+	Postal: 130 Holger Way
+	San Jose, CA 95134             
+	U.S.A
+	Tel: +1-408-333-6061
+	E-mail: support@Brocade.com
+	web: www.brocade.com.";
+
+	description
+	"This module provides interface to provision fabric principal priority";
+
+    revision "2012-04-12" {
+        description
+            "Initial version of this management module.";
+    }
+
+    grouping logical-chassis-cmds {
+        container logical-chassis {
+
+            leaf principal-priority {
+                type uint32 {
+                    range "1..128" {
+                    }
+                }
+            }
+        }
+    }
+
+    augment "/rbridge:rbridge-id" {
+        uses logical-chassis-cmds;
+    }
+}

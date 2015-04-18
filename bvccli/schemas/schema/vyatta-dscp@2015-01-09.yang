@@ -1,0 +1,124 @@
+module vyatta-dscp {
+	namespace "urn:vyatta.com:mgmt:vyatta-dscp";
+	prefix dscp;
+
+	import ietf-inet-types {
+		prefix inet;
+	}
+	import configd {
+		prefix configd;
+	}
+
+	organization "Brocade Communications Systems, Inc.";
+	contact
+		"Brocade Communications Systems, Inc.
+		 Postal: 130 Holger Way
+		         San Jose, CA 95134
+		 E-mail: support@Brocade.com
+		 Web: www.brocade.com";
+
+	revision 2015-01-09 {
+		description "Initial revision.";
+	}
+
+	typedef dscp-name {
+		reference "http://www.iana.org/assignments/dscp-registry/dscp-registry.xhtml#dscp-registry-1";
+		type enumeration {
+			enum default {
+				reference "RFC 2474";
+				value 0;
+			}
+			enum cs1 {
+				reference "RFC 2474";
+				value 8;
+			}
+			enum cs2 {
+				reference "RFC 2474";
+				value 16;
+			}
+			enum cs3 {
+				reference "RFC 2474";
+				value 24;
+			}
+			enum cs4 {
+				reference "RFC 2474";
+				value 32;
+			}
+			enum cs5 {
+				reference "RFC 2474";
+				value 40;
+			}
+			enum cs6 {
+				reference "RFC 2474";
+				value 48;
+			}
+			enum cs7 {
+				reference "RFC 2474";
+				value 56;
+			}
+			enum af11 {
+				reference "RFC 2597";
+				value 10;
+			}
+			enum af12 {
+				reference "RFC 2597";
+				value 12;
+			}
+			enum af13 {
+				reference "RFC 2597";
+				value 14;
+			}
+			enum af21 {
+				reference "RFC 2597";
+				value 18;
+			}
+			enum af22 {
+				reference "RFC 2597";
+				value 20;
+			}
+			enum af23 {
+				reference "RFC 2597";
+				value 22;
+			}
+			enum af31 {
+				reference "RFC 2597";
+				value 26;
+			}
+			enum af32 {
+				reference "RFC 2597";
+				value 28;
+			}
+			enum af33 {
+				reference "RFC 2597";
+				value 30;
+			}
+			enum af41 {
+				reference "RFC 2597";
+				value 34;
+			}
+			enum af42 {
+				reference "RFC 2597";
+				value 36;
+			}
+			enum af43 {
+				reference "RFC 2597";
+				value 38;
+			}
+			enum ef {
+				reference "RFC 3246";
+				value 46;
+			}
+			enum va {
+				reference "RFC 5865";
+				value 44;
+			}
+		}
+	}
+
+	typedef dscp-name-or-value {
+		type union {
+			type inet:dscp;
+			type dscp-name;
+		}
+	}
+}

@@ -1,0 +1,294 @@
+/***********************************************************************
+ * brocade-distributedlog.yang: Brocade Event Handler Data Model
+ *
+ * November 2014, Brian Adaniya 
+ *
+ * Copyright (c) 2014 by Brocade Communications Systems, Inc.
+ * All rights reserved.
+ *
+ **********************************************************************/
+module brocade-event-handler {
+    namespace "urn:brocade.com:mgmt:brocade-event-handler";
+    prefix "event-handler";
+
+    import tailf-common {
+        prefix tailf;
+    }
+
+    import ietf-yang-types {
+        prefix ietfyang;
+    }
+
+    import brocade-rbridge {
+        prefix rbridge;
+    }
+
+    /* for user defined data-types */
+    import brocade-common-def {
+        prefix common-def;
+    }
+
+    organization
+        "Brocade Communications Inc.";
+
+    contact
+        "Brocade Communications Systems, Inc.
+        Postal: 130 Holger Way,
+        San Jose, CA 95134
+        U.S.A
+        Tel: +1-408-333-8000
+        E-mail: support@Brocade.com
+        web: www.brocade.com.";
+
+    description "event handler related information";
+
+    reference
+        "<Author Name>, '<Title>', <RFC XXXX>, <Month> <YEAR>.";
+
+    revision 2010-12-02 {
+            description "Initial version";
+    }
+
+    /* Type Definitions */
+
+    /* Define Event Handler Configuration */  
+
+    grouping event-handler-group {
+        list event-handler-list {
+
+
+            key "name";
+
+            leaf name {
+                type common-def:name-string32;
+                description
+                    "Event handler name";
+            }
+
+            list trigger {
+
+                description
+                    "VCS event or RASlog event.";
+                
+                key "trigger-id";
+
+                leaf trigger-id {
+                    type uint32 {
+                        range "1..100" {
+                            error-message "% Error: Value out of range at '^' marker";
+                        }
+                    }
+                }
+
+                choice trigger-choice {
+                    case vcs {
+                        leaf vcs {
+                            description
+                                "VCS event type.";
+
+                            type enumeration {
+                                enum switch-bootup {
+                                    value 1;
+                                }
+
+                                enum config-replay-complete {
+                                    value 2;
+                                }
+
+                                enum cluster-formation-complete {
+                                    value 3;
+                                }
+                            }
+                        }
+                    }
+
+                    case raslog {
+                        leaf raslog {
+                            description
+                                "RASlog Id.";
+
+                            type common-def:name-string32;
+                        }
+                    }
+                }
+            }
+
+            container action {
+
+                choice action-choice {
+                    case python-script {
+                        leaf python-script {
+                            description
+                                "Name of a script located under the flash:// directory.";
+
+                            type common-def:name-string32;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    grouping event-handler-rbridge-activation {
+        container activate {
+            list name {
+
+                key name;
+
+                leaf name {
+                    type common-def:name-string32;
+                description
+                    "Event handler name";
+                }
+
+                leaf delay {
+                    type uint32;
+
+                    default 0;
+                }
+                
+                leaf iterations {
+                    type uint32;
+
+                    default 0;
+                }
+
+                leaf interval {
+                    type uint32;
+
+                    default 0;
+                }
+
+                leaf run-mode {
+
+                    type enumeration {
+                        enum exclusive {
+                            value 1;
+                        }
+
+                        enum non-exclusive {
+                            value 2;
+                        }
+                    }
+                    
+                    default non-exclusive;
+                }
+
+                leaf trigger-mode {
+
+                    type enumeration {
+                        enum each-instance {
+                            value 1;
+                        }
+
+                        enum on-first-instance {
+                            value 2;
+                        }
+            
+                        enum only-once {
+                            value 3;
+                        }
+                    }
+
+                    default each-instance;
+                }
+
+                container trigger-function-container {
+
+                    leaf trigger-function {
+                    
+                        type enumeration {
+                            enum OR {
+                                value 1;
+                            }
+
+                            enum AND {
+                                value 2;
+                            }
+                        }
+
+                        default OR;
+                    }
+
+                    leaf time-window {
+                        when "../trigger-function = 'AND'";
+                        type uint32;
+
+                        mandatory true;
+                    }
+                }
+            }
+        }
+    }
+
+    container event-handler {
+        uses event-handler-group;
+    }
+
+    augment "/rbridge:rbridge-id" {
+        container event-handler {
+            uses event-handler-rbridge-activation;
+        }
+    }
+
+    augment "/common-def:show" {
+        container event-handler {
+            tailf:action activations {
+                input {
+                    leaf rbridge-id {
+                        type common-def:rbridge-id-all-range-type;
+                        mandatory false;
+                    }
+                }
+            }
+        }
+    }
+
+    rpc show-event-handler {
+        description
+            "display operational status of activated event handler for a specified switch or all switches in cluster";
+        input {
+            leaf rbridge-id {
+                mandatory false;
+                type common-def:rbridge-id-all-type;
+            }
+        }
+        output {
+            list event-handler-operational-data {
+                leaf rbridge-id-out {
+                    type common-def:rbridge-id-type;
+                }
+                leaf event-handler-name {
+                    type common-def:name-string32;
+                    description
+                        "Event handler name";
+                }
+                leaf last-trigger-activation-time {
+                    type ietfyang:date-and-time;
+                    description
+                        "Trigger activation date and time";
+                }
+                leaf total-trigger-activations {
+                    type uint32;
+                    description
+                        "Total number of trigger activations";
+                }
+                leaf last-action-completion-time {
+                    type ietfyang:date-and-time;
+                    description
+                        "Action completion date and time";
+                }
+                leaf last-action-completion-status {
+                    type common-def:name-string32;
+                    description
+                        "Action completion status";
+                }
+                leaf total-action-completions {
+                    type uint32;
+                    description
+                        "Total number of action completions";
+                }
+            }
+        }
+    }
+}

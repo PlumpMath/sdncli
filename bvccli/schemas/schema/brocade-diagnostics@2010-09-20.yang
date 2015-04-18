@@ -1,0 +1,481 @@
+/***********************************************************************
+ * brocade-diagnostics.yang-: Brocade FOS diagnostics Data Model
+ *
+ * April 2011, Mobin Mohan
+ *
+ * Copyright (c) 2011 by Brocade Communications Systems, Inc.
+ * All rights reserved.
+ *
+ **********************************************************************/
+module brocade-diagnostics {
+    namespace "urn:brocade.com:mgmt:brocade-diagnostics";
+    prefix "diagnostics";
+
+    import tailf-common {
+        prefix tailf;
+    }
+
+    /* for user defined data-types */
+    import brocade-common-def {
+        prefix common-def;
+    }
+
+    import brocade-interface {
+        prefix interfaces;
+    }
+
+    organization "Brocade Communications Systems, Inc.";
+    contact sshaik@brocade.com;
+    description "Modules for entities implementing FOS Diagnostics";
+
+    revision "2010-09-20" {
+        description "Initial version.";
+    }
+ 
+    feature platform_chassis {
+        description "chassis-platform";
+    }
+
+    feature platform_pizzabox {
+        description "pizzabox-platform";
+    }
+
+    feature portlevel_testing_on {
+        description "Enables port level testing options";
+    }
+
+    feature portlevel_testing_off {
+        description "Disables port level testing options";
+    }
+
+    typedef slotidtype {
+        type string {
+            length 2 {
+            }
+        }
+    }
+
+    augment "/common-def:show" {
+        container diag {
+           container post {
+               tailf:action results {
+                  input {
+                      choice localremote {
+                          case local {
+                              leaf slot {
+                                  if-feature platform_chassis;
+                                  type slotidtype;
+                                  mandatory true;
+                              }
+                          }
+                          case remote {
+                              leaf rbridge-id {
+                                 type common-def:rbridge-id-type;
+                              }
+                          }
+                      }
+                      choice postresult {
+                          case brief {
+                              leaf brief {
+                                  type empty;
+                              }
+                          }
+                          case detailed {
+                              leaf detailed {
+                                  type empty;
+                              }
+                          }
+                      }
+                  }
+                  output {
+                      leaf result {
+                          type string;
+                      }
+                  }
+               }
+           }
+
+           tailf:action status {
+               input {
+                  choice localremote {
+                      case local {
+                          leaf slot {
+                              if-feature platform_chassis;
+                              type slotidtype;
+                              mandatory true;
+                          }
+                      }
+                      case remote {
+                          leaf rbridge-id {
+                              type common-def:rbridge-id-type;
+                          }
+                      }
+                  }
+               }
+               output {
+                   leaf result {
+                       type string;
+                   }
+               }
+           }
+
+           tailf:action burninstatus {
+               input {
+                   leaf rbridge-id {
+                      type common-def:rbridge-id-type;
+                   }
+               }
+               output {
+                   leaf result {
+                       type string;
+                   }
+               }
+           }
+
+           tailf:action burninerrshow {
+               input {
+                   leaf rbridge-id {
+                      type common-def:rbridge-id-type;
+                   }
+               }
+               output {
+                   leaf result {
+                       type string;
+                   }
+               }
+           }
+       }
+    }
+
+    container diag {
+        tailf:action turboramtest {
+             input {
+                leaf slot {
+                    if-feature platform_chassis;
+                    type slotidtype;
+                    mandatory true;
+                }
+                leaf passcnt {
+                    type uint32 {
+                        range "1..10" {
+                        }
+                    }
+                }
+            }
+            output {
+                leaf result {
+                    type string;
+                }
+            }
+        }
+
+        tailf:action portloopbacktest {
+            input {
+                choice interfaces {
+                    case slot {
+                        leaf slot {
+                            if-feature platform_chassis;
+                            type slotidtype;
+                            mandatory true;
+                        }
+                    }
+                    case ethernet {
+                        leaf ethernet {
+                            type interfaces:interface-type;
+                        }
+                    }
+                    case fibrechannel {
+                        leaf fibrechannel {
+                            if-feature portlevel_testing_on;
+                            type interfaces:interface-type;
+                        }
+                    }
+                }
+                leaf nframes {
+                    type uint32 {
+                        range "1..16" {
+                        }
+                    }
+                }
+                leaf lbmode {
+                    type uint32 {
+                        range "1..8" {
+                        }
+                    }   
+                }
+                leaf spdmode {
+                    type enumeration {
+                        enum spd-1Gbps {
+                            value 1;
+                        }
+                        enum spd-2Gbps {
+                            value 2;
+                        }
+                        enum spd-4Gbps {
+                            value 4;
+                        }
+                        enum spd-8Gbps {
+                            value 8;
+                        }
+                        enum spd-10Gbps {
+                            value 10;
+                        }
+                        enum spd-16Gbps {
+                            value 16;
+                        }
+                        enum spd-40Gbps {
+                            value 40;
+                        }
+                        enum spd-100Gbps {
+                            value 100;
+                        }
+                    }
+                }
+            }
+            output {
+                leaf result {
+                    type string;
+                }
+            }
+        }
+
+        tailf:action portledtest {
+            input {
+                choice interfaces {
+                    case slot {
+                        leaf slot {
+                            if-feature platform_chassis;
+                            type slotidtype;
+                            mandatory true;
+                        }
+                    }
+                    case ethernet {
+                        leaf ethernet {
+                            type interfaces:interface-type;
+                        }
+                    }
+                    case fibrechannel {
+                        leaf fibrechannel {
+                            if-feature portlevel_testing_on;
+                            type interfaces:interface-type;
+                        }
+                    }
+                }
+                leaf action {
+                    type enumeration {
+                        enum cycle-all {
+                            value 0;
+                        }
+                        enum turn-off {
+                            value 1;
+                        }
+                        enum status-amber {
+                            value 2;
+                        }
+                        enum status-green {
+                            value 3;
+                        }
+                        enum blink-green {
+                            value 4;
+                        }
+                        enum blink-amber {
+                            value 5;
+                        }
+                     }
+                }
+                leaf  npass{
+                    type  uint32 {
+                        range "1..10" {
+                        }
+                    }
+                }
+            }
+            output {
+                leaf result {
+                    type string;
+                }
+            }
+        }
+
+        tailf:action systemverification {
+            input {
+                choice sysv {
+                    case short {
+                        leaf short {
+                            type empty;
+                        }
+                    }
+                    case stop {
+                        leaf stop {
+                            type empty;
+                        }
+                    }
+                }
+            }
+            output {
+                leaf result {
+                    type string;
+                }
+            }
+        }
+ 
+        tailf:action prbstest {
+            input {
+                leaf slot {
+                    if-feature platform_chassis;
+                    type slotidtype;
+                    mandatory true;
+                }
+                leaf pattern {
+                    type enumeration {
+                        enum PRBS7 {
+                            value 7;
+                        }
+                        enum PRBS23 {
+                            value 23;
+                        }
+                        enum PRBS31 {
+                            value 31;
+                        }
+                    }
+                }                
+            }
+            output {
+                leaf result {
+                    type string;
+                }
+            }
+        }
+
+        tailf:action clearerror {
+            output {
+               leaf result {
+                    type string;
+                }
+            }
+        }
+
+        tailf:action burninerrclear {
+            output {
+               leaf result {
+                    type string;
+                }
+            }   
+        }
+
+        tailf:action setcycle {
+            input {
+                leaf tbr_passes {
+                    type  uint32 {
+                        range "1..10" {
+                        }
+                    }
+                    mandatory false;
+                }
+                leaf num_of_runs {
+                    type  uint32 {
+                        range "1..25" {
+                        }
+                    }
+                    mandatory false;
+                }
+                leaf min_lb_mode {
+                    type  uint32 {
+                        range "1..2" {
+                        }
+                    }
+                    mandatory false;
+                }
+                leaf plb_nframes {
+                    type  uint32 {
+                        range "4..16" {
+                        }
+                    }
+                    mandatory false;
+                }
+            }
+            output {
+               leaf result {
+                    type string;
+                }
+            }
+        }
+
+        tailf:action setdbg {
+             input {
+                leaf level {
+                    type enumeration {
+                        enum ALWAYS {
+                            value 0;
+                        }
+                        enum HEADER {
+                            value 1;
+                        }
+                        enum FLOW {
+                            value 2;
+                        }
+                        enum MAJOR-TESTPOINTS {
+                            value 3;
+                        }
+                        enum TEST-SETUPPOINTS {
+                            value 4;
+                        }
+                        enum TEST-PARAM {
+                            value 5;
+                        }
+                         enum TEST-SETUP {
+                            value 6;
+                        }
+                        enum DEBUG {
+                            value 7;
+                        }
+                        enum BKTPOINT {
+                            value 8;
+                        }
+                        enum MAX {
+                            value 9;
+                        }
+
+                    }
+                }
+            }
+        }
+
+        container post {
+            list rbridge-id {
+                key rbridge-id;
+                leaf enable {
+                    type empty;
+                }
+                leaf rbridge-id {
+                    type common-def:rbridge-id-type;
+                }
+            }
+
+            leaf enable {
+                type empty;
+            }
+        }
+    }
+
+    container fos {
+        tailf:action exec {
+            input {
+                choice op {
+                    case file {
+                        leaf file {
+                            type string;
+                        }
+                    }
+                    case cmd {
+                        leaf cmd {
+                            type string;
+                        }
+                    }
+                }
+            }
+            output {
+            }
+        }
+    }
+}
