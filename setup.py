@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 setup(
-    name="BVC CLI",
-    version="0.0.1",
+    name="BVCCLI",
+    version="0.9.0",
     description='BVC Command Line Interface',
     author='Brocade Communications',
     author_email='gberger@brocade.com',

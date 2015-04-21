@@ -10,29 +10,10 @@ from api import API
 
 
 
-class Controller(object):
-    def __init__(self, auth, address):
-        self.port = auth.get('port', 8181)
-        self.auth = HTTPBasicAuth(auth.get('username', 'admin'), auth.get('password', 'admin'))
-        self.server = address or auth.get('server')
-        self.session = requests.Session()
-        self.headers = {'content-type': 'application/json'}
 
 
-    def http_get(self, uri):
-        headers = {'content-type': 'application/xml'}
-        try:
-            retval = self.session.get(uri, auth=self.auth, params=None, headers=headers, timeout=120)
-        except requests.exceptions.ConnectionError:
-            return(("Error connecting to BVC {}").format(self.server), False)
-        if str(retval.status_code)[:1] == "2":
-            try:
-                data = retval.json()
-            except ValueError, e:
-                return(("Bad JSON found: {} {}").format(e, retval.text), False)
-            return(data, True)
-        else:
-            return (("Unknown Status Code").format(retval.status_code), False)
+
+
 
 
     # def get_bvc_flow_entries(self, api, debug):

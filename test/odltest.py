@@ -6,23 +6,14 @@ import uuid
 import shlex
 import json
 from requests.auth import HTTPBasicAuth
-
-
-import pprint
+from pprint import pprint
 
 sys.path.insert(0, os.path.abspath(__file__+"/../.."))
-from lib.bvclib import Controller
+from bvccli.bvclib import Controller
+import bvccli.utils
 
-API = {'OPER': 'http://{server}:8181/restconf/operational/opendaylight-inventory:nodes',
-       'CONFIG': 'http://{server}:8181/restconf/config/opendaylight-inventory:nodes',
-       'TOPOLOGY': 'http://{server}:8181/restconf/operational/network-topology:network-topology/',
-       'FLOWMOD': 'http://{server}:8181/restconf/config/opendaylight-inventory:nodes/node/{node}/flow-node-inventory:table/{table}/flow/{flow}',
-       'FLOW': 'http://{server}:8181/restconf/config/opendaylight-inventory:nodes/node/{node}/flow-node-inventory:table/{table}/flow/{flow}',
-       'MODULES': 'http://{server}:8181/restconf/modules',
-       'MOUNTS': 'http://{server}:8181/restconf/config/opendaylight-inventory:nodes/node/controller-config/yang-ext:mount/',
-       'NETCONF': 'http://{server}:8181/restconf/{ds}/opendaylight-inventory:nodes/node/{node}/yang-ext:mount/{resource}',
-       'UNMOUNT': 'http://{server}:8181/restconf/config/opendaylight-inventory:nodes/node/controller-config/yang-ext:mount/config:modules/module/odl-sal-netconf-connector-cfg:sal-netconf-connector/{name}',
-       }
+auth = bvccli.utils.load_json_config()
+
 
 
 class mod(object):
@@ -59,7 +50,7 @@ def extract(ind, outd):
 
 
 class TestGetSchema(unittest.TestCase):
-    ctl = Controller('localhost')
+    ctl = Controller(auth, 'localhost')
     module = 'vyatta-interfaces'
     d = {'input': {'identifier': module}}
     (retval, status) = ctl.netconf_get_schema('vr5600', d)

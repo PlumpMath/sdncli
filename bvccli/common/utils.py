@@ -1,4 +1,5 @@
 from prettytable import PrettyTable
+import os
 
 
 def print_table(text, table, sortkey=None):
@@ -20,7 +21,7 @@ def print_table_detail(table, sortkey=None):
         row = table.get(i)[0].values()
         p.add_row(row)
         # rows = [[row[sortindex]]+row for row in rows]
-    #TODO Figure out how to put index column first and have secondary sort key.
+        #TODO Figure out how to put index column first and have secondary sort key.
     p.add_column('Index', range(len(table)))
 
     print p
@@ -36,6 +37,41 @@ def load_json_config():
          "port": "8181"}
     '''
     return json.loads(source)
+
+
+def prepare_directory(directory):
+    if not os.path.exists(directory):
+        (destination) = os.makedirs(directory)
+        return destination
+
+
+def write_file(filename,  data):
+    with open(filename, "w") as fh:
+        fh.write(data)
+
+
+# def http_get(self, args):
+#     uri = args['<uri>']
+#     (retval, status) = self.ctl.http_get(uri)
+#     if status:
+#         print retval
+#     else:
+#         print("Houston we have a problem, {}").format(retval)
+
+#             def http_get(self, uri):
+#         headers = {'content-type': 'application/xml'}
+#         try:
+#             retval = self.session.get(uri, auth=self.auth, params=None, headers=headers, timeout=120)
+#         except requests.exceptions.ConnectionError:
+#             return(("Error connecting to BVC {}").format(self.server), False)
+#         if str(retval.status_code)[:1] == "2":
+#             try:
+#                 data = retval.json()
+#             except ValueError, e:
+#                 return(("Bad JSON found: {} {}").format(e, retval.text), False)
+#             return(data, True)
+#         else:
+#             return (("Unknown Status Code").format(retval.status_code), False)
 
 # def get_rest_client(manager_ip=None, rest_port=None):
 
