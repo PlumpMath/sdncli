@@ -1,5 +1,6 @@
 """
 Usage:
+        bvccli system [options] memory
         bvccli system [options] heap
         bvccli system [options] gc
 

@@ -3,4 +3,6 @@
 lib/.pyc
 lib/.DS_Store
 yangs
-
+build/*
+BVCCLI.egg-info
+dist/*

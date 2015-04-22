@@ -1,15 +1,15 @@
-from api import API
 import requests
 from uuid import uuid4
 from pprint import pprint
-from utils import print_table
+from ..common import utils
+from ..common import api
 
 
 def _get_bvc_nodes(ctl, ds, debug=False):
     #TODO fix key in output
     nodetable = {}
     filter_keys = ('controller-config')
-    resource = API[ds].format(server=ctl.server)
+    resource = api.API[ds].format(server=ctl.server)
     try:
         retval = ctl.session.get(resource, auth=ctl.auth, params=None, headers=ctl.headers, timeout=5)
     except requests.exceptions.ConnectionError:
@@ -33,7 +33,7 @@ def show_nodes(session, args):
         if status:
             node_ops = retval
             (retval, status) = _get_bvc_nodes(session, 'CONFIG', debug)
-            if status:  
+            if status:
                 node_config = retval
                 nodemap = node_ops.copy()
                 nodemap.update(node_config)
@@ -43,6 +43,6 @@ def show_nodes(session, args):
             for n in nodemap:
                 s = {'node': n, 'status': nodemap[n]}
                 nodetable.setdefault(uuid4(), []).append(s)
-            print_table("get_nodes:", nodetable)
+            utils.print_table("get_nodes:", nodetable)
         else:
             print("Error: {}").format(retval)

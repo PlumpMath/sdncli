@@ -9,7 +9,8 @@ setup(
     packages=find_packages(),
     install_requires=['docopt',
                       'requests',
-                      'prettytable'],
+                      'prettytable',
+                      'ascii_graph'],
     entry_points={
         'console_scripts': [
             'bvccli = bvccli.__main__:main',

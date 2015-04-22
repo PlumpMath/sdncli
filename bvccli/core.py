@@ -18,9 +18,7 @@ Options :
 Commands:
              api           Print out existing HTTP APIs supported
              flows         Retrieve all known flows from the controller
-             hosts         Retroeve all known hosts from the controller
-             modules       Retrieve controller modules 
-             nodes         Retrieve all known nodes from the controller
+             show          Retrieve varios elements from BVC
              netconf       Perform NetConf related functions such as retrieve configuration
              http          Perform HTTP based operations
              system        Perform queries on the BVC system itself
@@ -75,6 +73,18 @@ def main():
     elif args['<command>'] == 'http-get':
         from common import utils
         utils.http_get(args['uri'])
+    elif args['<command>'] == 'show':
+        from show import bvc_show
+        show_args = bvc_show.docopt(bvc_show.__doc__, argv=argv)
+        if(show_args['hosts']):
+            from show import hosts
+            hosts.show_hosts(ctl, show_args)
+        if(show_args['nodes']):
+            from show import nodes
+            nodes.show_nodes(ctl, show_args)
+        if(show_args['modules']):
+            from show import modules
+            modules.show_modules(ctl, show_args)
     elif args['<command>'] == 'netconf':
         from netconf import bvc_netconf
         from netconf import netconf

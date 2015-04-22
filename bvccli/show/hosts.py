@@ -1,14 +1,14 @@
-from api import API
 import requests
 from pprint import pprint
-from utils import print_table
+from ..common import utils
+from ..common import api
 
 
 def _get_bvc_hosts(ctl, debug):
     '''
     Get all hosts connected to known switches using topology data source
     '''
-    resource = API['TOPOLOGY'].format(server=ctl.server)
+    resource = api.API['TOPOLOGY'].format(server=ctl.server)
     try:
         retval = ctl.session.get(resource, auth=ctl.auth, params=None, headers=ctl.headers, timeout=5)
     except requests.exceptions.ConnectionError:
@@ -53,7 +53,7 @@ def show_hosts(ctl, args):
                                 hostmap = {'IP': p.get('ip'), 'MacAddr': p.get('mac'), 'TID': q.get('tp-id')}
                                 dbhosts.setdefault(p.get('id'), []).append(hostmap)
                 if len(dbhosts) > 0:
-                    print_table("get_hosts", dbhosts)
+                    utils.print_table("get_hosts", dbhosts)
                 else:
                     print "Found no Hosts"
                     return

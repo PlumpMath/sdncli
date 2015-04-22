@@ -1,13 +1,13 @@
-from api import API
 import requests
 from uuid import uuid4
 from pprint import pprint
-from utils import print_table
+from ..common import utils
+from ..common import api
 
 
 def _get_modules(ctl, debug=False):
         moduledb = {}
-        resource = API['MODULES'].format(server=ctl.server)
+        resource = api.API['MODULES'].format(server=ctl.server)
         headers = {'content-type': 'application/xml'}
         try:
             retval = ctl.session.get(resource, auth=ctl.auth, params=None, headers=headers)
@@ -35,6 +35,6 @@ def show_modules(ctl, args):
         debug = args['--debug']
         (retval, status) = _get_modules(ctl, debug)
         if status:
-            print_table("show-modules", retval, 'name')
+            utils.print_table("show-modules", retval, 'name')
         else:
             print("Houston we have a problem, {}").format(retval)

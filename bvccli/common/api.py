@@ -17,7 +17,8 @@ API = {'OPER': 'http://{server}:8181/restconf/operational/opendaylight-inventory
 
 JMXAPI = {'HEAPUSAGE':  'http://{server}:8181/jolokia/read/java.lang:type=Memory/HeapMemoryUsage',
           'HEAPUSED': 'http://localhost:8181/jolokia/read/java.lang:type=Memory/HeapMemoryUsage/used',
-          'GC':      'http://localhost:8181/jolokia/read/java.lang:type=GarbageCollector,*'}
+          'GC':      'http://localhost:8181/jolokia/read/java.lang:type=GarbageCollector,*',
+          'MEMORY': 'http://localhost:8181/jolokia/read/java.lang:type=Memory'}
 
 
 def show_api(ctl):
