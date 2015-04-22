@@ -4,6 +4,9 @@
 # All rights reserved.
 # Author: Gary Berger <gberger@brocade.com>
 """
+Brocade Vyatta Controller - Command Line Interface
+Brocade Communications, Inc.
+
 Usage:
         bvccli [options] <command> [<args>...]
 
@@ -13,19 +16,20 @@ Options :
             -h --help              This help screen
 
 Commands:
-             api
-             flows
-             hosts
-             modules
-             nodes
+             api           Print out existing HTTP APIs supported
+             flows         Retrieve all known flows from the controller
+             hosts         Retroeve all known hosts from the controller
+             modules       Retrieve controller modules 
+             nodes         Retrieve all known nodes from the controller
              netconf       Perform NetConf related functions such as retrieve configuration
-             http-get
+             http          Perform HTTP based operations
+             system        Perform queries on the BVC system itself
 
 """
 
 
 import docopt
-from common import utils
+
 
 import requests
 from requests.auth import HTTPBasicAuth
@@ -49,35 +53,37 @@ class Controller(object):
 
 
 def main():
+    from common import utils
     args = docopt.docopt(__doc__,  version="0.9.0", options_first=True)
     auth = utils.load_json_config()
     argv = [args['<command>']] + args['<args>']
+    ctl = Controller(auth, args['--address'])
     if args['<command>'] == 'nodes':
         from common import nodes
-        ctl = Controller(auth, args['--address'])
-        nodes.show_nodes(ctl, debug=False)
+        nodes.show_nodes(ctl, args)
     elif args['<command>'] == 'hosts':
         from common import hosts
-        ctl = Controller(auth, args['--address'])
-        hosts.show_hosts(ctl, debug=False)
+        hosts.show_hosts(ctl, args)
     elif args['<command>'] == 'modules':
         from common import modules
-        ctl = Controller(auth, args['--address'])
-        modules.show_modules(ctl, debug=False)
+        modules.show_modules(ctl, args)
     elif args['<command>'] == 'api':
         from common import api
-        ctl = Controller(auth, args['--address'])
         api.show_api(ctl)
+    elif args['<command>'] == 'flows':
+        print "Not implemented yet"
+    elif args['<command>'] == 'http-get':
+        from common import utils
+        utils.http_get(args['uri'])
     elif args['<command>'] == 'netconf':
         from netconf import bvc_netconf
         from netconf import netconf
         from netconf import mounts
-        ctl = Controller(auth, args['--address'])
         netconf_args = bvc_netconf.docopt(bvc_netconf.__doc__, argv=argv)
         if(netconf_args['schema']):
             netconf.show_schema(ctl, netconf_args)
         elif(netconf_args['schemas']):
-            netconf.show_schemas(ctl, netconf_args)
+            netconf.get_schemas(ctl, netconf_args)
         elif(netconf_args['config']):
             netconf.show_config(ctl, netconf_args)
         elif(netconf_args['capabilities']):
@@ -88,5 +94,17 @@ def main():
             mounts.unmount_device(ctl, netconf_args)
         elif(netconf_args['mounts']):
             mounts.show_mounts(ctl, netconf_args)
-
-
+    elif args['<command>'] == 'http':
+        from httplib import bvc_http
+        from httplib import httplib
+        http_args = bvc_http.docopt(bvc_http.__doc__, argv=argv)
+        if(http_args['get']):
+            httplib.http_get(ctl, http_args)
+    elif args['<command>'] == 'system':
+        from system import bvc_system
+        from system import system
+        system_args = bvc_system.docopt(bvc_system.__doc__, argv=argv)
+        if(system_args['heap']):
+            system.system_get_heapinfo(ctl, system_args)
+        elif(system_args['gc']):
+            system.system_get_gcinfo(ctl, system_args)

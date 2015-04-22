@@ -15,6 +15,9 @@ bvccli/common/hosts.py
 bvccli/common/modules.py
 bvccli/common/nodes.py
 bvccli/common/utils.py
+bvccli/httplib/__init__.py
+bvccli/httplib/bvc_http.py
+bvccli/httplib/httplib.py
 bvccli/netconf/__init__.py
 bvccli/netconf/bvc_netconf.py
 bvccli/netconf/mounts.py
@@ -22,3 +25,6 @@ bvccli/netconf/netconf.py
 bvccli/netconf/netconflib.py
 bvccli/remotelib/__init__.py
 bvccli/remotelib/connect.py
+bvccli/system/__init__.py
+bvccli/system/bvc_system.py
+bvccli/system/system.py

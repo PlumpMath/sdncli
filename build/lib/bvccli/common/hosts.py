@@ -4,7 +4,7 @@ from pprint import pprint
 from utils import print_table
 
 
-def _get_bvc_hosts(ctl, debug=False):
+def _get_bvc_hosts(ctl, debug):
     '''
     Get all hosts connected to known switches using topology data source
     '''
@@ -17,7 +17,7 @@ def _get_bvc_hosts(ctl, debug=False):
         hosttable = {}
         data = retval.json()
         if debug:
-            pprint.pprint(data)
+            pprint(data)
         nodes = data.get('network-topology').get('topology')
         for node in nodes:
             topology_nodes = node.get('node')
@@ -35,7 +35,8 @@ def _get_bvc_hosts(ctl, debug=False):
         return (("Unexpected Status Code {}").format(retval.status_code), False)
 
 
-def show_hosts(ctl, debug=False):
+def show_hosts(ctl, args):
+        debug = args['--debug']
         dbhosts = {}
         (retval, status) = _get_bvc_hosts(ctl, debug)
         hosttable = retval

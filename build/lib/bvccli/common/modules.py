@@ -16,7 +16,7 @@ def _get_modules(ctl, debug=False):
         if str(retval.status_code)[:1] == "2":
             data = retval.json()
             if debug:
-                pprint.pprint(data)
+                pprint(data)
             root = data['modules']['module']
             for line in root:
                 modulemap = {'name':     line['name'],
@@ -31,7 +31,8 @@ def _get_modules(ctl, debug=False):
             return (("Unexpected Status Code {}").format(retval.status_code), False)
 
 
-def show_modules(ctl, debug=False):
+def show_modules(ctl, args):
+        debug = args['--debug']
         (retval, status) = _get_modules(ctl, debug)
         if status:
             print_table("show-modules", retval, 'name')

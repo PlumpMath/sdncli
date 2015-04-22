@@ -11,8 +11,9 @@ Usage:
 Options :
             -a --address <ip>      Address of controller (default: localhost)
             -d --debug             Print JSON dump
+            -v --verbose           Add verbose output
             -h --help              This help screen
-            -o --operationa        Read from operational datastore
+            -o --operations        Read from operations datastore
             -c --config            Read from configuration datastore
 
 """

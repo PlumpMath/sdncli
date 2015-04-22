@@ -1,0 +1,1 @@
+{"interfaces": {"vyatta-interfaces-dataplane:dataplane": [{"tagnode": "dp0p5p1", "address": ["10.255.1.174/20"]}], "vyatta-interfaces-loopback:loopback": [{"tagnode": "lo"}]}}

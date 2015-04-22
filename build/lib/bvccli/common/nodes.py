@@ -25,14 +25,15 @@ def _get_bvc_nodes(ctl, ds, debug=False):
         return (("No Nodes Found").format(retval.status_code), False)
 
 
-def show_nodes(session, debug=False):
+def show_nodes(session, args):
+        debug = args['--debug']
         nodemap = {}
         nodetable = {}
         (retval, status) = _get_bvc_nodes(session, 'OPER', debug)
         if status:
             node_ops = retval
             (retval, status) = _get_bvc_nodes(session, 'CONFIG', debug)
-            if status:
+            if status:  
                 node_config = retval
                 nodemap = node_ops.copy()
                 nodemap.update(node_config)

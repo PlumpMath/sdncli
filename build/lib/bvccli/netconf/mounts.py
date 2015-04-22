@@ -1,8 +1,8 @@
-from ..api import API
 import requests
 from uuid import uuid4
 # from pprint import pprint
-from ..utils import print_table
+from ..common import api
+from ..common import utils
 from ..netconf import netconflib
 
 
@@ -11,7 +11,7 @@ def _mount_netconf_device(ctl, name, node, user, pw, port=830, mlx=None):
             data = netconflib.netconf_mount_mlx(name, node, port, user, pw)
         else:
             data = netconflib.netconf_mount(name, node, port, user, pw)
-        resource = API['MOUNTDEVICE'].format(server=ctl.server)
+        resource = api.API['MOUNTDEVICE'].format(server=ctl.server)
         headers = {'content-type': 'application/xml'}
         try:
             retval = ctl.session.post(resource, auth=ctl.auth, params=None, headers=headers, data=data)
@@ -36,7 +36,7 @@ def mount_device(ctl, args):
 
 
 def _unmount_netconf_device(ctl, name):
-        resource = API['UNMOUNTDEVICE'].format(server=ctl.server, name=name)
+        resource = api.API['UNMOUNTDEVICE'].format(server=ctl.server, name=name)
         headers = {'content-type': 'application/xml'}
         try:
             retval = ctl.session.delete(resource, auth=ctl.auth, params=None, headers=headers)
@@ -60,7 +60,7 @@ def unmount_device(ctl, args):
 def _get_mount_status(ctl, debug=False):
         stats = {}
         # keys = {"netconf-node-inventory"}
-        resource = API['OPER'].format(server=ctl.server)
+        resource = api.API['OPER'].format(server=ctl.server)
         headers = {'content-type': 'application/xml'}
         try:
             retval = ctl.session.get(resource, auth=ctl.auth, params=None, headers=headers)
@@ -85,7 +85,7 @@ def _get_mounts(ctl, debug=False):
         mntstats = retval
         if status:
             keys = {"odl-sal-netconf-connector-cfg:sal-netconf-connector"}
-            resource = API['MOUNTS'].format(server=ctl.server)
+            resource = api.API['MOUNTS'].format(server=ctl.server)
             headers = {'content-type': 'application/xml'}
             try:
                 retval = ctl.session.get(resource, auth=ctl.auth, params=None, headers=headers)
@@ -119,6 +119,6 @@ def _get_mounts(ctl, debug=False):
 def show_mounts(ctl, debug=False):
         (retval, status) = _get_mounts(ctl, debug)
         if status:
-            print_table("mounts", retval, 'name')
+            utils.print_table("mounts", retval, 'name')
         else:
             print("Houston we have a problem, {}").format(retval)

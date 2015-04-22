@@ -15,6 +15,10 @@ API = {'OPER': 'http://{server}:8181/restconf/operational/opendaylight-inventory
        'GETSCHEMA': 'http://{server}:8181/restconf/{ds}/opendaylight-inventory:nodes/node/{node}/yang-ext:mount/ietf-netconf-monitoring:get-schema'
        }
 
+JMXAPI = {'HEAPUSAGE':  'http://{server}:8181/jolokia/read/java.lang:type=Memory/HeapMemoryUsage',
+          'HEAPUSED': 'http://localhost:8181/jolokia/read/java.lang:type=Memory/HeapMemoryUsage/used',
+          'GC':      'http://localhost:8181/jolokia/read/java.lang:type=GarbageCollector,*'}
+
 
 def show_api(ctl):
     apitable = {}

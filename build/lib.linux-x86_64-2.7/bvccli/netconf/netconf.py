@@ -3,7 +3,6 @@ from pprint import pprint
 from uuid import uuid4
 from ..common import api
 from ..common import utils
-import os
 import json
 
 
@@ -78,7 +77,6 @@ def _get_capabilities(ctl, args, debug=False):
 def get_schemas(ctl, args):
     #TODO: Test for ietf-monitoring first
     debug = args['--debug']
-    verbose = args['--verbose']
     ds = 'operations'
     node = args['<node>']
     (retval, status) = _get_capabilities(ctl, args)
@@ -90,8 +88,6 @@ def get_schemas(ctl, args):
             (retval, status) = _netconf_post(ctl, node, ds, 'GETSCHEMA', debug, data)
             if status:
                 data = retval['get-schema']['output']['data']
-                if verbose:
-                    print os.path.join(utils.get_schemadir(), module)
                 if revision:
                     utils.print_file((module + '@' + revision), utils.get_schemadir(), json.dumps(data))
                 else:

@@ -1,13 +1,14 @@
-from ..api import API
 import requests
 from pprint import pprint
 from uuid import uuid4
-from ..utils import print_table
+from ..common import api
+from ..common import utils
+import os
 import json
 
 
-def _netconf_get(ctl, node, ds, api, resource=None):
-    resource = API[api].format(server=ctl.server, node=node, ds=ds, resource=resource)
+def _netconf_get(ctl, node, ds, apicall, debug, resource=None):
+    resource = api.API[apicall].format(server=ctl.server, node=node, ds=ds, resource=resource)
     try:
         retval = ctl.session.get(resource, auth=ctl.auth, params=None, headers=ctl.headers,  timeout=120)
     except requests.exceptions.ConnectionError:
@@ -15,6 +16,8 @@ def _netconf_get(ctl, node, ds, api, resource=None):
     if str(retval.status_code)[:1] == "2":
         try:
             data = retval.json()
+            if debug:
+                pprint(data)
         except ValueError, e:
             return(("Bad JSON found: {} {}").format(e, retval.text), False)
         return(data, True)
@@ -22,8 +25,8 @@ def _netconf_get(ctl, node, ds, api, resource=None):
         return (("Unexpected Status Code {}").format(retval.status_code), False)
 
 
-def _netconf_post(ctl, node, ds, api, data=None):
-    resource = API[api].format(server=ctl.server, node=node, ds=ds)
+def _netconf_post(ctl, node, ds, apicall, debug, data=None):
+    resource = api.API[apicall].format(server=ctl.server, node=node, ds=ds)
     payload = json.dumps(data)
     try:
         retval = ctl.session.post(resource, auth=ctl.auth, params=None, headers=ctl.headers, data=payload, timeout=120)
@@ -32,6 +35,9 @@ def _netconf_post(ctl, node, ds, api, data=None):
     if str(retval.status_code)[:1] == "2":
         try:
             data = retval.json()
+            if debug:
+                print("Payload: {}").format(payload)
+                pprint(data)
         except ValueError, e:
             return(("Bad JSON found: {} {}").format(e, retval.text), False)
         return(data, True)
@@ -43,8 +49,7 @@ def _get_capabilities(ctl, args, debug=False):
     moduledb = {}
     ds = "operational"
     node = args["<node>"]
-    resource = API['CAPABILITIES'].format(server=ctl.server, ds=ds, node=args['<node>'])
-    print resource
+    resource = api.API['CAPABILITIES'].format(server=ctl.server, ds=ds, node=args['<node>'])
     headers = {'content-type': 'application/xml'}
     try:
         retval = ctl.session.get(resource, auth=ctl.auth, params=None, headers=headers)
@@ -70,43 +75,58 @@ def _get_capabilities(ctl, args, debug=False):
         return (("Unexpected Status Code {}").format(retval.status_code), False)
 
 
-def show_schemas(ctl, args):
+def get_schemas(ctl, args):
+    #TODO: Test for ietf-monitoring first
+    debug = args['--debug']
+    verbose = args['--verbose']
     ds = 'operations'
     node = args['<node>']
     (retval, status) = _get_capabilities(ctl, args)
     if status:
         for i in retval.iteritems():
-            data = {'input': {'identifier': i[1][0]['namespace'].rsplit(':', 1)[1]}}
-            (retval, status) = _netconf_post(ctl, node, ds, 'GETSCHEMA', data)
+            module = i[1][0]['namespace'].rsplit(':', 1)[1]
+            revision = i[1][0]['revision'] or None
+            data = {'input': {'identifier': module}}
+            (retval, status) = _netconf_post(ctl, node, ds, 'GETSCHEMA', debug, data)
             if status:
-                print retval['get-schema']['output']['data']
+                data = retval['get-schema']['output']['data']
+                if verbose:
+                    print os.path.join(utils.get_schemadir(), module)
+                if revision:
+                    utils.print_file((module + '@' + revision), utils.get_schemadir(), json.dumps(data))
+                else:
+                    utils.print_file((module), utils.get_schemadir(), json.dumps(data))
 
 
 def show_capabilities(ctl, args):
     (retval, status) = _get_capabilities(ctl, args)
     if status:
-        print_table("Node Capabilities", retval, 'namespace')
+        utils.print_table("Node Capabilities", retval, 'namespace')
     else:
         print("Houston we have a problem, {}").format(retval)
 
 
 def show_config(ctl, args):
+    debug = args['--debug']
+    node = args['<node>']
     if(args['--config']):
         ds = 'config'
     else:
         ds = 'operational'
-    (retval, status) = _netconf_get(ctl, args['<node>'], ds, 'NETCONF')
+    (retval, status) = _netconf_get(ctl, node, ds, 'NETCONF', debug)
     if status:
         pprint(retval)
+        utils.write_file(node, utils.get_configdir(), json.dumps(retval))
     else:
         print("Houston we have a problem, {}").format(retval)
 
 
 def show_schema(ctl, args):
+    debug = args['--debug']
     ds = 'operations'
     module = args['<resource>']
     data = {'input': {'identifier': module}}
-    (retval, status) = _netconf_post(ctl, args['<node>'], ds, 'GETSCHEMA', data)
+    (retval, status) = _netconf_post(ctl, args['<node>'], ds, 'GETSCHEMA', debug, data)
     if status:
         print retval['get-schema']['output']['data']
     else:
