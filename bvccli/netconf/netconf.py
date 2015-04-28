@@ -5,6 +5,7 @@ from ..common import api
 from ..common import utils
 import os
 import json
+import hashlib
 
 
 def _netconf_get(ctl, node, ds, apicall, debug, resource=None):
@@ -79,6 +80,7 @@ def get_schemas(ctl, args):
     #TODO: Test for ietf-monitoring first
     debug = args['--debug']
     verbose = args['--verbose']
+    #TODO What is the difference between operational and operations?
     ds = 'operations'
     node = args['<node>']
     (retval, status) = _get_capabilities(ctl, args)
@@ -96,6 +98,10 @@ def get_schemas(ctl, args):
                     utils.print_file((module + '@' + revision), utils.get_schemadir(), json.dumps(data))
                 else:
                     utils.print_file((module), utils.get_schemadir(), json.dumps(data))
+            else:
+                print("Houston we have a problem, {}").format(retval)
+    else:
+        print("Houston we have a problem, {}").format(retval)
 
 
 def show_capabilities(ctl, args):
@@ -109,16 +115,24 @@ def show_capabilities(ctl, args):
 def show_config(ctl, args):
     debug = args['--debug']
     node = args['<node>']
+    ignore = args['--force']
     if(args['--config']):
         ds = 'config'
     else:
         ds = 'operational'
-    (retval, status) = _netconf_get(ctl, node, ds, 'NETCONF', debug)
-    if status:
-        pprint(retval)
-        utils.write_file(node, utils.get_configdir(), json.dumps(retval))
+    urihash = int(hashlib.md5(os.path.join(utils.get_configdir(), node)).hexdigest(), 16)
+    filename = os.path.join(utils.get_configdir(), str(urihash))
+    (buf, status) = utils.check_file_and_print(filename)
+    if ignore or not status:
+        (retval, status) = _netconf_get(ctl, node, ds, 'NETCONF', debug)
+        if status:
+            utils.write_file(str(urihash), utils.get_configdir(), json.dumps(retval))
+            pprint(retval)
+        else:
+            print("Houston we have a problem, {}").format(retval)
     else:
-        print("Houston we have a problem, {}").format(retval)
+        jdata = json.loads(buf)
+        print(jdata)
 
 
 def show_schema(ctl, args):
@@ -131,3 +145,4 @@ def show_schema(ctl, args):
         print retval['get-schema']['output']['data']
     else:
         print("Houston we have a problem, {}").format(retval)
+

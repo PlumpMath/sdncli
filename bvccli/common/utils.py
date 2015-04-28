@@ -81,6 +81,7 @@ def write_file(node, directory, data):
     except Exception, e:
         raise e
     filename = os.path.join(directory, node)
+    # print "Writing file %s" % filename
     with open(filename, "w") as fh:
         fh.write(data)
 
@@ -100,51 +101,3 @@ def check_file_and_print(filename):
     else:
         return (None, False)
 
-
-# def get_rest_client(manager_ip=None, rest_port=None):
-
-#     if not manager_ip:
-#         manager_ip = get_management_server_ip()
-
-#     if not rest_port:
-#         rest_port = get_rest_port()
-
-#     username = get_username()
-#     password = get_password()
-#     headers = create_auth_header(username, password)
-#     return Client(host=manager_ip, port=rest_port, headers=headers)
-
-
-# def create_auth_header(username, password):
-#     header = None
-
-#     if username and password:
-#         credentials = '{0}:{1}'.format(username, password)
-#         header = {AUTHENTICATION_HEADER: base64_encode(credentials)}
-
-#     return header
-
-
-# def get_rest_port():
-#     settings = load_settings()
-#     return settings.get_rest_port()
-
-
-# def get_management_server_ip():
-#     settings = load_working_dir_settings()
-#     management_ip = settings.get_management_server()
-#     if management_ip:
-#         return management_ip
-
-#     msg = ("Must either first run 'cfy use' command for a "
-#            "management server or provide a management "
-#            "server ip explicitly")
-#     raise CloudifyCliError(msg)
-
-
-# def get_username():
-#     return os.environ.get(CLOUDIFY_USERNAME_ENV)
-
-
-# def get_password():
-#     return os.environ.get(CLOUDIFY_PASSWORD_ENV)

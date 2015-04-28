@@ -6,4 +6,4 @@ fi
 if [ -f ./dist/bvccli.tar ]; then
  rm ./dist/bvccli.tar
 fi
-tar -cf bvccli.tar bvc setup.py lib/  -C ./dist
+tar -cf bvccli.tar bvccli/ setup.py  -C ./dist

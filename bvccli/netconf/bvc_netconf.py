@@ -12,6 +12,7 @@ Options :
             -a --address <ip>      Address of controller (default: localhost)
             -d --debug             Print JSON dump
             -v --verbose           Add verbose output
+            -f --force             Ignore cache
             -h --help              This help screen
             -o --operations        Read from operations datastore
             -c --config            Read from configuration datastore

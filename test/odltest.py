@@ -1,42 +1,9 @@
 import unittest
-import requests
 import sys
 import os
-import uuid
-import shlex
-import json
-from requests.auth import HTTPBasicAuth
-from pprint import pprint
-
 sys.path.insert(0, os.path.abspath(__file__+"/../.."))
-from bvccli.bvclib import Controller
-import bvccli.utils
 
-auth = bvccli.utils.load_json_config()
-
-
-
-class mod(object):
-    def __init__(self, name, revision, namespace):
-        self.name = name
-        self.revision = revision
-        self.namespace = namespace
-
-
-def extract(ind, outd):
-    for key, value in ind.viewitems():
-        print("Key: {key}, Value: {value}, Type: {type}").format(key=key, value=value, type=type(value))
-        if isinstance(value, dict):
-            extract(value, outd)
-        elif isinstance(value, list):
-            for i in value:
-                extract(i, outd)
-        else:
-          s =  mod(key, value)
-
-          # outd.update({value: key})
-    return outd
-
+# auth = bvccli.utils.load_json_config()
 
 # class TestCapGet(unittest.TestCase):
 #     ctl = Controller('localhost')
@@ -49,14 +16,20 @@ def extract(ind, outd):
 #         ctl.http_get(uri)
 
 
-class TestGetSchema(unittest.TestCase):
-    ctl = Controller(auth, 'localhost')
-    module = 'vyatta-interfaces'
-    d = {'input': {'identifier': module}}
-    (retval, status) = ctl.netconf_get_schema('vr5600', d)
-    if status:
-        print retval.json()['get-schema']['output']['data']
+# class TestGetSchema(unittest.TestCase):
+#     ctl = Controller(auth, 'localhost')
+#     module = 'vyatta-interfaces'
+#     d = {'input': {'identifier': module}}
+#     (retval, status) = ctl.netconf_get_schema('vr5600', d)
+#     if status:
+#         print retval.json()['get-schema']['output']['data']
 
+
+class TestStr2Dict(unittest.TestCase):
+    def testconvert(self):
+        s = {'input': {'identifier': 'brocade-interface'}}
+        todict = dict(s)
+        self.assertIsInstance(todict, dict)
 
 
 

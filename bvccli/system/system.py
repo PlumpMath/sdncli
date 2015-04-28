@@ -1,6 +1,5 @@
 from pprint import pprint
 from ..common import api
-from ..common import utils
 import requests
 from ascii_graph import Pyasciigraph
 
@@ -27,9 +26,34 @@ def system_get_heapinfo(ctl, args):
     (retval, status) = _system_get(ctl, 'HEAPUSAGE', False)
     if status:
         value = retval['value']
-        graph = Pyasciigraph(graphsymbol='*')
-        for l in graph.graph('Heap Usage', value.items()):
+        graph = Pyasciigraph(graphsymbol='.')
+        for l in graph.graph('Heap Memory Usage', value.items()):
             print l
+
+
+def system_get_memory(ctl, args):
+    (retval, status) = _system_get(ctl, 'MEMORY', False)
+    if status:
+        value = retval['value']
+        graph = Pyasciigraph(graphsymbol='.')
+        for l in graph.graph('Non-Heap Memory Usage', value.items()):
+            print l
+
+
+def mem_banner():
+    print """
+init        represents the initial amount of memory (in bytes) that the Java virtual machine requests from the operating system for memory management during startup. 
+            The Java virtual machine may request additional memory from the operating system and may also release memory to the system over time. The value of init 
+            may be undefined.
+used        represents the amount of memory currently used (in bytes).
+committed   represents the amount of memory (in bytes) that is guaranteed to be available for use by the Java virtual machine. The amount of committed memory may 
+            change over time (increase or decrease). The Java virtual machine may release memory to the system and committed could be less than init. committed 
+            will always be greater than or equal to used.
+max         represents the maximum amount of memory (in bytes) that can be used for memory management. Its value may be undefined. The maximum amount of memory may 
+            change over time if defined. The amount of used and committed memory will always be less than or equal to max if max is defined. A memory allocation 
+            may fail if it attempts to increase the used memory such that used > committed even if used <= max would still be true (for example, when the system is 
+            low on virtual memory).
+"""
 
 
 def system_get_gcinfo(ctl, args):
@@ -37,7 +61,6 @@ def system_get_gcinfo(ctl, args):
 
     if status:
         value = retval['value']
-        pprint(value)
         if 'java.lang:name=PS MarkSweep,type=GarbageCollector' in value.keys():
             print "Old Generation GC: PS MarkSweep"
             oldgen = value['java.lang:name=PS MarkSweep,type=GarbageCollector']
@@ -80,7 +103,7 @@ def system_get_gcinfo(ctl, args):
         for l in graph.graph('PS Survivor Space', before['PS Survivor Space'].items()):
             print l
         for l in graph.graph('Code Cache', before['Code Cache'].items()):
-            print l 
+            print l
 
         print "_______________________________________________________________________________"
         print "After GC:"
@@ -98,6 +121,5 @@ def system_get_gcinfo(ctl, args):
             print l
         for l in graph.graph('Code Cache', after['Code Cache'].items()):
             print l
-
-      
-       
+        print "_______________________________________________________________________________"
+        mem_banner()

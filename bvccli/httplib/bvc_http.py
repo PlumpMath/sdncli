@@ -1,6 +1,7 @@
 """
 Usage:
         bvccli http [options] get <uri>
+        bvccli http [options] post <uri> <payload>
 
 Options :
             -d --debug             Print JSON dump

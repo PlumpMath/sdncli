@@ -1,7 +1,10 @@
 """
 Usage:
+        bvccli show [options] api
+        bvccli show [options] ctlapis
         bvccli show [options] hosts
         bvccli show [options] nodes
+        bvccli show [options] interfaces
         bvccli show [options] modules
 
 Options :

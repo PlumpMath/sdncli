@@ -16,8 +16,7 @@ Options :
             -h --help              This help screen
 
 Commands:
-             api           Print out existing HTTP APIs supported
-             flows         Retrieve all known flows from the controller
+             openflow      Perform OpenFlow functions
              show          Retrieve varios elements from BVC
              netconf       Perform NetConf related functions such as retrieve configuration
              http          Perform HTTP based operations
@@ -56,35 +55,29 @@ def main():
     auth = utils.load_json_config()
     argv = [args['<command>']] + args['<args>']
     ctl = Controller(auth, args['--address'])
-    if args['<command>'] == 'nodes':
-        from common import nodes
-        nodes.show_nodes(ctl, args)
-    elif args['<command>'] == 'hosts':
-        from common import hosts
-        hosts.show_hosts(ctl, args)
-    elif args['<command>'] == 'modules':
-        from common import modules
-        modules.show_modules(ctl, args)
-    elif args['<command>'] == 'api':
-        from common import api
-        api.show_api(ctl)
-    elif args['<command>'] == 'flows':
+    if args['<command>'] == 'openflow':
         print "Not implemented yet"
-    elif args['<command>'] == 'http-get':
-        from common import utils
-        utils.http_get(args['uri'])
     elif args['<command>'] == 'show':
         from show import bvc_show
         show_args = bvc_show.docopt(bvc_show.__doc__, argv=argv)
         if(show_args['hosts']):
             from show import hosts
             hosts.show_hosts(ctl, show_args)
+        if(show_args['api']):
+            from common import api
+            api.show_api(ctl)
         if(show_args['nodes']):
             from show import nodes
             nodes.show_nodes(ctl, show_args)
         if(show_args['modules']):
             from show import modules
             modules.show_modules(ctl, show_args)
+        if(show_args['interfaces']):
+            from show import interfaces
+            interfaces.printinterfaces()
+        if(show_args['ctlapis']):
+            from common import api
+            api.show_ctl_apis(ctl)
     elif args['<command>'] == 'netconf':
         from netconf import bvc_netconf
         from netconf import netconf
@@ -110,6 +103,8 @@ def main():
         http_args = bvc_http.docopt(bvc_http.__doc__, argv=argv)
         if(http_args['get']):
             httplib.http_get(ctl, http_args)
+        if(http_args['post']):
+            httplib.http_post(ctl, http_args)
     elif args['<command>'] == 'system':
         from system import bvc_system
         from system import system
@@ -118,3 +113,5 @@ def main():
             system.system_get_heapinfo(ctl, system_args)
         elif(system_args['gc']):
             system.system_get_gcinfo(ctl, system_args)
+        elif(system_args['memory']):
+            system.system_get_memory(ctl, system_args)
