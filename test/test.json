@@ -1,0 +1,19 @@
+{"vyatta-security:security": {
+        "vyatta-security-firewall:firewall": {
+            "name": [
+                {
+                    "rule": [
+                        {
+                            "action": "accept",
+                            "source": {
+                                "address": "0.0.0.0/0"
+                            },
+                            "tagnode": 9999
+                        }
+                    ],
+                    "tagnode": "TEST"
+                }
+            ]
+        }
+    }
+}
