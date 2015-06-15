@@ -17,30 +17,33 @@ def _get_mount_status(ctl, debug=False):
             return(("Error connecting to BVC {}").format(ctl.server), False)
         if str(retval.status_code)[:1] == "2":
             data = retval.json()
+            if debug:
+                pprint(data)
             root = data['nodes']['node']
             keys = ['id', 'connected', 'type']
             for line in root:
                 devid = line['id']
                 if 'netconf-node-inventory:connected' in line:
                     connected = True
+                if 'netconf-node-inventory:initial-capability' in line:
+                    for l in line['netconf-node-inventory:initial-capability']:
+                        if devid == "controller-config":
+                            devtype = 'controller'
+                        elif "brocade-interface" in l:
+                            devtype = 'nos'
+                            break
+                        elif "vyatta-interfaces" in l:
+                            devtype = 'vyatta'
+                            break
+                        elif "vyatta-interfaces" in l:
+                            devtype = 'vyatta'
+                            break
+                        else:
+                            devtype = 'unknown'
+                    vals = [devid, connected, devtype]
+                    stats.append(dict(zip(keys, vals)))
                 else:
                     connected = False
-                for l in line['netconf-node-inventory:initial-capability']:
-                    if devid == "controller-config":
-                        devtype = 'controller'
-                    elif "brocade-interface" in l:
-                        devtype = 'nos'
-                        break
-                    elif "vyatta-interfaces" in l:
-                        devtype = 'vyatta'
-                        break
-                    elif "vyatta-interfaces" in l:
-                        devtype = 'vyatta'
-                        break
-                    else:
-                        devtype = 'unknown'
-                vals = [devid, connected, devtype]
-                stats.append(dict(zip(keys, vals)))
             return stats
         else:
             return (("Unexpected Status Code {}").format(retval.status_code), False)

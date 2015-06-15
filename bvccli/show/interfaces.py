@@ -1,8 +1,9 @@
 from ..common import utils
 from uuid import uuid4
 import string
-
+from ..interface import interface
 import random
+from ..common.utils import print_table_list
 
 
 def random_generator(size=6, chars=string.ascii_lowercase):
@@ -22,5 +23,7 @@ def generatemock(size=100):
     return interfacedb
 
 
-def printinterfaces():
-    utils.print_table('Interfaces', generatemock(), sortkey=None)
+def show_interface(ctl):
+    # utils.print_table('Interfaces', generatemock(), sortkey=None)
+    result = interface.get_interfaces(ctl)
+    print_table_list('Interfaces', result)

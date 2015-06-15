@@ -2,10 +2,13 @@
 Usage:
         bvccli show [options] api
         bvccli show [options] ctlapis
+        bvccli show [options] flows <node>
         bvccli show [options] hosts
+        bvccli show [options] mounts
         bvccli show [options] nodes
         bvccli show [options] interfaces
         bvccli show [options] modules
+        bvccli show [options] rpc <node>
 
 Options :
             -a --address <ip>      Address of controller (default: localhost)
