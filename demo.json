@@ -1,0 +1,40 @@
+{
+  "flow-node-inventory:flow": [
+    {
+      "flow-name": "foo",
+      "hard-timeout": 0,
+      "id": 10,
+      "idle-timeout": 0,
+      "installHw": "True",
+      "match": {
+        "ethernet-match": {
+          "ethernet-type": {
+            "type": 2048
+          }
+        },
+        "ip-match": {
+          "ip-protocol": 17
+        }
+      },
+      "instructions": {
+        "instruction": [
+          {
+            "apply-actions": {
+              "action": [
+                {
+                  "output-action": {
+                    "output-node-connector": "1"
+                  },
+                  "order": 0
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "priority": 110,
+      "strict": "False",
+      "table_id": 0
+    }
+  ]
+}

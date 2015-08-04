@@ -24,50 +24,61 @@ Commands:
 
 """
 
-import docopt
-import requests
-from requests.auth import HTTPBasicAuth
-
+from docopt import docopt
+from pybvc.controller.controller import Controller
+from pybvc.common.status import STATUS
 import bvcctl.show
+import bvcctl.node
+from requests import ConnectionError
+from logging import log
 
-# import bvcctl.show
 
 import logging
-
 logging.basicConfig()
 logging.getLogger().setLevel(logging.DEBUG)
-requests_log = logging.getLogger("requests")
-requests_log.setLevel(logging.DEBUG)
-requests_log.propagate = True
+logging.propagate = True
+# requests_log = logging.getLogger("requests")
+# requests_log.setLevel(logging.DEBUG)
+# requests_log.propagate = True
 
 
-class Controller(object):
-    def __init__(self, auth, address):
-        self.port = auth.get('port', 8181)
-        self.auth = HTTPBasicAuth(auth.get('username', 'admin'), auth.get('password', 'admin'))
-        self.server = address or auth.get('server')
-        self.session = requests.Session()
-        self.headers = {'content-type': 'application/json'}
+class Session(Controller):
+    def __init__(self, ip, port, user, password):
+        try:
+            Controller.__init__(self, ip, port, user, password)
+        except Exception, e:
+            raise e
+        result = self.build_inventory_object()
+        if(result.status.eq(STATUS.OK)):
+            self.inventory = result.data
+            result = self.build_topology_object("flow:1")
+            if(result.status.eq(STATUS.OK)):
+                self.topology = result.data
+
 
 
 def main():
-    # from bvcctl.common import utils
-    argv = ['show']
-    args = docopt.docopt(__doc__,argv=argv)
-    # args = docopt.docopt(__doc__, version="0.9.0", options_first=True)
-
-    ctl = Controller()
-
+    port = '8181'
+    auth = {'user': 'admin', 'password': 'admin'}
+    args = docopt(__doc__, options_first=True)
+    # args = {'--address': None, '--debug': False, '--help': False, '<args>': ['mount'], '<command>': 'node'}
+    if args.get('--address') is not None:
+        ctl = Session(args['--address'], port, auth.get('user', 'admin'), auth.get('password', 'admin'))
+    else:
+        ctl = Session('127.0.0.1', port, auth.get('user', 'admin'), auth.get('password', 'admin'))
 
     cmd = args['<command>']
     subcmd = args['<args>']
     commands = [cmd] + subcmd
 
     module = getattr(bvcctl, cmd)
-    module.show_hosts(ctl, commands)
-    s = module.__doc__
-    a = docopt(s)
-    # print arguments
+
+    arguments = docopt(module.__doc__, commands)
+    try:
+        pass
+        getattr(module, cmd)(ctl, arguments)
+    except Exception, e:
+        raise e
 
 if __name__ == '__main__':
         main()

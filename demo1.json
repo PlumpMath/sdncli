@@ -1,0 +1,43 @@
+{
+  "flow-node-inventory:flow": [
+    {
+      "flow-name": "flow1288",
+      "hard-timeout": 0,
+      "id": 1,
+      "idle-timeout": 0,
+      "installHw": "True",
+      "match": {
+        "ethernet-match": {
+          "ethernet-type": {
+            "type": 2048
+          }
+        },
+        "udp-destination-port": 123,
+        "ipv4-source": "80.80.80.7/24",
+        "ip-match": {
+          "ip-protocol": 17
+        }
+      },
+      "instructions": {
+        "instruction": [
+          {
+            "apply-actions": {
+              "action": [
+                {
+                  "output-action": {
+                    "output-node-connector": "1"
+                  },
+                  "order": 0
+                }
+              ]
+            },
+            "order": 0
+          }
+        ]
+      },
+      "priority": 200,
+      "strict": "False",
+      "table_id": 0
+    }
+  ]
+}
