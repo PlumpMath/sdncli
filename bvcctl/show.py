@@ -19,16 +19,23 @@ Options :
 
 """
 from common.api import API
+from util import print_table_list
+from util import print_table_dict
+from pprint import pprint
+from pybvc.common.status import STATUS
+import json
+
 # from pybvc.controller.topology import Topology
 
 
 def show(ctl, args):
     if args.get('nodes'):
-        # s = [i.to_json() for i in ctl.inventory.netconf_nodes]
-        status = ctl.get_all_nodes_conn_status()
-        print status.data 
+        s = ctl.topology
+        pprint(vars(s))
+        print_table_list('Nodes', ctl.topology.nodes)
     elif args.get('hosts'):
-        print ctl.topology.to_string()
+        print ctl.topology.hosts
+        print_table_list('Hosts', ctl.topology.hosts)
         # for node in ctl.topology.get_hosts():
         #     print node.get_id()
         #     print node.get_mac_address()
@@ -43,7 +50,19 @@ def show(ctl, args):
     elif args.get('topology'):
         print "show topology"
     elif args.get('modules'):
-        print ctl.get_config_modules().data
+        modules = []
+        result = ctl.get_config_modules()
+        if(result.status.eq(STATUS.OK)):
+            modulelist = result.data
+            pprint(modulelist)
+            for line in modulelist:
+                    modulemap = {'type':     line['type'],
+                                 'name': line['name']}
+                    modules.append(dict(modulemap))
+            print_table_dict('Modules', modules)
+
+
+
     elif args.get('streams'):
         print ctl.get_streams_info().data
     elif args.get('providers'):

@@ -33,10 +33,10 @@ from requests import ConnectionError
 from logging import log
 
 
-import logging
-logging.basicConfig()
-logging.getLogger().setLevel(logging.DEBUG)
-logging.propagate = True
+# import logging
+# logging.basicConfig()
+# logging.getLogger().setLevel(logging.DEBUG)
+# logging.propagate = True
 # requests_log = logging.getLogger("requests")
 # requests_log.setLevel(logging.DEBUG)
 # requests_log.propagate = True
@@ -44,17 +44,16 @@ logging.propagate = True
 
 class Session(Controller):
     def __init__(self, ip, port, user, password):
-        try:
-            Controller.__init__(self, ip, port, user, password)
-        except Exception, e:
-            raise e
+        Controller.__init__(self, ip, port, user, password)
         result = self.build_inventory_object()
         if(result.status.eq(STATUS.OK)):
             self.inventory = result.data
             result = self.build_topology_object("flow:1")
             if(result.status.eq(STATUS.OK)):
                 self.topology = result.data
-
+        else:
+            print "Houston we have a problem {}".format(result.status.to_string())
+            exit()
 
 
 def main():
@@ -63,9 +62,9 @@ def main():
     args = docopt(__doc__, options_first=True)
     # args = {'--address': None, '--debug': False, '--help': False, '<args>': ['mount'], '<command>': 'node'}
     if args.get('--address') is not None:
-        ctl = Session(args['--address'], port, auth.get('user', 'admin'), auth.get('password', 'admin'))
+            ctl = Session(args['--address'], port, auth.get('user', 'admin'), auth.get('password', 'admin'))
     else:
-        ctl = Session('127.0.0.1', port, auth.get('user', 'admin'), auth.get('password', 'admin'))
+            ctl = Session('127.0.0.1', port, auth.get('user', 'admin'), auth.get('password', 'admin'))
 
     cmd = args['<command>']
     subcmd = args['<args>']
