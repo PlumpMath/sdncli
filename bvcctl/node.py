@@ -14,6 +14,7 @@ from pybvc.common.status import STATUS
 
 
 def node(ctl, args):
+    #MOUNT
     if args.get('mount'):
         addr = args.get('<address>')
         name = args.get('<node>')
@@ -23,7 +24,6 @@ def node(ctl, args):
         nodeid = ctl.inventory.get_netconf_node(name)
         if not nodeid:
             node = NetconfNode(ctl, name, addr, user, pw, portNum=port)
-            print node.to_json()
             result = ctl.add_netconf_node(node)
             status = result.get_status()
             if(status.eq(STATUS.OK)):
@@ -34,6 +34,7 @@ def node(ctl, args):
                 print "Houston we have a problem: {}".format(status.to_string())
         else:
                 print "Node: {} is already in inventory".format(name)
+    #UNMOUNT
     elif args.get('unmount'):
         name = args.get('<node>')
         nodeid = ctl.inventory.get_netconf_node(name)
