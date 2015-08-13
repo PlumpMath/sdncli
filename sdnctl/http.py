@@ -1,4 +1,4 @@
-`"""
+"""
 Usage:
         sdncli http [options] get <resource>
         sdncli http [options] delete <resource>

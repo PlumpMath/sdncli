@@ -1,0 +1,5 @@
+__title__ = 'pybvc'
+__version__ = '1.1.1'
+__author__ = 'Gary Berger'
+__license__ = 'BSD'
+__copyright__ = 'Brocade Communications'
