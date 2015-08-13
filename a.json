@@ -1,7 +1,0 @@
-{
-  "input": {
-    "path": "opendaylight-inventory:nodes",
-    "datastore": "OPERATIONAL",
-    "scope": "BASE"
-    }
-  }
