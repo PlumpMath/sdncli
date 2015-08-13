@@ -1,0 +1,7 @@
+{
+  "input": {
+    "path": "opendaylight-inventory:nodes",
+    "datastore": "CONFIGURATION",
+    "scope": "BASE"
+    }
+  }

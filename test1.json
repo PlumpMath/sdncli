@@ -1,0 +1,38 @@
+{
+  "flow-node-inventory:flow": [
+    {
+      "flow-name": "ABC",
+      "hard-timeout": 0,
+      "id": 1,
+      "idle-timeout": 0,
+      "installHw": "True",
+      "match": {
+        "ethernet-match": {
+          "ethernet-type": {
+            "type": 2054
+          },
+          "in-port": "27"
+        },
+        "instructions": {
+          "instruction": [
+            {
+              "apply-actions": {
+                "action": [
+                  {
+                    "output-action": {
+                      "drop-action": {}
+                    },
+                    "order": 0
+                  }
+                ]
+              },
+              "priority": 200,
+              "strict": "False",
+              "table_id": 0
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
