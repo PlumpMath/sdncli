@@ -2,8 +2,8 @@
 Usage:
         sdncli http [options] get <resource>
         sdncli http [options] delete <resource>
-        sdncli http [options] post <resource> ([--payload <payload>] | [--file <file>])
-        sdncli http [options] put <resource> ([--payload <payload>] | [--file <file>])
+        sdncli http [options] post <resource> (--payload <payload>> | --file <file>)
+        sdncli http [options] put <resource> (-payload <payload>>  | --file <file>)
 
 Options :
             -d --debug             Print JSON dump
@@ -19,21 +19,41 @@ Options :
             opendaylight-inventory:nodes/node/{node}/yang-ext:mount
 
 """
-from requests import ConnectionError
-from pprint import pprint
 import json
-import os
-import pybvc.common.status
+import util
+from pybvc.common import status
+from pybvc.common.status import STATUS
+from pybvc.common.result import Result
+from pybvc.common.result import OperStatus
 
 
 def http(ctl, args):
     # GET
     if args.get('get'):
-        http_get(ctl, args)
+        result = http_get(ctl, args)
+        if(result.status.eq(STATUS.OK)):
+            print result.data
+            print vars(result)
+        else:
+            print "Error"
     elif args.get('put'):
-        http_put(ctl, args)
+        result = http_put(ctl, args)
+        if(result.status.eq(STATUS.OK)):
+            print "Commited"
+        else:
+            print "Error"
+    elif args.get('post'):
+        result = http_post(ctl, args)
+        if(result.status.eq(STATUS.OK)):
+            print "Commited"
+        else:
+            print "Error"
     elif args.get('delete'):
-        http_delete(ctl, args)
+        result = http_delete(ctl, args)
+        if(result.status.eq(STATUS.OK)):
+            print "Commited"
+        else:
+            print "Error"
 
 
 def http_get(ctl, args):
@@ -41,7 +61,7 @@ def http_get(ctl, args):
     import hashlib
     templateUrl = "http://{}:{}/restconf/{}"
     url = templateUrl.format(ctl.ipAddr, ctl.portNum, args['<resource>'])
-  
+    status = OperStatus()
     # resourcehash = int(hashlib.md5(resource).hexdigest(), 16)
     # if not (os.path.exists(utils.get_cachedir())):
     #     utils.prepare_directory(utils.get_cachedir())
@@ -52,11 +72,20 @@ def http_get(ctl, args):
 
     resp = ctl.http_get_request(url, data=None, headers=None)
     if(resp is None):
-            status.set_status(STATUS.CONN_ERROR)
+        status.set_status(STATUS.CONN_ERROR)
     elif(resp.content is None):
-            status.set_status(STATUS.CTRL_INTERNAL_ERROR)
-    elif(resp.status_code == 200):
-        print resp.json()
+        status.set_status(STATUS.CTRL_INTERNAL_ERROR)
+    elif(resp.status_code == 200 or resp.status_code == 204):
+        status.set_status(STATUS.OK)
+    else:
+        status.set_status(STATUS.HTTP_ERROR, resp)
+    return Result(status, resp.json())
+    # if(resp is None):
+    #         status.set_status(STATUS.CONN_ERROR)
+    # elif(resp.content is None):
+    #         status.set_status(STATUS.CTRL_INTERNAL_ERROR)
+    # elif(resp.status_code == 200):
+    #     print resp.json()
 
     #     if str(retval.status_code)[:1] == "2":
     #         # utils.write_file(str(resourcehash), utils.get_cachedir(), json.dumps(retval.response))
@@ -72,50 +101,72 @@ def http_post(ctl, args):
     if args['--payload']:
         payload = args['<payload>']
     elif args['--file']:
-        payload = utils.load_json_file(file)
-
+        payload = util.load_json_file(args['<file>'])
+    status = OperStatus()
     headers = {'content-type': 'application/yang.data+json',
                'accept': 'text/json, text/html, application/xml, */*'}
     templateUrl = "http://{}:{}/restconf/{}"
     url = templateUrl.format(ctl.ipAddr, ctl.portNum, args['<resource>'])
-    resp = self.http_post_request(url, json.dumps(payload), headers)
+    resp = ctl.http_post_request(url, json.dumps(payload), headers)
     if(resp is None):
-            status.set_status(STATUS.CONN_ERROR)
+        status.set_status(STATUS.CONN_ERROR)
     elif(resp.content is None):
-            status.set_status(STATUS.CTRL_INTERNAL_ERROR)
-    elif(resp.status_code == 200):
-        print resp.json()
+        status.set_status(STATUS.CTRL_INTERNAL_ERROR)
+    elif(resp.status_code == 200 or resp.status_code == 204):
+        status.set_status(STATUS.OK)
+    else:
+        status.set_status(STATUS.HTTP_ERROR, resp)
+    return Result(status, resp)
 
 
 def http_put(ctl, args):
     if args['--payload']:
         payload = args['<payload>']
     elif args['--file']:
-        payload = utils.load_json_file(args['<file>'])
+        payload = util.load_json_file(args['<file>'])
+    status = OperStatus()
     headers = {'content-type': 'application/yang.data+json',
                'accept': 'text/json, text/html, application/xml, */*'}
     templateUrl = "http://{}:{}/restconf/{}"
     url = templateUrl.format(ctl.ipAddr, ctl.portNum, args['<resource>'])
     resp = ctl.http_put_request(url, json.dumps(payload), headers)
     if(resp is None):
-            status.set_status(STATUS.CONN_ERROR)
+        status.set_status(STATUS.CONN_ERROR)
     elif(resp.content is None):
-            status.set_status(STATUS.CTRL_INTERNAL_ERROR)
-    elif(resp.status_code == 200):
-        print "Success"
+        status.set_status(STATUS.CTRL_INTERNAL_ERROR)
+    elif(resp.status_code == 200 or resp.status_code == 204):
+        status.set_status(STATUS.OK)
+    else:
+        status.set_status(STATUS.HTTP_ERROR, resp)
+    return Result(status, resp)
+
+    # if(resp is None):
+    #         status.set_status(STATUS.CONN_ERROR)
+    # elif(resp.content is None):
+    #         status.set_status(STATUS.CTRL_INTERNAL_ERROR)
+    # elif(resp.status_code == 200):
+    #     print "Success"
 
 
 def http_delete(ctl, args):
     ignore = args['--force']
     templateUrl = "http://{}:{}/restconf/{}"
-
+    status = OperStatus()
     url = templateUrl.format(ctl.ipAddr, ctl.portNum, args['<resource>'])
     resp = ctl.http_delete_request(url, data=None, headers=None)
     if(resp is None):
-            status.set_status(STATUS.CONN_ERROR)
+        status.set_status(STATUS.CONN_ERROR)
     elif(resp.content is None):
-            status.set_status(STATUS.CTRL_INTERNAL_ERROR)
-    elif(resp.status_code == 200):
-        print resp.json()
+        status.set_status(STATUS.CTRL_INTERNAL_ERROR)
+    elif(resp.status_code == 200 or resp.status_code == 204):
+        status.set_status(STATUS.OK)
+    else:
+        status.set_status(STATUS.HTTP_ERROR, resp)
+    return Result(status, resp)
+    # if(resp is None):
+    #         status.set_status(STATUS.CONN_ERROR)
+    # elif(resp.content is None):
+    #         status.set_status(STATUS.CTRL_INTERNAL_ERROR)
+    # elif(resp.status_code == 200):
+    #     print resp.json()
 
-#TODO Create higher abstraction for YANG Mounts
