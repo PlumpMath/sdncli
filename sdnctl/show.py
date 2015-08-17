@@ -140,7 +140,7 @@ def show(ctl, args):
                 action = str(action).translate(None, '\'\`\ []]')
                 i['action'] = str(action).replace(",", "\n")
                 table.append(i)
-                print_table_dict(fields, table)
+            print_table_dict(fields, table, 'id')
         else:
             print "No Flows Found"
     #INTERFACES
@@ -149,7 +149,7 @@ def show(ctl, args):
             for mounts in (ctl.get_mounts()).data:
                 if netconf_nodes.get_id() == mounts['name'] and 'controller-config' not in netconf_nodes.get_id():
                     name = mounts['name']
-                    port =  mounts['odl-sal-netconf-connector-cfg:port']
+                    port = mounts['odl-sal-netconf-connector-cfg:port']
                     address = mounts['odl-sal-netconf-connector-cfg:address']
                     user = mounts['odl-sal-netconf-connector-cfg:username']
                     password = mounts['odl-sal-netconf-connector-cfg:password']

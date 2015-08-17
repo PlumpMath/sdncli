@@ -32,33 +32,6 @@ def node(ctl, args):
             result = ctl.add_netconf_node(node)
             if(result.status.eq(STATUS.OK)):
                 print "Mounted node {}".format(name)
-            # Need to wait for mount
-            # sleep(5)
-            # if(result.status.eq(STATUS.OK)):
-            #     result = ctl.check_node_conn_status(node)
-            #     # TODO Fix this
-            #     if(result.status.eq(STATUS.OK)):
-
-            #         # Device Detection.. Move into pysdn..
-            #         # result = node.get_schemas()
-            #         # if(result.status.eq(STATUS.OK)):
-            #         #     schemas = result.data
-            #         #     for schema in schemas:
-            #         #         if "controller-config" in schema['identifier']:
-            #         #             devtype = 'controller'
-            #         #             break
-            #         #         elif "brocade-interface" in schema['identifier']:
-            #         #             devtype = 'nos'
-            #         #             break
-            #         #         elif "vyatta-interfaces" in schema['identifier']:
-            #         #             devtype = 'vyatta'
-            #         #             vr = VRouter5600(ctl, name, addr, user, pw, port)
-            #         #             break
-            #         #         else:
-            #         #             devtype = 'unknown'
-            #         #             break
-            #     else:
-            #         print "Houston we have a problem: {}".format(status.to_string())
         else:
                 print "Node: {} is already in inventory".format(name)
     #UNMOUNT
@@ -95,34 +68,3 @@ def mount_ssh(ctl, args):
         """
         print in_put.format(name=name, user=user, pw=pw, enable=enable, devtype=devtype)
 
-        # payload = json.loads(in_put)
-        # print payload
-        # if not nodeid:
-        #     headers = {'content-type': 'application/yang.data+json',
-        #                'accept': 'text/json, text/html, application/xml, */*'}
-        #     templateUrl = "http://{}:{}/restconf/{}"
-        #     url = templateUrl.format(ctl.ipAddr, ctl.portNum, resource)
-        #     resp = ctl.http_post_request(url, json.dumps(payload), headers)
-        #     if(resp is None):
-        #             status.set_status(STATUS.CONN_ERROR)
-        #     elif(resp.content is None):
-        #             status.set_status(STATUS.CTRL_INTERNAL_ERROR)
-        #     elif(resp.status_code == 200):
-        #         print resp.json()
-        # if 'netconf-node-inventory:initial-capability' in line:
-        #     for l in line['netconf-node-inventory:initial-capability']:
-        #         if devid == "controller-config":
-        #             devtype = 'controller'
-        #         elif "brocade-interface" in l:
-        #             devtype = 'nos'
-        #             break
-        #         elif "vyatta-interfaces" in l:
-        #             devtype = 'vyatta'
-        #             break
-        #         elif "vyatta-interfaces" in l:
-        #             devtype = 'vyatta'
-        #             break
-        #         else:
-        #             devtype = 'unknown'
-        #     vals = [devid, connected, devtype]
-        #     stats.append(dict(zip(keys, vals)))

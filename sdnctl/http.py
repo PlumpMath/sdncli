@@ -32,28 +32,42 @@ def http(ctl, args):
     if args.get('get'):
         result = http_get(ctl, args)
         if(result.status.eq(STATUS.OK)):
-            print result.data
-            print vars(result)
+            try:
+                print (result.data).json()
+            except ValueError:
+                raise ValueError(response=(result.data))
         else:
-            print "Error"
+            print "Error {}:{}".format(result.status.detailed(), result.data)
+    #PUT
     elif args.get('put'):
         result = http_put(ctl, args)
         if(result.status.eq(STATUS.OK)):
-            print "Commited"
+            try:
+                print (result.data).json()
+            except ValueError:
+                print "Succes.. No data.."
         else:
-            print "Error"
+            print "Error {}:{}".format(result.status.detailed(), result.data)
+    #POST
     elif args.get('post'):
         result = http_post(ctl, args)
         if(result.status.eq(STATUS.OK)):
-            print "Commited"
+            try:
+                print (result.data).json()
+            except ValueError:
+                raise ValueError(response=(result.data))
         else:
-            print "Error"
+            print "Error {}:{}".format(result.status.detailed(), result.data)
+    #DELETE
     elif args.get('delete'):
         result = http_delete(ctl, args)
         if(result.status.eq(STATUS.OK)):
-            print "Commited"
+            try:
+                print (result.data).json()
+            except ValueError:
+                    print "Succes.. No data.."
         else:
-            print "Error"
+            print "Error {}:{}".format(result.status.detailed(), result.data)
 
 
 def http_get(ctl, args):
@@ -79,22 +93,7 @@ def http_get(ctl, args):
         status.set_status(STATUS.OK)
     else:
         status.set_status(STATUS.HTTP_ERROR, resp)
-    return Result(status, resp.json())
-    # if(resp is None):
-    #         status.set_status(STATUS.CONN_ERROR)
-    # elif(resp.content is None):
-    #         status.set_status(STATUS.CTRL_INTERNAL_ERROR)
-    # elif(resp.status_code == 200):
-    #     print resp.json()
-
-    #     if str(retval.status_code)[:1] == "2":
-    #         # utils.write_file(str(resourcehash), utils.get_cachedir(), json.dumps(retval.response))
-    #         pprint(retval.json())
-    #     else:
-    #         print("Houston we have a problem, {} {}").format(retval.status_code, retval.reason)
-    # else:
-    #     #TODO add async cache refresh
-    #     print buf
+    return Result(status, resp)
 
 
 def http_post(ctl, args):
