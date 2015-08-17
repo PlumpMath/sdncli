@@ -3,6 +3,7 @@ Usage:
         sdncli show hosts
         sdncli show mounts
         sdncli show nodes
+        sdncli show config <node>
         sdncli show flows <node> <table>
         sdncli show flow <id>
         sdncli show interfaces
@@ -85,6 +86,18 @@ def show(ctl, args):
                 i.connected = "False"
             table.append(i.__dict__)
         print_table_dict(fields, table)
+    # CONFIG
+    elif args.get('config'):
+        node = args.get('<node>')
+        result = ctl.check_node_conn_status(node)
+        if(result.status.eq(STATUS.NODE_CONNECTED)):
+            result = ctl.get_node_config(node)
+            if(result.status.eq(STATUS.OK)):
+                print (result.data).json()
+            else:
+                print "Houston we have a problem"
+        else:
+                print "Node {} is not mounted".format(node)
 
     # TOPOLOGY
     elif args.get('topology'):
