@@ -29,7 +29,7 @@ from pybvc.netconfdev.vrouter.vrouter5600 import VRouter5600
 from pybvc.netconfdev.vdx.nos import NOS
 
 from singledispatch import singledispatch
-
+from pprint import pprint
 
 @singledispatch
 def get_interfaces_list():
@@ -50,10 +50,25 @@ def _(obj):
 
 def show(ctl, args):
     # NODES
+
     if args.get('nodes'):
+        table = []
         result = ctl.get_all_nodes_conn_status()
-        fields = ['node', 'connected']
-        print_table_dict(fields, result.data)
+        for node in result.data:
+            result = ctl.get_node_info(node.get('node'))
+            if(result.status.eq(STATUS.OK)):
+                d = result.data
+                record = {'node': node.get('node'),
+                          'connected': node.get('connected'),
+                          'description': d.get('flow-node-inventory:description'),
+                          'hardware': d.get('flow-node-inventory:hardware'),
+                          'ipaddr': d.get('flow-node-inventory:ip-address'),
+                          'manufacturer': d.get('flow-node-inventory:manufacturer'),
+                          'serialno': d.get('flow-node-inventory:serial-number'),
+                          'software': d.get('flow-node-inventory:software')}
+                table.append(record)
+        fields = ['node', 'connected', 'description', 'hardware', 'ipaddr', 'manufacturer', 'serialno', 'software']
+        print_table_dict(fields, table)
         # ctl.get_openflow_nodes_operational_list()
         # ctl.get_netconf_nodes_conn_status()
         # nodes = ctl.inventory.netconf_nodes
@@ -145,18 +160,23 @@ def show(ctl, args):
             print "No Flows Found"
     #INTERFACES
     elif args.get('interfaces'):
-        for netconf_nodes in ctl.inventory.netconf_nodes:
-            for mounts in (ctl.get_mounts()).data:
-                if netconf_nodes.get_id() == mounts['name'] and 'controller-config' not in netconf_nodes.get_id():
-                    name = mounts['name']
-                    port = mounts['odl-sal-netconf-connector-cfg:port']
-                    address = mounts['odl-sal-netconf-connector-cfg:address']
-                    user = mounts['odl-sal-netconf-connector-cfg:username']
-                    password = mounts['odl-sal-netconf-connector-cfg:password']
-                    # m = globals()[netconf_nodes.clazz](ctl, name, address, port, user, password)
-                    m = globals()['NOS'](ctl, name, address, port, user, password)
-                    result = m.get_interfaces_list()
-                    print result
+        node = [[netconf_nodes, mounts] for netconf_nodes in ctl.inventory.netconf_nodes
+                for mounts in (ctl.get_mounts()).data
+                if netconf_nodes.get_id() == mounts['name']
+                and 'controller-config' not in netconf_nodes.get_id()]
+        for n in node:
+            name = n[1]['name']
+            port = n[1]['odl-sal-netconf-connector-cfg:port']
+            address = n[1]['odl-sal-netconf-connector-cfg:address']
+            user = n[1]['odl-sal-netconf-connector-cfg:username']
+            password = n[1]['odl-sal-netconf-connector-cfg:password']
+            m = globals()[n[0].clazz](ctl, name, address, port, user, password)
+            result = m.get_interfaces_cfg()
+            if(result.status.eq(STATUS.OK)):
+                fields = ['cookie', 'priority', 'id', 'match', 'action']
+                print (result.data)
+            # for i in result:
+            #     print i
 
 
 

@@ -9,6 +9,7 @@ Options :
             -d --debug             Print JSON dump
             -h --help              This help screen
             -f --force             Ignore cache
+            -t <time> --timeout    HTTP Timeout in seconds
             -y --yang              Utilize yang mounted prefix
             -o --operational       Read from operational datastore
             -p --operations        RPC Resource
@@ -72,6 +73,7 @@ def http(ctl, args):
 
 def http_get(ctl, args):
     ignore = args['--force']
+    timeout = args['--timeout']
     import hashlib
     templateUrl = "http://{}:{}/restconf/{}"
     url = templateUrl.format(ctl.ipAddr, ctl.portNum, args['<resource>'])
@@ -84,7 +86,7 @@ def http_get(ctl, args):
     # if ignore or not status:
     # retval = _http_get(ctl, resource)
 
-    resp = ctl.http_get_request(url, data=None, headers=None)
+    resp = ctl.http_get_request(url, data=None, headers=None, timeout=timeout)
     if(resp is None):
         status.set_status(STATUS.CONN_ERROR)
     elif(resp.content is None):
