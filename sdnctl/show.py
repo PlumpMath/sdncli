@@ -31,26 +31,23 @@ from pybvc.netconfdev.vdx.nos import NOS
 from singledispatch import singledispatch
 from pprint import pprint
 
-@singledispatch
-def get_interfaces_list():
-    raise NotImplementedError("Not Implemented Yet!")
+# @singledispatch
+# def get_interfaces_list():
+#     raise NotImplementedError("Not Implemented Yet!")
 
 
-@get_interfaces_list.register(VRouter5600)
-def _(obj):
-    result = VRouter5600.get_interfaces_list()
-    return result
+# @get_interfaces_list.register(VRouter5600)
+# def _(obj):
+#     result = VRouter5600.get_interfaces_list()
+#     return result
 
-@get_interfaces_list.register(NOS)
-def _(obj):
-    raise NotImplementedError("Not Implemented")
-    return result
-
-
+# @get_interfaces_list.register(NOS)
+# def _(obj):
+#     raise NotImplementedError("Not Implemented")
+#     return result
 
 def show(ctl, args):
     # NODES
-
     if args.get('nodes'):
         table = []
         result = ctl.get_all_nodes_conn_status()
@@ -146,8 +143,13 @@ def show(ctl, args):
         ofswitch = OFSwitch(ctl, node)
         result = ofswitch.get_flows(flowtable, operational=True)
         if(result.status.eq(STATUS.OK)):
-            fields = ['cookie', 'priority', 'id', 'match', 'action']
+            # fields = ['cookie', 'priority', 'id', 'match', 'action', 'second', 'nanosecond', 'packet-count', 'byte-count']
+            fields = ['cookie', 'priority', 'id', 'match', 'action', 'packet-count', 'byte-count']
             for i in result.data:
+                # i['second'] = dict_unicode_to_string(i.get('opendaylight-flow-statistics:flow-statistics').get('duration').get('second'))
+                # i['nanosecond'] = dict_unicode_to_string(i.get('opendaylight-flow-statistics:flow-statistics').get('duration').get('nanosecond'))
+                i['packet-count'] = dict_unicode_to_string(i.get('opendaylight-flow-statistics:flow-statistics').get('packet-count'))
+                i['byte-count'] = dict_unicode_to_string(i.get('opendaylight-flow-statistics:flow-statistics').get('byte-count'))
                 match = dict_unicode_to_string(i.get('match'))
                 match = str(match).translate(None, '{\'\`\ }')
                 i['match'] = str(match).replace(",", "\n")

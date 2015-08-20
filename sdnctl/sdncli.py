@@ -84,15 +84,19 @@ def main():
     port = '8181'
     auth = {'user': 'admin', 'password': 'admin'}
     args = docopt(doc, options_first=True)
-    # args = {'--address': None, '--debug': False, '--help': False, '<args>': ['mount'], '<command>': 'node'}
-    if args.get('--address') is not None:
-            ctl = Session(args['--address'], port, auth.get('user', 'admin'), auth.get('password', 'admin'))
-    else:
-            ctl = Session('127.0.0.1', port, auth.get('user', 'admin'), auth.get('password', 'admin'))
 
     cmd = args['<command>']
     subcmd = args['<args>']
     commands = [cmd] + subcmd
+
+    try:
+        if args.get('--address') is not None:
+            ctl = Session(args['--address'], port, auth.get('user', 'admin'), auth.get('password', 'admin'))
+        else:
+            ctl = Session('127.0.0.1', port, auth.get('user', 'admin'), auth.get('password', 'admin'))
+    except ConnectionError, e:
+        print("Can't establish connection to controller {}".format(args.get('--address')))
+        exit()
 
     try:
         module = getattr(sdnctl, cmd)
@@ -100,7 +104,7 @@ def main():
         raise e
     arguments = docopt(module.__doc__, commands)
     try:
-        pass
+        # pass
         getattr(module, cmd)(ctl, arguments)
     except Exception, e:
         raise e
