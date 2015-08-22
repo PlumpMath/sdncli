@@ -28,7 +28,7 @@ def node(ctl, args):
         pw = args.get('<password>')
         nodeid = ctl.inventory.get_netconf_node(name)
         if nodeid is None:
-            node = NetconfNode(ctl, name, addr, user, pw, portNum=port)
+            node = NetconfNode(ctl, nodeName=name, ipAddr=addr, portNum=port, adminName=user, adminPassword=pw)
             result = ctl.add_netconf_node(node)
             if(result.status.eq(STATUS.OK)):
                 print "Mounted node {}".format(name)
@@ -38,7 +38,6 @@ def node(ctl, args):
     elif args.get('unmount'):
         name = args.get('<node>')
         nodeid = ctl.inventory.get_netconf_node(name)
-        print nodeid
         if nodeid:
             result = ctl.delete_netconf_node(nodeid)
             if(result.status.eq(STATUS.OK)):
