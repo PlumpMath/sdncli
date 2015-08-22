@@ -16,7 +16,7 @@ from pybvc.netconfdev.vrouter.vrouter5600 import VRouter5600
 
 
 def node(ctl, args):
-    #MOUNT
+    # MOUNT
     if args.get('mount'):
         if args.get('--ssh'):
             mount_ssh(ctl, args)
@@ -34,10 +34,11 @@ def node(ctl, args):
                 print "Mounted node {}".format(name)
         else:
                 print "Node: {} is already in inventory".format(name)
-    #UNMOUNT
+    # UNMOUNT
     elif args.get('unmount'):
         name = args.get('<node>')
         nodeid = ctl.inventory.get_netconf_node(name)
+        print nodeid
         if nodeid:
             result = ctl.delete_netconf_node(nodeid)
             if(result.status.eq(STATUS.OK)):

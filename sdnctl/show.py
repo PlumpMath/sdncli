@@ -55,20 +55,17 @@ def show(ctl, args):
             result = ctl.get_node_info(node.get('node'))
             if(result.status.eq(STATUS.OK)):
                 d = result.data
-                record = {'node': node.get('node'),
-                          'connected': node.get('connected'),
-                          'description': d.get('flow-node-inventory:description'),
-                          'hardware': d.get('flow-node-inventory:hardware'),
-                          'ipaddr': d.get('flow-node-inventory:ip-address'),
-                          'manufacturer': d.get('flow-node-inventory:manufacturer'),
-                          'serialno': d.get('flow-node-inventory:serial-number'),
-                          'software': d.get('flow-node-inventory:software')}
+                record = {'Node': node.get('node'),
+                          'IPAddres': d.get('flow-node-inventory:ip-address'),
+                          'SerialNo': d.get('flow-node-inventory:serial-number'),
+                          'Software': d.get('flow-node-inventory:software'),
+                          'Hardware': d.get('flow-node-inventory:hardware'),
+                          'Connected': node.get('connected'),
+                          'Decription': d.get('flow-node-inventory:description'),
+                          'Manufacturer': d.get('flow-node-inventory:manufacturer')}
                 table.append(record)
-        fields = ['node', 'connected', 'description', 'hardware', 'ipaddr', 'manufacturer', 'serialno', 'software']
+        fields = ['Node', 'Connected', 'Decription', 'Hardware', 'IPAddres', 'Manufacturer', 'SerialNo', 'Software']
         print_table_dict(fields, table)
-        # ctl.get_openflow_nodes_operational_list()
-        # ctl.get_netconf_nodes_conn_status()
-        # nodes = ctl.inventory.netconf_nodes
         # print [[r['node'], r['connected'], node.clazz] for r in result.data for node in nodes if node.get_id() == r['node']]
     # HOSTS
     elif args.get('hosts'):

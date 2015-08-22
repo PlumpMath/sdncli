@@ -5,7 +5,7 @@ lib/.pyc
 lib/.DS_Store
 yangs
 build/*
-BVCCLI.egg-info
+sdncli.egg-info
 dist/*
 schemas
-
+sdnctl/archive/*

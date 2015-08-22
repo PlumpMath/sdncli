@@ -24,7 +24,7 @@ class Vyatta5600(object):
     def get_interfaces(self):
         resource = API['VRINTERFACE'].format(server=self.ctl.server, node=self.node)
         try:
-            retval = self.ctl.session.get(resource, auth=self.ctl.auth, params=None, headers=self.ctl.headers, timeout=120)
+            retval = self.ctl.session.get(resource, auth=self.ctl.auth, params=None, headers=self.ctl.headers, timeout=480)
         except requests.exceptions.ConnectionError:
             raise requests.ConnectionError("Error Connecting to Server: {}".format(self.node))
         return retval

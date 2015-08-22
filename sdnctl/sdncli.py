@@ -75,6 +75,8 @@ class Session(Controller):
             result = self.build_topology_object("flow:1")
             if(result.status.eq(STATUS.OK)):
                 self.topology = result.data
+            else:
+                print "Warning: Can't build topology"
         else:
             print "Houston we have a problem {}".format(result.status.to_string())
             exit()
