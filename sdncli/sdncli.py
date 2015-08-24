@@ -48,13 +48,14 @@ from docopt import docopt
 from pybvc.controller.controller import Controller
 from pybvc.common.status import STATUS
 
-import sdnctl.show
-import sdnctl.node
-import sdnctl.http
-import sdnctl.flow
-
 from requests import ConnectionError
 from exceptions import AttributeError
+
+import lib.show
+import lib.node
+import lib.flow
+import lib.http
+
 
 # from logging import log
 # import logging
@@ -102,7 +103,7 @@ def main():
         exit()
 
     try:
-        module = getattr(sdnctl, cmd)
+        module = getattr(lib, cmd)
     except AttributeError, e:
         raise e
     arguments = docopt(module.__doc__, commands)
