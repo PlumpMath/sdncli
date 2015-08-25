@@ -46,7 +46,7 @@ def http(ctl, args):
             try:
                 print (result.data).json()
             except ValueError:
-                print "Succes.. No data.."
+                print "Success.. No data.."
         else:
             print "Error {}:{}".format(result.status.detailed(), result.data)
     #POST
@@ -56,7 +56,7 @@ def http(ctl, args):
             try:
                 print (result.data).json()
             except ValueError:
-                raise ValueError(response=(result.data))
+                print "Success.. No data.."
         else:
             print "Error {}:{}".format(result.status.detailed(), result.data)
     #DELETE
@@ -66,7 +66,7 @@ def http(ctl, args):
             try:
                 print (result.data).json()
             except ValueError:
-                    print "Succes.. No data.."
+                    print "Success.. No data.."
         else:
             print "Error {}:{}".format(result.status.detailed(), result.data)
 

@@ -47,15 +47,16 @@ Commands:
 from docopt import docopt
 from pybvc.controller.controller import Controller
 from pybvc.common.status import STATUS
+
 import sdnctl.show
 import sdnctl.node
 import sdnctl.http
 import sdnctl.flow
 
 from requests import ConnectionError
-from logging import log
 from exceptions import AttributeError
 
+# from logging import log
 # import logging
 # logging.basicConfig()
 # logging.getLogger().setLevel(logging.DEBUG)
