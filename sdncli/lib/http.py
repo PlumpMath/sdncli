@@ -2,8 +2,8 @@
 Usage:
         sdncli http [options] get <resource>
         sdncli http [options] delete <resource>
-        sdncli http [options] post <resource> (--payload <payload>> | --file <file>)
-        sdncli http [options] put <resource> (-payload <payload>>  | --file <file>)
+        sdncli http [options] post <resource> (--payload <payload> | --file <file>)
+        sdncli http [options] put <resource> (-payload <payload>  | --file <file>)
 
 Options :
             -d --debug             Print JSON dump
@@ -22,10 +22,11 @@ Options :
 """
 import json
 import util
-from pybvc.common import status
 from pybvc.common.status import STATUS
 from pybvc.common.result import Result
 from pybvc.common.result import OperStatus
+from pybvc.common.utils import dict_unicode_to_string
+from pprint import pprint
 
 
 def http(ctl, args):
@@ -34,12 +35,16 @@ def http(ctl, args):
         result = http_get(ctl, args)
         if(result.status.eq(STATUS.OK)):
             try:
-                print (result.data).json()
+                print(dict_unicode_to_string((result.get_data()).content))
             except ValueError:
-                raise ValueError(response=(result.data))
+                try:
+                    # TODO Why is this JSON malformed?
+                    print (result.get_data()).content.replace('\\\n', '')
+                except ValueError:
+                    print "Cannot coerece to JSON"
         else:
             print "Error {}:{}".format(result.status.detailed(), result.data)
-    #PUT
+    # PUT
     elif args.get('put'):
         result = http_put(ctl, args)
         if(result.status.eq(STATUS.OK)):
@@ -49,7 +54,7 @@ def http(ctl, args):
                 print "Success.. No data.."
         else:
             print "Error {}:{}".format(result.status.detailed(), result.data)
-    #POST
+    # POST
     elif args.get('post'):
         result = http_post(ctl, args)
         if(result.status.eq(STATUS.OK)):
@@ -59,7 +64,7 @@ def http(ctl, args):
                 print "Success.. No data.."
         else:
             print "Error {}:{}".format(result.status.detailed(), result.data)
-    #DELETE
+    # DELETE
     elif args.get('delete'):
         result = http_delete(ctl, args)
         if(result.status.eq(STATUS.OK)):
@@ -74,9 +79,11 @@ def http(ctl, args):
 def http_get(ctl, args):
     ignore = args['--force']
     timeout = args['--timeout']
-    import hashlib
-    templateUrl = "http://{}:{}/restconf/{}"
-    url = templateUrl.format(ctl.ipAddr, ctl.portNum, args['<resource>'])
+    if timeout is not None:
+        timeout = int(timeout)
+    # import hashlib
+    template_url = "http://{}:{}/restconf/{}"
+    url = template_url.format(ctl.ipAddr, ctl.portNum, args['<resource>'])
     status = OperStatus()
     # resourcehash = int(hashlib.md5(resource).hexdigest(), 16)
     # if not (os.path.exists(utils.get_cachedir())):
@@ -106,8 +113,8 @@ def http_post(ctl, args):
     status = OperStatus()
     headers = {'content-type': 'application/yang.data+json',
                'accept': 'text/json, text/html, application/xml, */*'}
-    templateUrl = "http://{}:{}/restconf/{}"
-    url = templateUrl.format(ctl.ipAddr, ctl.portNum, args['<resource>'])
+    template_url = "http://{}:{}/restconf/{}"
+    url = template_url.format(ctl.ipAddr, ctl.portNum, args['<resource>'])
     resp = ctl.http_post_request(url, json.dumps(payload), headers)
     if(resp is None):
         status.set_status(STATUS.CONN_ERROR)
@@ -128,8 +135,8 @@ def http_put(ctl, args):
     status = OperStatus()
     headers = {'content-type': 'application/yang.data+json',
                'accept': 'text/json, text/html, application/xml, */*'}
-    templateUrl = "http://{}:{}/restconf/{}"
-    url = templateUrl.format(ctl.ipAddr, ctl.portNum, args['<resource>'])
+    template_url = "http://{}:{}/restconf/{}"
+    url = template_url.format(ctl.ipAddr, ctl.portNum, args['<resource>'])
     resp = ctl.http_put_request(url, json.dumps(payload), headers)
     if(resp is None):
         status.set_status(STATUS.CONN_ERROR)
@@ -151,9 +158,9 @@ def http_put(ctl, args):
 
 def http_delete(ctl, args):
     ignore = args['--force']
-    templateUrl = "http://{}:{}/restconf/{}"
+    template_url = "http://{}:{}/restconf/{}"
     status = OperStatus()
-    url = templateUrl.format(ctl.ipAddr, ctl.portNum, args['<resource>'])
+    url = template_url.format(ctl.ipAddr, ctl.portNum, args['<resource>'])
     resp = ctl.http_delete_request(url, data=None, headers=None)
     if(resp is None):
         status.set_status(STATUS.CONN_ERROR)
@@ -170,4 +177,3 @@ def http_delete(ctl, args):
     #         status.set_status(STATUS.CTRL_INTERNAL_ERROR)
     # elif(resp.status_code == 200):
     #     print resp.json()
-

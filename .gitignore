@@ -9,3 +9,4 @@ sdncli.egg-info
 dist/*
 schemas
 sdnctl/archive/*
+.idea/*

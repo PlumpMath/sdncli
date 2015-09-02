@@ -14,7 +14,8 @@ setup(
                       'requests',
                       'prettytable',
                       'singledispatch',
-                      'ascii_graph'],
+                      'ascii_graph',
+                      'pybvc'],
     entry_points={'console_scripts': ['sdncli = sdncli.sdncli:main']},
     platforms='any',
     license='BSD')
