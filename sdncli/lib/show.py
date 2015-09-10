@@ -24,6 +24,8 @@ from pybvc.common.status import STATUS
 from pybvc.openflowdev.ofswitch import OFSwitch
 from pybvc.common.utils import dict_unicode_to_string
 from pprint import pprint
+from pybvc.netconfdev.vrouter.vrouter5600 import VRouter5600
+from pybvc.netconfdev.vdx.nos import NOS
 
 
 def show(ctl, args):
@@ -146,23 +148,29 @@ def show(ctl, args):
             print "No Flows Found"
     # INTERFACES
     elif args.get('interfaces'):
-        node = [[netconf_nodes, mounts] for netconf_nodes in ctl.inventory.netconf_nodes
-                for mounts in (ctl.get_mounts()).data
-                if netconf_nodes.get_id() == mounts['name']
-                and 'controller-config' not in netconf_nodes.get_id()]
-        for n in node:
-            name = n[1]['name']
-            port = n[1]['odl-sal-netconf-connector-cfg:port']
-            address = n[1]['odl-sal-netconf-connector-cfg:address']
-            user = n[1]['odl-sal-netconf-connector-cfg:username']
-            password = n[1]['odl-sal-netconf-connector-cfg:password']
-            m = globals()[n[0].clazz](ctl, name, address, port, user, password)
+        result = ctl.build_netconf_config_objects()
+        if(result.status.eq(STATUS.OK)):
+            mounts = result.data
+        else:
+            raise ("Can't obtain mount data")
+
+        nodes = [[mount, node] for mount in mounts
+                 for node in ctl.inventory.netconf_nodes
+                 if mount.name == node.id and 'controller-config' not in node.id]
+
+        for node in nodes:
+            name = node[0].name
+            port = node[0].port
+            address = node[0].address
+            user = node[0].username
+            password = node[0].password
+            clazz = node[1].clazz
+            # print "Setting up connection for {} using driver {}".format(address, clazz)
+            m = globals()[node[1].clazz](ctl, name, address, port, user, password)
             result = m.get_interfaces_cfg()
             if(result.status.eq(STATUS.OK)):
                 fields = ['cookie', 'priority', 'id', 'match', 'action']
                 print (result.data)
-            # for i in result:
-            #     print i
 
 
 
