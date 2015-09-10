@@ -16,6 +16,9 @@ setup(
                       'singledispatch',
                       'ascii_graph',
                       'pybvc'],
+    dependency_links=[
+        "git+ssh://git@github.com:gaberger/pybvc.git"
+    ],
     entry_points={'console_scripts': ['sdncli = sdncli.sdncli:main']},
     platforms='any',
     license='BSD')

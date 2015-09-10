@@ -30,6 +30,10 @@ def show(ctl, args):
     # NODES
     if args.get('nodes'):
         table = []
+        # result = ctl.get_all_nodes_in_config()
+        # if(result.status.eq(STATUS.OK)):
+        #     for node in result.data:
+        #         print node
         result = ctl.get_all_nodes_conn_status()
         for node in result.data:
             result = ctl.get_node_info(node.get('node'))
@@ -71,9 +75,7 @@ def show(ctl, args):
                       'connection_timeout_millis', 'connected']
             table = []
             for i in result.data:
-                print i.to_json()
                 result = ctl.check_node_conn_status(i.name)
-                pprint(result)
                 if(result.status.eq(STATUS.NODE_CONNECTED)):
                     i.connected = "True"
                 else:

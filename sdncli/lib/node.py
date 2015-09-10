@@ -27,7 +27,11 @@ def node(ctl, args):
             return
         addr = args.get('<address>')
         name = args.get('<node>')
-        port = args.get('<port>')
+        if args.get('<port>') is not None:
+            port = args.get('<port>')
+        else:
+            port = 830
+
         user = args.get('<username>')
         pw = args.get('<password>')
         nodeid = ctl.inventory.get_netconf_node(name)
@@ -37,6 +41,8 @@ def node(ctl, args):
             result = ctl.add_netconf_node(node)
             if(result.status.eq(STATUS.OK)):
                 print "Mounted node {}".format(name)
+            else:
+                print "Houston we have a problem {}".format(result.status.get_status_response())
         else:
                 print "Node: {} is already in inventory".format(name)
     # UNMOUNT
@@ -45,12 +51,17 @@ def node(ctl, args):
             unmount_ssh(ctl, args)
             return
         name = args.get('<node>')
-        # TODO figure out where nodes live.
-        result = [ctl.delete_netconf_node(nodeid) for nodeid in ctl.inventory.netconf_nodes if nodeid.get_id() == name]
-        if(result[0].status.eq(STATUS.OK)):
-                print "UnMounted Node {}".format(name)
+        result = ctl.check_node_conn_status(name)
+        if(result.status.eq(STATUS.NODE_NOT_FOUND)):
+            print "Node not mounted"
+            return
         else:
-                print "Houston we have a problem {}".format(result.status)
+            result = ctl.delete_netconf_node(name)
+            if(result.status.eq(STATUS.OK)):
+                print "UnMounted Node {}".format(name)
+            else:
+                print "Houston we have a problem {}".format(result.status.get_status_response())
+            # for nodeid in ctl.inventory.netconf_nodes if nodeid.get_id() == name]
     # COMMAND
     elif args.get('command'):
         name = args.get('<node>')
@@ -103,17 +114,17 @@ def mount_ssh(ctl, args):
 def unmount_ssh(ctl, args):
     name = args.get('<node>')
     nodeid = ctl.inventory.get_netconf_node(name)
-    if nodeid is None:
-        ssh_unmount = {'input': {'name': name, }}
-        template_url = "http://{}:{}/restconf/operations/cliconf:remove-platform".format(ctl.ipAddr, ctl.portNum)
-        print template_url
-        response = ctl.http_post_request(template_url, json.dumps(ssh_unmount), headers)
-        pprint(response)
-        # TODO not getting an error code on unmount bad name
-        if(response.status_code == 200):
-            print "UnMounted node {}".format(name)
-    else:
-            print "Node: {} is already in inventory".format(name)
+    # if nodeid is None:
+    ssh_unmount = {'input': {'name': name, }}
+    template_url = "http://{}:{}/restconf/operations/cliconf:remove-platform".format(ctl.ipAddr, ctl.portNum)
+    print template_url
+    response = ctl.http_post_request(template_url, json.dumps(ssh_unmount), headers)
+    pprint(response)
+    # TODO not getting an error code on unmount bad name
+    if(response.status_code == 200):
+        print "UnMounted node {}".format(name)
+    # else:
+    #         print "Node: {} not found in inventory".format(name)
 
 
 def execute_command(ctl, node, command):

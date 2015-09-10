@@ -10,3 +10,4 @@ dist/*
 schemas
 sdnctl/archive/*
 .idea/*
+vagrant

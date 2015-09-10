@@ -36,11 +36,10 @@ Options :
             -h --help              This help screen
 
 Commands:
-             openflow      Perform OpenFlow functions
+             flow      Perform OpenFlow functions
              show          Retrieve varios elements from BVC
-             netconf       Perform NetConf related functions such as retrieve configuration
+             node          Perform Node related functions such as retrieve configuration
              http          Perform HTTP based operations
-             system        Perform queries on the BVC system itself
 
 """
 
