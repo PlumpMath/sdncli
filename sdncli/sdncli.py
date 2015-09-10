@@ -12,7 +12,7 @@ modification, are permitted provided that the following conditions are met:
    without specific prior written permission.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
 DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
 FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
@@ -36,11 +36,10 @@ Options :
             -h --help              This help screen
 
 Commands:
-             openflow      Perform OpenFlow functions
+             flow      Perform OpenFlow functions
              show          Retrieve varios elements from BVC
-             netconf       Perform NetConf related functions such as retrieve configuration
+             node          Perform Node related functions such as retrieve configuration
              http          Perform HTTP based operations
-             system        Perform queries on the BVC system itself
 
 """
 

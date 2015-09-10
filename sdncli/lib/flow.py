@@ -1,7 +1,6 @@
 """
 Usage:
         sdncli flow delete <node> <table> <flow>
-        
 
 Options :
             -h --help              This help screen
@@ -9,7 +8,7 @@ Options :
             -c --config            Read from configuration datastore
 
 """
-from pybvc.common.status import STATUS, OperStatus
+from pybvc.common.status import STATUS
 from pybvc.openflowdev.ofswitch import OFSwitch
 
 # from pybvc.controller.topology import Topology
@@ -25,7 +24,7 @@ def flow(ctl, args):
         result = ofswitch.delete_flow(tid, fid)
         if(result.status.eq(STATUS.OK)):
             print "Successfully deleted flow {}:{}:{}".format(node, tid, fid)
-        #TODO Status codes for immutable calls are wrong.
+        # TODO Status codes for immutable calls are wrong.
         elif(result.status_code == 10):
             print "Flow already exists"
         else:
