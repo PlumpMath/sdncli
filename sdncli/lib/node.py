@@ -98,13 +98,13 @@ def mount_ssh(ctl, args):
     if nodeid is None:
         if(add_platform(ctl, name, addr, user, pw, enable, devtype)):
             print "Mounted Device {}".format(name)
-            # sshmount = {'input': {'device-name': name}}
-            # template_url = "http://{}:{}/restconf/operations/cliconf:mount-device".format(ctl.ipAddr, ctl.portNum)
-            # response = ctl.http_post_request(template_url, json.dumps(sshmount), headers=headers)
-            # # pprint(response.content)
-            # if(response.status_code == 200):
-            #     print "Mounted node {}".format(name)
-            #     # execute_command(name, 'connection-template')
+            sshmount = {'input': {'device-name': name}}
+            template_url = "http://{}:{}/restconf/operations/cliconf:mount-device".format(ctl.ipAddr, ctl.portNum)
+            response = ctl.http_post_request(template_url, json.dumps(sshmount), headers=headers)
+            # pprint(response.content)
+            if(response.status_code == 200):
+                print "Mounted node {}".format(name)
+                # execute_command(name, 'connection-template')
         else:
             print "Error adding platform {}".format(devtype)
     else:
