@@ -1,6 +1,7 @@
 """
 Usage:
         sdncli node mount <node> <address> <username> <password> [(--ssh <enable> <type>)] [--port <port>]
+        sdncli node command <node> <template> <command>
         sdncli node unmount <node> [--ssh]
         sdncli node command <node> <command>
 
@@ -59,7 +60,9 @@ def node(ctl, args):
     # COMMAND
     elif args.get('command'):
         name = args.get('<node>')
-        result = execute_command(ctl, name, args.get('<commmand'))
+        template = args.get('<template>')
+        command = args.get('<command>')
+        result = execute_command(ctl, name, template, command)
         pprint(result)
         # if(result.status.eq(STATUS.OK)):
         #     print "UnMounted Node {}".format(name)
@@ -120,26 +123,19 @@ def unmount_ssh(ctl, args):
     #         print "Node: {} not found in inventory".format(name)
 
 
-def execute_command(ctl, node, command):
-    template = 'connection-template'
-    template_url = "http://{}:{}/restconf/config/cliconf:devices".format(ctl.ipAddr, ctl.portNum)
-    retval = ctl.http_get_request(template_url, data=None, headers=None)
-    devices = retval.json()
-    if [device.get('name') for device in devices['devices']['device'] if node in device.get('name') ] is not None:
+def execute_command(ctl, node, template_name, command):
         ssh_command = {'input': {'device-name': node,
-                                 # 'connection-template': template,
+                                 'template-connection-name': template_name,
                                  'extensive-output': 'true',
                                  'command': [{'do-command': command,
                                               }]}}
+        print ssh_command
         template_url = "http://{}:{}/restconf/operations/cliconf:execute-commands".format(ctl.ipAddr, ctl.portNum)
-        print template_url
-        response = ctl.http_post_request(template_url, json.dumps(ssh_command),
-                                         headers=headers)
+        response = ctl.http_post_request(template_url, json.dumps(ssh_command), headers=headers)
         pprint(response)
         if(response.status_code == 200):
             print "executed command {}".format(command)
         else:
             print "Failed to execute command on {} ".format(node)
-    else:
-        print "Device not mounted"
+
 
