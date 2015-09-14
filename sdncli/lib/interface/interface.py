@@ -1,7 +1,13 @@
-from pprint import pprint
-from ..show import mounts
-from ..drivers.nos import NOS
-from bvccli.drivers.vyatta import Vyatta5600
+import json
+
+
+def get_cliconf_devices(ctl):
+    template_url = "http://{}:{}/restconf/config/cliconf:devices".format(ctl.ipAddr, ctl.portNum)
+    response = ctl.http_get_request(template_url, data=None, headers=None)
+    if(response.status_code == 200):
+        return json.loads(response.content)
+    else:
+        return None
 
 
 def get_interfaces(ctl):

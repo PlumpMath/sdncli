@@ -26,6 +26,10 @@ from pybvc.common.utils import dict_unicode_to_string
 from pprint import pprint
 from pybvc.netconfdev.vrouter.vrouter5600 import VRouter5600
 from pybvc.netconfdev.vdx.nos import NOS
+from lib.interface.interface import get_cliconf_devices
+from driver.mlx import MLX
+from driver.linux import Linux
+import json
 
 
 def show(ctl, args):
@@ -147,7 +151,33 @@ def show(ctl, args):
         else:
             print "No Flows Found"
     # INTERFACES
+    # TODO break this up
     elif args.get('interfaces'):
+        '''
+        Get CLIConf devices
+        '''
+        int_table = []
+        interfaces = get_cliconf_devices(ctl)
+        if interfaces["devices"] is not None:
+            devices = interfaces.get('devices').get('device')
+            if devices is not None:
+                for device in devices:
+                    name = device.get('name')
+                    print "Grabbing interface for device {}".format(name)
+                    filter = device.get("read-template-name")
+                    if "mlx" in filter:
+                        result = MLX.get_interfaces_cfg(ctl, name)
+                        intf = MLX.maptoietfinterfaces(name, json.loads(result.data))
+                        int_table = int_table + intf
+                    elif ("linux" in filter):
+                        result = Linux.get_interfaces_cfg(ctl, name)
+                        intf = Linux.maptoietfinterfaces(name, json.loads(result.data))
+                        int_table = int_table + intf
+                    elif ("cisco" in filter):
+                        result = Cisco.get_interfaces_cfg(ctl, name)
+                        intf = Cisco.maptoietfinterfaces(name, json.loads(result.data))
+                        int_table = int_table + intf
+
         result = ctl.build_netconf_config_objects()
         if(result.status.eq(STATUS.OK)):
             mounts = result.data
@@ -156,21 +186,25 @@ def show(ctl, args):
 
         nodes = [[mount, node] for mount in mounts
                  for node in ctl.inventory.netconf_nodes
-                 if mount.name == node.id and 'controller-config' not in node.id]
+                 if mount.name == node.id and 'controller-config' not in node.id] 
 
         for node in nodes:
-            name = node[0].name
-            port = node[0].port
-            address = node[0].address
-            user = node[0].username
-            password = node[0].password
-            clazz = node[1].clazz
-            # print "Setting up connection for {} using driver {}".format(address, clazz)
-            m = globals()[node[1].clazz](ctl, name, address, port, user, password)
-            result = m.get_interfaces_cfg()
-            if(result.status.eq(STATUS.OK)):
-                fields = ['cookie', 'priority', 'id', 'match', 'action']
-                print (result.data)
+            if node is not None:
+                name = node[0].name
+                port = node[0].port
+                address = node[0].address
+                user = node[0].username
+                password = node[0].password
+                clazz = node[1].clazz
+                print "Setting up connection for {} using driver {}".format(address, clazz)
+                # TODO This is wrong. I don't want to create an object to make this call..
+                m = globals()[node[1].clazz](ctl, name, address, port, user, password)
+                timeout = 60
+                result = m.get_interfaces_cfg(timeout)
+                if(result.status.eq(STATUS.OK)):
+                    intf = m.maptoietfinterfaces(name, json.loads(result.data))
+                    int_table = int_table + intf
 
-
+        fields = ['node', 'name', 'mtu', 'operstatus', 'adminstatus', 'ipv4-address', 'mac']
+        print_table_dict(fields, int_table)
 

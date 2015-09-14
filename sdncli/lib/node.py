@@ -5,9 +5,9 @@ Usage:
         sdncli node command <node> <command>
 
 Options :
-            -h --help                   This help screen
-            -o --operations             Read from operations datastore
-            -p <port>  --port <port>    Mount port
+            -h --help                   This help screen.
+            -o --operations             Read from operations datastore.
+            -p <port>  --port <port>    Mount port [default: 1830].
 
 """
 from pybvc.controller.netconfnode import NetconfNode
@@ -27,13 +27,11 @@ def node(ctl, args):
             return
         addr = args.get('<address>')
         name = args.get('<node>')
-        if args.get('<port>') is not None:
-            port = args.get('<port>')
-        else:
-            port = 830
-
+        port = args.get('<port>')
         user = args.get('<username>')
         pw = args.get('<password>')
+        if port is None:
+            port = 1830
         nodeid = ctl.inventory.get_netconf_node(name)
         if nodeid is None:
             node = NetconfNode(ctl, nodeName=name, ipAddr=addr, portNum=port,
@@ -42,26 +40,22 @@ def node(ctl, args):
             if(result.status.eq(STATUS.OK)):
                 print "Mounted node {}".format(name)
             else:
-                print "Houston we have a problem {}".format(result.status.get_status_response())
+                print "Houston we have a problem {}".format(result.get_status().to_string())
         else:
-                print "Node: {} is already in inventory".format(name)
+            print "Node: {} is already in inventory".format(name)
     # UNMOUNT
     elif args.get('unmount'):
         if args.get('--ssh'):
             unmount_ssh(ctl, args)
             return
         name = args.get('<node>')
-        result = ctl.check_node_conn_status(name)
-        if(result.status.eq(STATUS.NODE_NOT_FOUND)):
-            print "Node not mounted"
-            return
-        else:
-            result = ctl.delete_netconf_node(name)
-            if(result.status.eq(STATUS.OK)):
+        # TODO figure out where nodes live.
+        # result = [ctl.delete_netconf_node(nodeid) for nodeid in ctl.inventory.netconf_nodes if nodeid.get_id() == name]
+        result = ctl.delete_netconf_node(name)
+        if(result.status.eq(STATUS.OK)):
                 print "UnMounted Node {}".format(name)
-            else:
-                print "Houston we have a problem {}".format(result.status.get_status_response())
-            # for nodeid in ctl.inventory.netconf_nodes if nodeid.get_id() == name]
+        else:
+                print "Houston we have a problem {}".format(result.get_status().to_string())
     # COMMAND
     elif args.get('command'):
         name = args.get('<node>')
@@ -98,13 +92,13 @@ def mount_ssh(ctl, args):
     if nodeid is None:
         if(add_platform(ctl, name, addr, user, pw, enable, devtype)):
             print "Mounted Device {}".format(name)
-            sshmount = {'input': {'device-name': name}}
-            template_url = "http://{}:{}/restconf/operations/cliconf:mount-device".format(ctl.ipAddr, ctl.portNum)
-            response = ctl.http_post_request(template_url, json.dumps(sshmount), headers=headers)
-            # pprint(response.content)
-            if(response.status_code == 200):
-                print "Mounted node {}".format(name)
-                # execute_command(name, 'connection-template')
+            # sshmount = {'input': {'device-name': name}}
+            # template_url = "http://{}:{}/restconf/operations/cliconf:mount-device".format(ctl.ipAddr, ctl.portNum)
+            # response = ctl.http_post_request(template_url, json.dumps(sshmount), headers=headers)
+            # # pprint(response.content)
+            # if(response.status_code == 200):
+            #     print "Mounted node {}".format(name)
+            #     # execute_command(name, 'connection-template')
         else:
             print "Error adding platform {}".format(devtype)
     else:
@@ -117,7 +111,6 @@ def unmount_ssh(ctl, args):
     # if nodeid is None:
     ssh_unmount = {'input': {'name': name, }}
     template_url = "http://{}:{}/restconf/operations/cliconf:remove-platform".format(ctl.ipAddr, ctl.portNum)
-    print template_url
     response = ctl.http_post_request(template_url, json.dumps(ssh_unmount), headers)
     pprint(response)
     # TODO not getting an error code on unmount bad name
