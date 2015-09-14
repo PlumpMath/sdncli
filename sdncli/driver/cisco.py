@@ -40,7 +40,7 @@ class Cisco(object):
     @staticmethod
     def maptoietfinterfaces(node, data):
         ilist = []
-        for i in data['opinterfaces']['interface']:
+        for i in data['interfaces']['interface']:
             ilist.append({'node': node,
                           'name': i['name'],
                           'mtu': i.get('mtu', 'unknown'),
