@@ -1,5 +1,4 @@
 __title__ = 'sdncli'
-__version__ = '1.1.1'
 __author__ = 'Gary Berger'
 __license__ = 'BSD'
 __copyright__ = 'Brocade Communications'
