@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="sdncli",
-    version=versioneer.getversion(),
+    version=versioneer.get_version(),
     cmdclass=versioneer.get_cmdclass(),
     description='SDN Command Line Interface',
     author='Brocade Communications',
