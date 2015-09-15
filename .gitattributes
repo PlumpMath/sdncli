@@ -1,0 +1,3 @@
+./_version.py export-subst
+sdncli/_version.py export-subst
+src/sdncli/_version.py export-subst

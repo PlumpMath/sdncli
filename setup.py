@@ -1,8 +1,10 @@
+import versioneer
 from setuptools import setup, find_packages
-import sdncli
+
 setup(
     name="sdncli",
-    version=sdncli.__version__,
+    version=versioneer.getversion(),
+    cmdclass=versioneer.get_cmdclass(),
     description='SDN Command Line Interface',
     author='Brocade Communications',
     author_email='gberger@brocade.com',
