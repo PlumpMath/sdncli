@@ -29,6 +29,7 @@ from pybvc.netconfdev.vdx.nos import NOS
 from lib.interface.interface import get_cliconf_devices
 from driver.mlx import MLX
 from driver.linux import Linux
+from driver.cisco import Cisco
 import json
 
 

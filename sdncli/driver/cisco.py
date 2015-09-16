@@ -21,7 +21,7 @@ class Cisco(object):
             """
             status = OperStatus()
             cfg = None
-            templateModelRef = "cisco-9k:interfaces"
+            templateModelRef = "cisco9k:interfaces"
             modelref = templateModelRef
             url = ctrl.get_ext_mount_config_url(name)
             url += modelref
