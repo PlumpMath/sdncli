@@ -26,9 +26,9 @@ from pybvc.common.utils import dict_unicode_to_string
 from pprint import pprint
 from pybvc.netconfdev.vrouter.vrouter5600 import VRouter5600
 from pybvc.netconfdev.vdx.nos import NOS
-from lib.interface.interface import get_cliconf_devices
-from driver.mlx import MLX
-from driver.linux import Linux
+from sdncli.lib.interface.interface import get_cliconf_devices
+from sdncli.driver.mlx import MLX
+from sdncli.driver.linux import Linux
 import json
 
 
