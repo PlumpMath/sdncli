@@ -1,3 +1,0 @@
-[console_scripts]
-bvccli = bvccli.__main__:main
-
