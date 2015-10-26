@@ -11,3 +11,4 @@ schemas
 sdnctl/archive/*
 .idea
 vagrant
+BVCCLI.egg-info/*

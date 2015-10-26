@@ -25,3 +25,11 @@ def load_json_file(file):
     import json
     with open(file, "r") as fh:
         return (json.loads(fh.read()))
+
+
+def remove_keys(d, keys):
+    r = dict(d)
+    for i in keys:
+        if i in r:
+            del r[i]
+    return r

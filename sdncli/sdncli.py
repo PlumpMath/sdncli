@@ -81,6 +81,7 @@ class Session(Controller):
 
 
 def main():
+    import pdb
     port = '8181'
     auth = {'user': 'admin', 'password': 'admin'}
     args = docopt(doc, options_first=True)
@@ -109,6 +110,7 @@ def main():
     arguments = docopt(module.__doc__, commands)
     try:
         # pass
+        pdb.set_trace()
         getattr(module, cmd)(ctl, arguments)
     except Exception, e:
         raise e
