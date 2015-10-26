@@ -49,13 +49,10 @@ from pybvc.common.status import STATUS
 
 from requests import ConnectionError
 from exceptions import AttributeError
-
-import lib.show
-import lib.node
-import lib.flow
-import lib.http
-
-
+# import sdncli.lib.show
+# import sdncli.lib.node
+# import sdncli.lib.flow
+# import sdncli.lib.http
 # from logging import log
 # import logging
 # logging.basicConfig()
@@ -102,6 +99,10 @@ def main():
         exit()
 
     try:
+        import lib.show
+        import lib.http
+        import lib.node
+        import lib.flow
         module = getattr(lib, cmd)
     except AttributeError, e:
         raise e

@@ -1,22 +1,23 @@
 """
 Usage:
-        sdncli show hosts
-        sdncli show mounts
-        sdncli show nodes
-        sdncli show config <node>
-        sdncli show flows <node> <table>
-        sdncli show flow <id>
-        sdncli show interfaces
-        sdncli show modules
-        sdncli show rpc <node>
-        sdncli show streams
-        sdncli show providers
-        sdncli show inventory
+        sdncli [options] show hosts
+        sdncli [options] show mounts
+        sdncli [options] show nodes
+        sdncli [options] show config <node>
+        sdncli [options] show flows <node> <table>
+        sdncli [options] show flow <id>
+        sdncli [options] show interfaces
+        sdncli [options] show modules
+        sdncli [options] show rpc <node>
+        sdncli [options] show streams
+        sdncli [options] show providers
+        sdncli [options] show inventory
 
 Options :
             -h --help              This help screen
             -o --operations        Read from operations datastore
             -c --config            Read from configuration datastore
+            -d --debug             Debug
 
 """
 from util import print_table_dict
@@ -26,10 +27,10 @@ from pybvc.common.utils import dict_unicode_to_string
 from pprint import pprint
 from pybvc.netconfdev.vrouter.vrouter5600 import VRouter5600
 from pybvc.netconfdev.vdx.nos import NOS
-from lib.interface.interface import get_cliconf_devices
-from driver.mlx import MLX
-from driver.linux import Linux
-from driver.cisco import Cisco
+from sdncli.lib.interface.interface import get_cliconf_devices
+from sdncli.driver.mlx import MLX
+from sdncli.driver.linux import Linux
+from sdncli.driver.cisco import Cisco
 import json
 
 
@@ -37,10 +38,6 @@ def show(ctl, args):
     # NODES
     if args.get('nodes'):
         table = []
-        # result = ctl.get_all_nodes_in_config()
-        # if(result.status.eq(STATUS.OK)):
-        #     for node in result.data:
-        #         print node
         result = ctl.get_all_nodes_conn_status()
         for node in result.data:
             result = ctl.get_node_info(node.get('node'))
