@@ -4,8 +4,6 @@ from prettytable import PrettyTable
 def print_table_dict(fields, table, sortkey=None):
     p = PrettyTable()
     for row in table:
-        print row.keys()
-        print row.values()
         p.field_names = row.keys()
         p.add_row(row.values())
         p.sortby = sortkey
