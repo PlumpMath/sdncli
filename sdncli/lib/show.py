@@ -19,7 +19,7 @@ Options :
             -c --config            Read from configuration datastore
 
 """
-from util import print_table_dict
+from util import print_table_dict, remove_keys
 from pybvc.common.status import STATUS
 from pybvc.openflowdev.ofswitch import OFSwitch
 from pybvc.common.utils import dict_unicode_to_string
@@ -79,6 +79,7 @@ def show(ctl, args):
         if(result.status.eq(STATUS.OK)):
             fields = ['name', 'port', 'address', 'username', 'password',
                       'connection_timeout_millis', 'connected']
+            r_keys = ['keepalive_executor']
             table = []
             for i in result.data:
                 result = ctl.check_node_conn_status(i.name)
@@ -86,7 +87,8 @@ def show(ctl, args):
                     i.connected = "True"
                 else:
                     i.connected = "False"
-                table.append(i.__dict__)
+                d = remove_keys(i.__dict__, r_keys)
+                table.append(d)
             print_table_dict(fields, table)
         else:
             print "Houston we have a problem {}".format(result.get_status().to_string())
