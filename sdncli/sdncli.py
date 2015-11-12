@@ -49,6 +49,10 @@ from pybvc.common.status import STATUS
 
 from requests import ConnectionError
 from exceptions import AttributeError
+
+import os
+import pdb
+
 # import sdncli.lib.show
 # import sdncli.lib.node
 # import sdncli.lib.flow
@@ -67,6 +71,7 @@ class Session(Controller):
     def __init__(self, ip, port, user, password):
         Controller.__init__(self, ip, port, user, password)
         # initialize session object
+        pdb.set_trace()
         result = self.build_inventory_object()
         if(result.status.eq(STATUS.OK)):
             self.inventory = result.data
@@ -81,7 +86,6 @@ class Session(Controller):
 
 
 def main():
-    import pdb
     port = '8181'
     auth = {'user': 'admin', 'password': 'admin'}
     args = docopt(doc, options_first=True)
@@ -89,12 +93,15 @@ def main():
     cmd = args['<command>']
     subcmd = args['<args>']
     commands = [cmd] + subcmd
-
     try:
-        if args.get('--address') is not None:
-            ctl = Session(args['--address'], port, auth.get('user', 'admin'), auth.get('password', 'admin'))
+        if 'BSCADDR' in os.environ:
+            controller = os.environ['BSCADDR']
+        elif args.get('--address') is not None:
+            controller = args.get('--address')
         else:
-            ctl = Session('127.0.0.1', port, auth.get('user', 'admin'), auth.get('password', 'admin'))
+            controller = '127.0.0.1'
+        ctl = Session(controller, port, auth.get('user', 'admin'), auth.get('password', 'admin'))
+
     except ConnectionError, e:
         print("Can't establish connection to controller {}".format(args.get('--address')))
         exit()
@@ -104,6 +111,7 @@ def main():
         import lib.http
         import lib.node
         import lib.flow
+        import lib.interface
         module = getattr(lib, cmd)
     except AttributeError, e:
         raise e

@@ -32,7 +32,7 @@ def node(ctl, args):
         user = args.get('<username>')
         pw = args.get('<password>')
         if port is None:
-            port = 1830
+            port = 830
         nodeid = ctl.inventory.get_netconf_node(name)
         if nodeid is None:
             node = NetconfNode(ctl, nodeName=name, ipAddr=addr, portNum=port,

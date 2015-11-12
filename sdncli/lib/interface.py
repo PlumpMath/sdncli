@@ -34,8 +34,7 @@ def get_interfaces(ctl):
                     ifs = d.get_interfaces()
                     if ifs.status_code == 200:
                         vyatta = d.maptoietfinterfaces(ifs.json())
-                        ilist = ilist + vyatta
-
+                        ilist = ilist + vyatta 
                     return ilist
         else:
             print "Found no mount points"

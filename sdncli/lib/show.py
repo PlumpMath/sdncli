@@ -27,7 +27,8 @@ from pybvc.common.utils import dict_unicode_to_string
 from pprint import pprint
 from pybvc.netconfdev.vrouter.vrouter5600 import VRouter5600
 from pybvc.netconfdev.vdx.nos import NOS
-from sdncli.lib.interface.interface import get_cliconf_devices
+# from sdncli.lib.interface.interface import get_cliconf_devices
+from sdncli.lib import interface
 from sdncli.driver.mlx import MLX
 from sdncli.driver.linux import Linux
 import json
@@ -156,54 +157,59 @@ def show(ctl, args):
         Get CLIConf devices
         '''
         int_table = []
-        interfaces = get_cliconf_devices(ctl)
-        if interfaces["devices"] is not None:
-            devices = interfaces.get('devices').get('device')
-            if devices is not None:
-                for device in devices:
-                    name = device.get('name')
-                    print "Grabbing interface for device {}".format(name)
-                    filter = device.get("read-template-name")
-                    if "mlx" in filter:
-                        result = MLX.get_interfaces_cfg(ctl, name)
-                        intf = MLX.maptoietfinterfaces(name, json.loads(result.data))
-                        int_table = int_table + intf
-                    elif ("linux" in filter):
-                        result = Linux.get_interfaces_cfg(ctl, name)
-                        intf = Linux.maptoietfinterfaces(name, json.loads(result.data))
-                        int_table = int_table + intf
-                    elif ("cisco" in filter):
-                        result = Cisco.get_interfaces_cfg(ctl, name)
-                        intf = Cisco.maptoietfinterfaces(name, json.loads(result.data))
-                        int_table = int_table + intf
+        interfaces = interface.get_cliconf_devices(ctl)
+        if interfaces is not None:
+            if 'devices' in interfaces:
+                devices = interfaces.get('devices').get('device')
+                if devices is not None:
+                    for device in devices:
+                        name = device.get('name')
+                        print "Grabbing interface for device {}".format(name)
+                        filter = device.get("read-template-name")
+                        if "mlx" in filter:
+                            result = MLX.get_interfaces_cfg(ctl, name)
+                            intf = MLX.maptoietfinterfaces(name, json.loads(result.data))
+                            int_table = int_table + intf
+                        elif ("linux" in filter):
+                            result = Linux.get_interfaces_cfg(ctl, name)
+                            intf = Linux.maptoietfinterfaces(name, json.loads(result.data))
+                            int_table = int_table + intf
+                        elif ("cisco" in filter):
+                            result = Cisco.get_interfaces_cfg(ctl, name)
+                            intf = Cisco.maptoietfinterfaces(name, json.loads(result.data))
+                            int_table = int_table + intf
 
         result = ctl.build_netconf_config_objects()
         if(result.status.eq(STATUS.OK)):
             mounts = result.data
         else:
             raise ("Can't obtain mount data")
+            return
+        nodes = ctl.inventory.netconf_nodes
+        if nodes is None:
+            return
 
-        nodes = [[mount, node] for mount in mounts
-                 for node in ctl.inventory.netconf_nodes
-                 if mount.name == node.id and 'controller-config' not in node.id] 
+        for mount in mounts:
+            for node in nodes:
+                if 'controller-config' not in mount.name and mount.name == node.id:
+                    name = node.id
+                    port = mount.port
+                    address = mount.address
+                    user = mount.username
+                    password = mount.password
+                    clazz = node.clazz
+                    print "Setting up connection for {} using driver {}".format(address, clazz)
+                    # TODO This is wrong. I don't want to create an object to make this call..
+                    m = globals()[clazz](ctl, name, address, port, user, password)
+                    timeout = 60
+                    result = m.get_interfaces_cfg(timeout)
+                    if(result.status.eq(STATUS.OK)):
+                        intf = m.maptoietfinterfaces(name, json.loads(result.data))
+                        int_table = int_table + intf
 
-        for node in nodes:
-            if node is not None:
-                name = node[0].name
-                port = node[0].port
-                address = node[0].address
-                user = node[0].username
-                password = node[0].password
-                clazz = node[1].clazz
-                print "Setting up connection for {} using driver {}".format(address, clazz)
-                # TODO This is wrong. I don't want to create an object to make this call..
-                m = globals()[node[1].clazz](ctl, name, address, port, user, password)
-                timeout = 60
-                result = m.get_interfaces_cfg(timeout)
-                if(result.status.eq(STATUS.OK)):
-                    intf = m.maptoietfinterfaces(name, json.loads(result.data))
-                    int_table = int_table + intf
-
-        fields = ['node', 'name', 'mtu', 'operstatus', 'adminstatus', 'ipv4-address', 'mac']
-        print_table_dict(fields, int_table)
+        if int_table:
+            fields = ['node', 'name', 'mtu', 'operstatus', 'adminstatus', 'ipv4-address', 'mac']
+            print_table_dict(fields, int_table)
+        else:
+            return
 
