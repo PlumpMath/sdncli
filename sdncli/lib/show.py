@@ -144,7 +144,8 @@ def show(ctl, args):
                                   "Macs": i.get('static', None),
                                   }
                         table.append(record)
-                    print_table_dict(fields, table)
+        print_table_dict(fields, table)
+
     # Syslog
     elif args.get('syslog'):
         table = []
@@ -167,7 +168,7 @@ def show(ctl, args):
                                       "Port": i.get('port', None),
                                       }
                             table.append(record)
-                        print_table_dict(fields, table)
+        print_table_dict(fields, table)
 
     # FLOWS
     elif args.get('flows'):
