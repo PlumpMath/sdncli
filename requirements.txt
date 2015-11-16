@@ -3,5 +3,4 @@ requests
 prettytable
 singledispatch
 ascii_graph
-pybvc
 
