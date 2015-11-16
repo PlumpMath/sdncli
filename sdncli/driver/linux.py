@@ -49,4 +49,3 @@ class Linux(object):
                           'mac': i.get('mac', 'unknown')})
         return ilist
 
-

@@ -20,7 +20,7 @@ from util import print_table_dict, remove_keys
 from pybvc.common.status import STATUS
 from pybvc.openflowdev.ofswitch import OFSwitch
 from pybvc.common.utils import dict_unicode_to_string
-from pprint import pprint
+# from pprint import pprint
 from pybvc.netconfdev.vrouter.vrouter5600 import VRouter5600
 from pybvc.netconfdev.vdx.nos import NOS
 # from sdncli.lib.interface.interface import get_cliconf_devices
@@ -253,4 +253,3 @@ def show(ctl, args):
             print_table_dict(fields, int_table)
         else:
             return
-

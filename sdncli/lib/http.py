@@ -26,7 +26,6 @@ from pybvc.common.status import STATUS
 from pybvc.common.result import Result
 from pybvc.common.result import OperStatus
 from pybvc.common.utils import dict_unicode_to_string
-from pprint import pprint
 
 
 def http(ctl, args):
@@ -77,7 +76,7 @@ def http(ctl, args):
 
 
 def http_get(ctl, args):
-    ignore = args['--force']
+    # ignore = args['--force']
     timeout = args['--timeout']
     if timeout is not None:
         timeout = int(timeout)
@@ -157,7 +156,7 @@ def http_put(ctl, args):
 
 
 def http_delete(ctl, args):
-    ignore = args['--force']
+    # ignore = args['--force']
     template_url = "http://{}:{}/restconf/{}"
     status = OperStatus()
     url = template_url.format(ctl.ipAddr, ctl.portNum, args['<resource>'])

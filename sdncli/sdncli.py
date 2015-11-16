@@ -51,7 +51,7 @@ from requests import ConnectionError
 from exceptions import AttributeError
 
 import os
-import pdb
+# import pdb
 
 # import sdncli.lib.show
 # import sdncli.lib.node

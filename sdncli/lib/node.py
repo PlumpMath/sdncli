@@ -110,7 +110,7 @@ def mount_ssh(ctl, args):
 
 def unmount_ssh(ctl, args):
     name = args.get('<node>')
-    nodeid = ctl.inventory.get_netconf_node(name)
+    # nodeid = ctl.inventory.get_netconf_node(name)
     # if nodeid is None:
     ssh_unmount = {'input': {'name': name, }}
     template_url = "http://{}:{}/restconf/operations/cliconf:remove-platform".format(ctl.ipAddr, ctl.portNum)
@@ -137,5 +137,4 @@ def execute_command(ctl, node, template_name, command):
             print "executed command {}".format(command)
         else:
             print "Failed to execute command on {} ".format(node)
-
 

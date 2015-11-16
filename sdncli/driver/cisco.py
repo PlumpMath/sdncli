@@ -1,6 +1,5 @@
 from pybvc.common.result import Result
 from pybvc.common.status import OperStatus, STATUS
-import json
 
 
 class Cisco(object):
