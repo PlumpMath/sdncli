@@ -3,15 +3,11 @@ Usage:
         sdncli [options] show hosts
         sdncli [options] show mounts
         sdncli [options] show nodes
-        sdncli [options] show config <node>
         sdncli [options] show flows <node> <table>
         sdncli [options] show flow <id>
         sdncli [options] show interfaces
-        sdncli [options] show modules
-        sdncli [options] show rpc <node>
-        sdncli [options] show streams
-        sdncli [options] show providers
-        sdncli [options] show inventory
+        sdncli [options] show port-profile
+        sdncli [options] show syslog
 
 Options :
             -h --help              This help screen
@@ -128,6 +124,51 @@ def show(ctl, args):
         #         print i
         # else:
         #     print "No providers found"
+    # Port Profile
+    elif args.get('port-profile'):
+        table = []
+        nodes = ctl.inventory.netconf_nodes
+        if nodes is None:
+            raise ("Can't obtain netconf device data")
+            return
+        for node in nodes:
+            if 'NOS' in node.clazz:
+                m = globals()[node.clazz](ctl, node.id, None, None, None, None, None)
+                result = m.get_portprofile()
+                if(result.status.eq(STATUS.OK)):
+                    fields = ['Host', 'Profile', 'Macs']
+                    tmp = json.loads(result.data).get('port-profile-global').get('port-profile')
+                    for i in tmp:
+                        record = {"Host": node.id,
+                                  "Profile": i.get('name', None),
+                                  "Macs": i.get('static', None),
+                                  }
+                        table.append(record)
+                    print_table_dict(fields, table)
+    # Syslog
+    elif args.get('syslog'):
+        table = []
+        nodes = ctl.inventory.netconf_nodes
+        if nodes is None:
+            raise ("Can't obtain netconf device data")
+            return
+        for node in nodes:
+            if 'NOS' in node.clazz:
+                m = globals()[node.clazz](ctl, node.id, None, None, None, None, None)
+                result = m.get_syslog()
+                if(result.status.eq(STATUS.OK)):
+                    fields = ['Host', 'SyslogIP', 'VRF', 'Port']
+                    if 'syslog-server' in result.data:
+                        tmp = json.loads(result.data).get('logging').get('syslog-server')
+                        for i in tmp:
+                            record = {"Host": node.id,
+                                      "SyslogIP": i.get('syslogip', None),
+                                      "VRF": i.get('use-vrf', None),
+                                      "Port": i.get('port', None),
+                                      }
+                            table.append(record)
+                        print_table_dict(fields, table)
+
     # FLOWS
     elif args.get('flows'):
         table = []

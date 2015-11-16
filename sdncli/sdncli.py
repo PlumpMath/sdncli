@@ -71,7 +71,6 @@ class Session(Controller):
     def __init__(self, ip, port, user, password):
         Controller.__init__(self, ip, port, user, password)
         # initialize session object
-        pdb.set_trace()
         result = self.build_inventory_object()
         if(result.status.eq(STATUS.OK)):
             self.inventory = result.data
@@ -118,7 +117,7 @@ def main():
     arguments = docopt(module.__doc__, commands)
     try:
         # pass
-        pdb.set_trace()
+        # pdb.set_trace()
         getattr(module, cmd)(ctl, arguments)
     except Exception, e:
         raise e
