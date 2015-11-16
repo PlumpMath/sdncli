@@ -29,6 +29,10 @@ Development Environment
 3. Setup Controller Address  
     1. export BSCADDR=<controllerIP>
 
-4. Mount Netconf Device
+4. Check ConnectionError
+
+    1. sdncli show nodes
+
+5. Mount Netconf Device
 
     1. sdncli node mount <name> <address> <user> <password>
