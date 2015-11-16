@@ -16,10 +16,9 @@ setup(
                       'requests',
                       'prettytable',
                       'singledispatch',
-                      'ascii_graph',
-                      'pybvc'],
+                      'ascii_graph'],
     dependency_links=[
-        "git+ssh://git@github.com:gaberger/pybvc.git"
+        "http://github.com/gaberger/pybvc.git"
     ],
     entry_points={'console_scripts': ['sdncli = sdncli.sdncli:main']},
     platforms='any',
