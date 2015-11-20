@@ -32,6 +32,7 @@ Usage:
 
 Options :
             -a --address <ip>      Address of controller (default: localhost)
+            -p --port <port>       RestCONF port (default: 8181)
             -d --debug             Print JSON dump
             -h --help              This help screen
 
@@ -85,39 +86,38 @@ class Session(Controller):
 
 
 def main():
-    port = '8181'
     auth = {'user': 'admin', 'password': 'admin'}
     args = docopt(doc, options_first=True)
 
     cmd = args['<command>']
     subcmd = args['<args>']
     commands = [cmd] + subcmd
-    try:
-        if 'BSCADDR' in os.environ:
-            controller = os.environ['BSCADDR']
-        elif args.get('--address') is not None:
-            controller = args.get('--address')
-        else:
-            controller = '127.0.0.1'
-        ctl = Session(controller, port, auth.get('user', 'admin'), auth.get('password', 'admin'))
+    if 'BSCADDR' in os.environ:
+        controller = os.environ['BSCADDR']
+    elif args.get('--address') is not None:
+        controller = args.get('--address')
+    else:
+        controller = "127.0.0.1"
+    port = args.get('--port') if args.get('--port') is not None else "8181"
 
+    try:
+        ctl = Session(controller, port,
+                      auth.get('user', 'admin'), auth.get('password', 'admin'))
     except ConnectionError, e:
         print("Can't establish connection to controller {}".format(args.get('--address')))
         exit()
 
+    import lib.show
+    import lib.http
+    import lib.node
+    import lib.flow
+    import lib.interface
     try:
-        import lib.show
-        import lib.http
-        import lib.node
-        import lib.flow
-        import lib.interface
         module = getattr(lib, cmd)
     except AttributeError, e:
         raise e
     arguments = docopt(module.__doc__, commands)
     try:
-        # pass
-        # pdb.set_trace()
         getattr(module, cmd)(ctl, arguments)
     except Exception, e:
         raise e
