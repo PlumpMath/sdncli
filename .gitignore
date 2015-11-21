@@ -15,4 +15,3 @@ BVCCLI.egg-info/*
 setup.py.orig
 sdncli.py.orig
 *.orig
-venv
