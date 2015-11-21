@@ -10,16 +10,20 @@ setup(
     author_email='gberger@brocade.com',
     maintainer='gberger@brocade.com',
     url='https://github.com/gaberger/sdncli',
+    setup_requires=["setuptools_git >= 0.3", ],
     include_package_data=True,
     packages=find_packages(),
     install_requires=['docopt',
                       'requests',
                       'prettytable',
                       'singledispatch',
-                      'ascii_graph'],
-    dependency_links=[
-        "http://github.com/gaberger/pybvc.git"
-    ],
+                      'ascii_graph',
+                      'pybvc'],
+    # dependency_links=[
+    #     "git+ssh://git@github.com:gaberger/pybvc.git"
+    # ],
     entry_points={'console_scripts': ['sdncli = sdncli.sdncli:main']},
     platforms='any',
     license='BSD')
+
+ 
