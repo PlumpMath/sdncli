@@ -20,10 +20,10 @@ Development Environment
     2. cd working
     3. virtualenv sdn
     4. source sdn/bin/activate
-    5. pip install setuptools_git
-    7. git clone https://github.com/gaberger/sdncli.git
-    8. cd ../sdncli
-    9  python setup.py develop
+    5. git clone https://github.com/gaberger/sdncli.git
+    6. cd ../sdncli
+    7. pip install -r requirements.txt 
+    8  python setup.py develop
 
 3. Setup Controller Address  
     1. export BSCADDR=<controllerIP>
