@@ -137,4 +137,3 @@ def execute_command(ctl, node, template_name, command):
             print "executed command {}".format(command)
         else:
             print "Failed to execute command on {} ".format(node)
-

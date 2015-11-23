@@ -1,3 +1,4 @@
+# [SublimeLinter flake8-ignore:-E302,+W601 flake8-max-line-length:120]
 """
 Usage:
         sdncli [options] show hosts
@@ -20,13 +21,11 @@ from util import print_table_dict, remove_keys
 from pybvc.common.status import STATUS
 from pybvc.openflowdev.ofswitch import OFSwitch
 from pybvc.common.utils import dict_unicode_to_string
-# from pprint import pprint
-from pybvc.netconfdev.vrouter.vrouter5600 import VRouter5600
-from pybvc.netconfdev.vdx.nos import NOS
-# from sdncli.lib.interface.interface import get_cliconf_devices
+import pybvc.netconfdev as netconfdev
+
 from sdncli.lib import interface
-from sdncli.driver.mlx import MLX
-from sdncli.driver.linux import Linux
+import sdncli.driver as sdndriver
+
 import json
 
 
@@ -38,20 +37,19 @@ def show(ctl, args):
         for node in result.data:
             result = ctl.get_node_info(node.get('node'))
             if(result.status.eq(STATUS.OK)):
-                d = result.data
+                retval = result.data
                 record = {'Node': node.get('node'),
-                          'IPAddres': d.get('flow-node-inventory:ip-address'),
-                          'SerialNo': d.get('flow-node-inventory:serial-number'),
-                          'Software': d.get('flow-node-inventory:software'),
-                          'Hardware': d.get('flow-node-inventory:hardware'),
+                          'IPAddres': retval.get('flow-node-inventory:ip-address'),
+                          'SerialNo': retval.get('flow-node-inventory:serial-number'),
+                          'Software': retval.get('flow-node-inventory:software'),
+                          'Hardware': retval.get('flow-node-inventory:hardware'),
                           'Connected': node.get('connected'),
-                          'Description': d.get('flow-node-inventory:description'),
-                          'Manufacturer': d.get('flow-node-inventory:manufacturer')}
+                          'Description': retval.get('flow-node-inventory:description'),
+                          'Manufacturer': retval.get('flow-node-inventory:manufacturer')}
                 table.append(record)
         fields = ['Node', 'Connected', 'Description', 'Hardware',
                   'IPAddres', 'Manufacturer', 'SerialNo', 'Software']
         print_table_dict(fields, table)
-        # print [[r['node'], r['connected'], node.clazz] for r in result.data for node in nodes if node.get_id() == r['node']]
     # HOSTS
     elif args.get('hosts'):
         if ctl.topology.get_hosts_cnt() > 0:
@@ -75,14 +73,14 @@ def show(ctl, args):
                       'connection_timeout_millis', 'connected']
             r_keys = ['keepalive_executor']
             table = []
-            for i in result.data:
-                result = ctl.check_node_conn_status(i.name)
+            for retval in result.data:
+                result = ctl.check_node_conn_status(retval.name)
                 if(result.status.eq(STATUS.NODE_CONNECTED)):
-                    i.connected = "True"
+                    retval.connected = "True"
                 else:
-                    i.connected = "False"
-                d = remove_keys(i.__dict__, r_keys)
-                table.append(d)
+                    retval.connected = "False"
+                rem_keys = remove_keys(retval.__dict__, r_keys)
+                table.append(rem_keys)
             print_table_dict(fields, table)
         else:
             print "Houston we have a problem {}".format(result.get_status().to_string())
@@ -118,12 +116,6 @@ def show(ctl, args):
     # PROVIDERS
     elif args.get('providers'):
         pass
-        # providers =  ctl.get_service_providers_info().data
-        # if len(providers) > 0:
-        #     for i in providers:
-        #         print i
-        # else:
-        #     print "No providers found"
     # Port Profile
     elif args.get('port-profile'):
         table = []
@@ -133,8 +125,8 @@ def show(ctl, args):
             return
         for node in nodes:
             if 'NOS' in node.clazz:
-                m = globals()[node.clazz](ctl, node.id, None, None, None, None, None)
-                result = m.get_portprofile()
+                module = globals()[netconfdev.node.clazz](ctl, node.id, None, None, None, None, None)
+                result = module.get_portprofile()
                 if(result.status.eq(STATUS.OK)):
                     fields = ['Host', 'Profile', 'Macs']
                     tmp = json.loads(result.data).get('port-profile-global').get('port-profile')
@@ -158,8 +150,8 @@ def show(ctl, args):
             return
         for node in nodes:
             if 'NOS' in node.clazz:
-                m = globals()[node.clazz](ctl, node.id, None, None, None, None, None)
-                result = m.get_syslog()
+                module = globals()[node.clazz](ctl, node.id, None, None, None, None, None)
+                result = module.get_syslog()
                 if(result.status.eq(STATUS.OK)):
                     fields = ['Host', 'SyslogIP', 'VRF', 'Port']
                     if 'syslog-server' in result.data:
@@ -185,17 +177,18 @@ def show(ctl, args):
         ofswitch = OFSwitch(ctl, node)
         result = ofswitch.get_flows(flowtable, operational=True)
         if(result.status.eq(STATUS.OK)):
-            fields = ['cookie', 'priority', 'id', 'match', 'action', 'packet-count', 'byte-count']
-            for i in result.data:
-                i['packet-count'] = dict_unicode_to_string(i.get('opendaylight-flow-statistics:flow-statistics').get('packet-count'))
-                i['byte-count'] = dict_unicode_to_string(i.get('opendaylight-flow-statistics:flow-statistics').get('byte-count'))
-                match = dict_unicode_to_string(i.get('match'))
+            fields = ['cookie', 'priority', 'id', 'match',
+                      'action', 'packet-count', 'byte-count']
+            for retval in result.data:
+                retval['packet-count'] = dict_unicode_to_string(retval.get('opendaylight-flow-statistics:flow-statistics').get('packet-count'))
+                retval['byte-count'] = dict_unicode_to_string(retval.get('opendaylight-flow-statistics:flow-statistics').get('byte-count'))
+                match = dict_unicode_to_string(retval.get('match'))
                 match = str(match).translate(None, '{\'\`\ }')
-                i['match'] = str(match).replace(",", "\n")
-                action = dict_unicode_to_string(i['instructions']['instruction'][0])
+                retval['match'] = str(match).replace(",", "\n")
+                action = dict_unicode_to_string(retval['instructions']['instruction'][0])
                 action = str(action).translate(None, '\'\`\ []]')
-                i['action'] = str(action).replace(",", "\n")
-                table.append(i)
+                retval['action'] = str(action).replace(",", "\n")
+                table.append(retval)
             print_table_dict(fields, table, 'id')
         else:
             print "No Flows Found"
@@ -216,16 +209,16 @@ def show(ctl, args):
                         print "Grabbing interface for device {}".format(name)
                         filter = device.get("read-template-name")
                         if "mlx" in filter:
-                            result = MLX.get_interfaces_cfg(ctl, name)
-                            intf = MLX.maptoietfinterfaces(name, json.loads(result.data))
+                            result = sdndriver.MLX.get_interfaces_cfg(ctl, name)
+                            intf = sdndriver.MLX.maptoietfinterfaces(name, json.loads(result.data))
                             int_table = int_table + intf
                         elif ("linux" in filter):
-                            result = Linux.get_interfaces_cfg(ctl, name)
-                            intf = Linux.maptoietfinterfaces(name, json.loads(result.data))
+                            result = sdndriver.Linux.get_interfaces_cfg(ctl, name)
+                            intf = sdndriver.Linux.maptoietfinterfaces(name, json.loads(result.data))
                             int_table = int_table + intf
                         elif ("cisco" in filter):
-                            result = Cisco.get_interfaces_cfg(ctl, name)
-                            intf = Cisco.maptoietfinterfaces(name, json.loads(result.data))
+                            result = sdndriver.Cisco.get_interfaces_cfg(ctl, name)
+                            intf = sdndriver.Cisco.maptoietfinterfaces(name, json.loads(result.data))
                             int_table = int_table + intf
 
         result = ctl.build_netconf_config_objects()
@@ -246,10 +239,9 @@ def show(ctl, args):
                     address = mount.address
                     user = mount.username
                     password = mount.password
-                    clazz = node.clazz
-                    print "Setting up connection for {} using driver {}".format(address, clazz)
+                    print "Setting up connection for {} using driver {}".format(address, netconfdev.node.clazz)
                     # TODO This is wrong. I don't want to create an object to make this call..
-                    m = globals()[clazz](ctl, name, address, port, user, password)
+                    m = globals()[netconfdev.node.clazz](ctl, name, address, port, user, password)
                     timeout = 60
                     result = m.get_interfaces_cfg(timeout)
                     if(result.status.eq(STATUS.OK)):

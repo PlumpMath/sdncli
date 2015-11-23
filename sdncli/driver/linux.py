@@ -48,4 +48,3 @@ class Linux(object):
                           'ipv4-address': i.get('ipv4-address', 'unknown'),
                           'mac': i.get('mac', 'unknown')})
         return ilist
-
