@@ -43,15 +43,16 @@ Commands:
              http          Perform HTTP based operations
 
 """
+import importlib
+import os
 
 from docopt import docopt
-from pybvc.controller.controller import Controller
-from pybvc.common.status import STATUS
-
 from requests import ConnectionError
 from exceptions import AttributeError
 
-import os
+from pybvc.controller.controller import Controller
+from pybvc.common.status import STATUS
+
 # import pdb
 
 # import sdncli.lib.show
@@ -106,19 +107,17 @@ def main():
     except ConnectionError, e:
         print("Can't establish connection to controller {}".format(args.get('--address')))
         exit()
-
-    import lib.show
-    import lib.http
-    import lib.node
-    import lib.flow
-    import lib.interface
+    
     try:
-        module = getattr(lib, cmd)
+        modulename = "sdncli.lib.{}".format(cmd)
+        module = importlib.import_module(modulename, package = None)
     except AttributeError, e:
         raise e
     arguments = docopt(module.__doc__, commands)
     try:
-        getattr(module, cmd)(ctl, arguments)
+       # modulename = "lib.{}.{}".format(commands[0])
+       # module = importlib.import_module(modulename, package = None)
+       getattr(module, cmd)(ctl, arguments)
     except Exception, e:
         raise e
 

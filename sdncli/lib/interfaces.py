@@ -9,49 +9,6 @@ def get_cliconf_devices(ctl):
     else:
         return None
 
-
-# def get_interfaces(ctl):
-#         """
-#         Show interfaces on all mounted nodes.. at this time can only do VR and NOS
-#         """
-#         # get list of mounts..
-#         m = mounts.show_mounts(ctl)
-#         if m.__len__() > 1:
-#             ilist = []
-#             for dev in m:
-#                 devid = dev.get('name')
-#                 if dev.get('type') == "nos":
-#                     d = NOS(ctl, devid)
-#                     ifs = d.get_interfaces()
-#                     if ifs.status_code == 200:
-#                         nos = d.maptoietfinterfaces(ifs.json())
-#                         ilist = ilist + nos
-#                     else:
-#                         continue
-#                 if dev.get('type') == "vyatta":
-#                     print "In Vyatta"
-#                     d = Vyatta5600(ctl, devid)
-#                     ifs = d.get_interfaces()
-#                     if ifs.status_code == 200:
-#                         vyatta = d.maptoietfinterfaces(ifs.json())
-#                         ilist = ilist + vyatta 
-#                     return ilist
-#         else:
-#             print "Found no mount points"
-#             return None
-
-
-# class Interfacestate(object):
-#     def __init__(self, admin, oper, lc, pa, hli, lli, speed):
-#         self.adminstatus = admin
-#         self.operstatus = oper
-#         self.last_change = lc
-#         self.phys_addr = pa
-#         self.higher_layer_if = hli
-#         self.lower_layer_if = lli
-#         self.speed = speed
-
-
 # class Statistics(object):
 #     def __init__(self, in_octets, in_unicast_pkts, in_broadcast_pkts, in_multicast_pkts, in_discards, in_errors, in_unknown_protos,
 #                  out_octets, out_unicast_pkts, out_broadcast_pkts, out_multicast_pkts, out_discards, out_errors):

@@ -1,5 +1,5 @@
 from prettytable import PrettyTable
-
+from pybvc.common.status import STATUS
 
 def print_table_dict(fields, table, sortkey=None):
     p = PrettyTable()
@@ -33,3 +33,12 @@ def remove_keys(d, keys):
         if i in r:
             del r[i]
     return r
+
+
+def isconnected(ctrl,node):
+    result = ctrl.check_node_conn_status(node)
+    status = result.get_status()
+    if (status.eq(STATUS.NODE_CONNECTED)):
+        return True
+    else:
+        return False

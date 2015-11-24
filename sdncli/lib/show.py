@@ -17,16 +17,19 @@ Options :
             -d --debug             Debug
 
 """
-from util import print_table_dict, remove_keys
+import json
+import importlib
+
 from pybvc.common.status import STATUS
 from pybvc.openflowdev.ofswitch import OFSwitch
 from pybvc.common.utils import dict_unicode_to_string
 import pybvc.netconfdev as netconfdev
+from pybvc.netconfdev.vrouter.vrouter5600 import VRouter5600 #noqa
+from pybvc.netconfdev.vdx.nos import NOS #noqa
 
-from sdncli.lib import interface
-import sdncli.driver as sdndriver
 
-import json
+from util import print_table_dict, remove_keys, isconnected
+
 
 
 def show(ctl, args):
@@ -198,8 +201,10 @@ def show(ctl, args):
         '''
         Get CLIConf devices
         '''
+        modulename = "sdncli.lib.interfaces"
+        module = importlib.import_module(modulename, package = None)
         int_table = []
-        interfaces = interface.get_cliconf_devices(ctl)
+        interfaces = module.get_cliconf_devices(ctl)
         if interfaces is not None:
             if 'devices' in interfaces:
                 devices = interfaces.get('devices').get('device')
@@ -209,16 +214,19 @@ def show(ctl, args):
                         print "Grabbing interface for device {}".format(name)
                         filter = device.get("read-template-name")
                         if "mlx" in filter:
-                            result = sdndriver.MLX.get_interfaces_cfg(ctl, name)
-                            intf = sdndriver.MLX.maptoietfinterfaces(name, json.loads(result.data))
+                            module = importlib.import_module("sdncli.driver.mlx", package = None)
+                            result = module.MLX.get_interfaces_cfg(ctl, name)
+                            intf = module.MLX.maptoietfinterfaces(name, json.loads(result.data))
                             int_table = int_table + intf
                         elif ("linux" in filter):
-                            result = sdndriver.Linux.get_interfaces_cfg(ctl, name)
-                            intf = sdndriver.Linux.maptoietfinterfaces(name, json.loads(result.data))
+                            module = importlib.import_module("sdncli.driver.linux", package = None)
+                            result = module.Linux.get_interfaces_cfg(ctl, name)
+                            intf = module.Linux.maptoietfinterfaces(name, json.loads(result.data))
                             int_table = int_table + intf
                         elif ("cisco" in filter):
-                            result = sdndriver.Cisco.get_interfaces_cfg(ctl, name)
-                            intf = sdndriver.Cisco.maptoietfinterfaces(name, json.loads(result.data))
+                            module = importlib.import_module("sdncli.driver.cisco", package = None)
+                            result = module.Cisco.get_interfaces_cfg(ctl, name)
+                            intf = module.Cisco.maptoietfinterfaces(name, json.loads(result.data))
                             int_table = int_table + intf
 
         result = ctl.build_netconf_config_objects()
@@ -233,15 +241,17 @@ def show(ctl, args):
 
         for mount in mounts:
             for node in nodes:
-                if 'controller-config' not in mount.name and mount.name == node.id:
+                if 'controller-config' not in mount.name and mount.name == node.id and isconnected(ctl, node.id):
                     name = node.id
                     port = mount.port
                     address = mount.address
                     user = mount.username
                     password = mount.password
-                    print "Setting up connection for {} using driver {}".format(address, netconfdev.node.clazz)
+                    clazz = node.clazz
+                    print "Setting up connection for {} using driver {}".format(address, clazz)
                     # TODO This is wrong. I don't want to create an object to make this call..
-                    m = globals()[netconfdev.node.clazz](ctl, name, address, port, user, password)
+                    # change to staticmethods
+                    m = globals()[clazz](ctl, name, address, port, user, password)
                     timeout = 60
                     result = m.get_interfaces_cfg(timeout)
                     if(result.status.eq(STATUS.OK)):
@@ -252,4 +262,4 @@ def show(ctl, args):
             fields = ['node', 'name', 'mtu', 'operstatus', 'adminstatus', 'ipv4-address', 'mac']
             print_table_dict(fields, int_table)
         else:
-            return
+            print("No available targets found")
