@@ -1,5 +1,5 @@
 from prettytable import PrettyTable
-from pybvc.common.status import STATUS
+from pysdn.common.status import STATUS
 
 def print_table_dict(fields, table, sortkey=None):
     p = PrettyTable()

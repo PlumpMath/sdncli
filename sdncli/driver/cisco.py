@@ -1,5 +1,5 @@
-from pybvc.common.result import Result
-from pybvc.common.status import OperStatus, STATUS
+from pysdn.common.result import Result
+from pysdn.common.status import OperStatus, STATUS
 
 
 class Cisco(object):

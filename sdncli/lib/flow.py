@@ -8,10 +8,10 @@ Options :
             -c --config            Read from configuration datastore
 
 """
-from pybvc.common.status import STATUS
-from pybvc.openflowdev.ofswitch import OFSwitch
+from pysdn.common.status import STATUS
+from pysdn.openflowdev.ofswitch import OFSwitch
 
-# from pybvc.controller.topology import Topology
+# from pysdn.controller.topology import Topology
 
 
 def flow(ctl, args):

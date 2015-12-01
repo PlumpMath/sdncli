@@ -20,12 +20,12 @@ Options :
 import json
 import importlib
 
-from pybvc.common.status import STATUS
-from pybvc.openflowdev.ofswitch import OFSwitch
-from pybvc.common.utils import dict_unicode_to_string
-import pybvc.netconfdev as netconfdev
-from pybvc.netconfdev.vrouter.vrouter5600 import VRouter5600 #noqa
-from pybvc.netconfdev.vdx.nos import NOS #noqa
+from pysdn.common.status import STATUS
+from pysdn.openflowdev.ofswitch import OFSwitch
+from pysdn.common.utils import dict_unicode_to_string
+import pysdn.netconfdev as netconfdev
+from pysdn.netconfdev.vrouter.vrouter5600 import VRouter5600 #noqa
+from pysdn.netconfdev.vdx.nos import NOS #noqa
 
 
 from util import print_table_dict, remove_keys, isconnected
@@ -42,7 +42,7 @@ def show(ctl, args):
             if(result.status.eq(STATUS.OK)):
                 retval = result.data
                 record = {'Node': node.get('node'),
-                          'IPAddres': retval.get('flow-node-inventory:ip-address'),
+                          'IPAddress': retval.get('flow-node-inventory:ip-address'),
                           'SerialNo': retval.get('flow-node-inventory:serial-number'),
                           'Software': retval.get('flow-node-inventory:software'),
                           'Hardware': retval.get('flow-node-inventory:hardware'),
@@ -51,7 +51,7 @@ def show(ctl, args):
                           'Manufacturer': retval.get('flow-node-inventory:manufacturer')}
                 table.append(record)
         fields = ['Node', 'Connected', 'Description', 'Hardware',
-                  'IPAddres', 'Manufacturer', 'SerialNo', 'Software']
+                  'IPAddress', 'Manufacturer', 'SerialNo', 'Software']
         print_table_dict(fields, table)
     # HOSTS
     elif args.get('hosts'):
@@ -252,11 +252,13 @@ def show(ctl, args):
                     # TODO This is wrong. I don't want to create an object to make this call..
                     # change to staticmethods
                     m = globals()[clazz](ctl, name, address, port, user, password)
-                    timeout = 60
-                    result = m.get_interfaces_cfg(timeout)
+                    # timeout = 60
+                    #TODO fix pysdn to add timeout..
+                    result = m.get_interfaces_cfg()
                     if(result.status.eq(STATUS.OK)):
                         intf = m.maptoietfinterfaces(name, json.loads(result.data))
                         int_table = int_table + intf
+
 
         if int_table:
             fields = ['node', 'name', 'mtu', 'operstatus', 'adminstatus', 'ipv4-address', 'mac']

@@ -22,10 +22,10 @@ Options :
 """
 import json
 import util
-from pybvc.common.status import STATUS
-from pybvc.common.result import Result
-from pybvc.common.result import OperStatus
-from pybvc.common.utils import dict_unicode_to_string
+from pysdn.common.status import STATUS
+from pysdn.common.result import Result
+from pysdn.common.result import OperStatus
+from pysdn.common.utils import dict_unicode_to_string
 
 
 def http(ctl, args):

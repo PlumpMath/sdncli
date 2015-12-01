@@ -50,8 +50,8 @@ from docopt import docopt
 from requests import ConnectionError
 from exceptions import AttributeError
 
-from pybvc.controller.controller import Controller
-from pybvc.common.status import STATUS
+from pysdn.controller.controller import Controller
+from pysdn.common.status import STATUS
 
 # import pdb
 

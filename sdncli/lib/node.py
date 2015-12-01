@@ -13,8 +13,8 @@ Options :
 """
 import json
 from pprint import pprint
-from pybvc.controller.netconfnode import NetconfNode
-from pybvc.common.status import STATUS
+from pysdn.controller.netconfnode import NetconfNode
+from pysdn.common.status import STATUS
 
 headers = {'content-type': 'application/json',
            'accept': 'application/json'}

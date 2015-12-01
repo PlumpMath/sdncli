@@ -17,7 +17,8 @@ setup(
                       'prettytable',
                       'singledispatch',
                       'ascii_graph',
-                      'pybvc>=1.3.6'],
+                      'pysdn>=1.3.6'],
+    dependency_links=['git+https://github.com/gaberger/pysdn.git@develop#egg=pysdn-1.3.6'],
     entry_points={'console_scripts': ['sdncli = sdncli.sdncli:main']},
     platforms='any',
     license='BSD')

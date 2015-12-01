@@ -3,4 +3,4 @@ requests
 prettytable
 singledispatch
 ascii_graph
-git+https://github.com/gaberger/pybvc.git@a6153a8#egg=pybvc
+git+https://github.com/gaberger/pysdn.git@develop#egg=pysdn
