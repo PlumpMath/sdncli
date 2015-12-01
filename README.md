@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/gaberger/sdncli.svg?branch=master)](https://travis-ci.org/gaberger/sdncli)
+
 # sdncli
 SDN CLI
 =======
