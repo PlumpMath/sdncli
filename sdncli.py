@@ -107,17 +107,14 @@ def main():
     except ConnectionError, e:
         print("Can't establish connection to controller {}".format(args.get('--address')))
         exit()
-    
     try:
         modulename = "sdncli.lib.{}".format(cmd)
-        module = importlib.import_module(modulename, package = None)
+        module = importlib.import_module(modulename, package=None)
     except AttributeError, e:
         raise e
     arguments = docopt(module.__doc__, commands)
     try:
-       # modulename = "lib.{}.{}".format(commands[0])
-       # module = importlib.import_module(modulename, package = None)
-       getattr(module, cmd)(ctl, arguments)
+        getattr(module, cmd)(ctl, arguments)
     except Exception, e:
         raise e
 

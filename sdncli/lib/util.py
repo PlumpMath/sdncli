@@ -1,6 +1,7 @@
 from prettytable import PrettyTable
 from pysdn.common.status import STATUS
 
+
 def print_table_dict(fields, table, sortkey=None):
     p = PrettyTable()
     for row in table:
@@ -35,7 +36,7 @@ def remove_keys(d, keys):
     return r
 
 
-def isconnected(ctrl,node):
+def isconnected(ctrl, node):
     result = ctrl.check_node_conn_status(node)
     status = result.get_status()
     if (status.eq(STATUS.NODE_CONNECTED)):

@@ -24,12 +24,11 @@ from pysdn.common.status import STATUS
 from pysdn.openflowdev.ofswitch import OFSwitch
 from pysdn.common.utils import dict_unicode_to_string
 import pysdn.netconfdev as netconfdev
-from pysdn.netconfdev.vrouter.vrouter5600 import VRouter5600 #noqa
-from pysdn.netconfdev.vdx.nos import NOS #noqa
+from pysdn.netconfdev.vrouter.vrouter5600 import VRouter5600  # noqa
+from pysdn.netconfdev.vdx.nos import NOS  # noqa
 
 
 from util import print_table_dict, remove_keys, isconnected
-
 
 
 def show(ctl, args):
@@ -202,7 +201,7 @@ def show(ctl, args):
         Get CLIConf devices
         '''
         modulename = "sdncli.lib.interfaces"
-        module = importlib.import_module(modulename, package = None)
+        module = importlib.import_module(modulename, package=None)
         int_table = []
         interfaces = module.get_cliconf_devices(ctl)
         if interfaces is not None:
@@ -214,17 +213,17 @@ def show(ctl, args):
                         print "Grabbing interface for device {}".format(name)
                         filter = device.get("read-template-name")
                         if "mlx" in filter:
-                            module = importlib.import_module("sdncli.driver.mlx", package = None)
+                            module = importlib.import_module("sdncli.driver.mlx", package=None)
                             result = module.MLX.get_interfaces_cfg(ctl, name)
                             intf = module.MLX.maptoietfinterfaces(name, json.loads(result.data))
                             int_table = int_table + intf
                         elif ("linux" in filter):
-                            module = importlib.import_module("sdncli.driver.linux", package = None)
+                            module = importlib.import_module("sdncli.driver.linux", package=None)
                             result = module.Linux.get_interfaces_cfg(ctl, name)
                             intf = module.Linux.maptoietfinterfaces(name, json.loads(result.data))
                             int_table = int_table + intf
                         elif ("cisco" in filter):
-                            module = importlib.import_module("sdncli.driver.cisco", package = None)
+                            module = importlib.import_module("sdncli.driver.cisco", package=None)
                             result = module.Cisco.get_interfaces_cfg(ctl, name)
                             intf = module.Cisco.maptoietfinterfaces(name, json.loads(result.data))
                             int_table = int_table + intf
@@ -258,8 +257,6 @@ def show(ctl, args):
                     if(result.status.eq(STATUS.OK)):
                         intf = m.maptoietfinterfaces(name, json.loads(result.data))
                         int_table = int_table + intf
-
-
         if int_table:
             fields = ['node', 'name', 'mtu', 'operstatus', 'adminstatus', 'ipv4-address', 'mac']
             print_table_dict(fields, int_table)
