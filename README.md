@@ -23,8 +23,7 @@ Development Environment
     4. source sdn/bin/activate
     5. git clone https://github.com/gaberger/sdncli.git
     6. cd ../sdncli
-    7. pip install -r requirements.txt 
-    8  python setup.py develop
+    7  python setup.py develop
 
 3. Setup Controller Address  
     1. export BSCADDR=<controllerIP>
