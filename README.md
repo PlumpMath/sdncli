@@ -1,7 +1,6 @@
 
 
-# sdncli [![Build Status](https://travis-ci.org/gaberger/sdncli.svg?branch=master)](https://travis-ci.org/gaberger/sdncli)
-SDN CLI
+# sdncli [![Build Status](https://travis-ci.org/gaberger/sdncli.svg)](https://travis-ci.org/gaberger/sdncli)
 =======
 Installling SDNCLI
 
