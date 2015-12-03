@@ -10,11 +10,11 @@ Development Environment
 
     On Ubuntu:  
 
-    ```bash 
-    sudp apt-get update
-    sudo apt-get install git python-pip
-    sudo pip install virtualenv
-    ```
+   ```bash 
+   sudp apt-get update
+   sudo apt-get install git python-pip
+   sudo pip install virtualenv
+   ```
 
 ###Setup VirtualEnv
 
@@ -30,18 +30,18 @@ Development Environment
 
 ###Setup Controller Address  
 
-    ```bash
+   ```bash
     export BSCADDR=<controllerIP>
-    ```
+   ```
 
 ###Check ConnectionError
 
-    ```bash 
-    sdncli show nodes
-    ```
+   ```bash 
+   sdncli show nodes
+   ```
 
 ###Mount Netconf Device
     
-    ```bash 
-    sdncli node mount <name> <address> <user> <password>
-    ```
+   ```bash 
+   sdncli node mount <name> <address> <user> <password>
+   ```
