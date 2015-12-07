@@ -23,7 +23,6 @@ headers = {'content-type': 'application/json',
 def node(ctl, args):
     # MOUNT
     if args.get('mount'):
-        import pdb; pdb.set_trace()
         
         if args.get('--ssh'):
             mount_ssh(ctl, args)
