@@ -34,8 +34,6 @@ from util import print_table_dict, remove_keys, isconnected
 def show(ctl, args):
     # NODES
     if args.get('nodes'):
-        import pdb; pdb.set_trace()
-        
         table = []
         result = ctl.get_all_nodes_conn_status()
         for node in result.data:
