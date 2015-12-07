@@ -23,6 +23,8 @@ headers = {'content-type': 'application/json',
 def node(ctl, args):
     # MOUNT
     if args.get('mount'):
+        import pdb; pdb.set_trace()
+        
         if args.get('--ssh'):
             mount_ssh(ctl, args)
             return
@@ -52,7 +54,7 @@ def node(ctl, args):
         name = args.get('<node>')
         # TODO figure out where nodes live.
         # result = [ctl.delete_netconf_node(nodeid) for nodeid in ctl.inventory.netconf_nodes if nodeid.get_id() == name]
-        result = ctl.delete_netconf_node(name)
+        result = ctl.delete_netconf_node(nodename=name)
         if(result.status.eq(STATUS.OK)):
                 print "UnMounted Node {}".format(name)
         else:
