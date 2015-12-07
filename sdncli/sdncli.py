@@ -90,8 +90,6 @@ def main():
     cmd = args['<command>']
     subcmd = args['<args>']
     commands = [cmd] + subcmd
-    
-    print commands
 
     if 'BSCADDR' in os.environ:
         controller = os.environ['BSCADDR']
