@@ -45,6 +45,7 @@ Commands:
 """
 import importlib
 import os
+import sys
 
 from docopt import docopt
 from requests import ConnectionError
@@ -119,4 +120,5 @@ def main():
         raise e
 
 if __name__ == '__main__':
-        main()
+        sys.exit(main())
+

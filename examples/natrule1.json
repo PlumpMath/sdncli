@@ -1,0 +1,19 @@
+{
+  "vyatta-service-nat:nat": {
+    "destination": {
+      "rule": [
+        {
+          "inbound-interface": "dp0s6.11",
+          "destination": {
+            "port": "80",
+            "address": "10.10.10.10"
+          },
+          "translation": {
+            "address": "10.0.4.1"
+          },
+          "tagnode": 1
+        }
+      ]
+    }
+  }
+}
