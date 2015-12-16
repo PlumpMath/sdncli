@@ -1,10 +1,4 @@
 docopt
 requests
 prettytable
-singledispatch
 ascii_graph
-<<<<<<< Updated upstream
-git+https://github.com/gaberger/pysdn.git@develop#egg=pysdn
-=======
-git+https://github.com/gaberger/pysdn.git@97a4e97#egg=pysdn
->>>>>>> Stashed changes

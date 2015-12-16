@@ -56,18 +56,15 @@ from pysdn.common.status import STATUS
 
 # import pdb
 
-# import sdncli.lib.show
-# import sdncli.lib.node
-# import sdncli.lib.flow
-# import sdncli.lib.http
-# from logging import log
 # import logging
 # logging.basicConfig()
-# logging.getLogger().setLevel(logging.DEBUG)
+# logging.getLogger().setLevel(logging.INFO)
 # logging.propagate = True
 # requests_log = logging.getLogger("requests")
 # requests_log.setLevel(logging.DEBUG)
 # requests_log.propagate = True
+# import pdb; pdb.set_trace()
+
 
 
 class Session(Controller):
@@ -94,6 +91,7 @@ def main():
     cmd = args['<command>']
     subcmd = args['<args>']
     commands = [cmd] + subcmd
+
     if 'BSCADDR' in os.environ:
         controller = os.environ['BSCADDR']
     elif args.get('--address') is not None:
@@ -110,7 +108,7 @@ def main():
         exit()
     try:
         modulename = "sdncli.lib.{}".format(cmd)
-        module = importlib.import_module(modulename, package=None)
+        module = importlib.import_module(modulename, package="sdncli")
     except AttributeError, e:
         raise e
     arguments = docopt(module.__doc__, commands)
