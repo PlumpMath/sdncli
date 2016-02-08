@@ -109,12 +109,15 @@ def http_post(ctl, args):
         payload = args['<payload>']
     elif args['--file']:
         payload = util.load_json_file(args['<file>'])
+    timeout = args['--timeout']
+    if timeout is not None:
+        timeout = int(timeout)
     status = OperStatus()
     headers = {'content-type': 'application/yang.data+json',
                'accept': 'text/json, text/html, application/xml, */*'}
     template_url = "http://{}:{}/restconf/{}"
     url = template_url.format(ctl.ipAddr, ctl.portNum, args['<resource>'])
-    resp = ctl.http_post_request(url, json.dumps(payload), headers)
+    resp = ctl.http_post_request(url, json.dumps(payload), headers, timeout=timeout)
     if(resp is None):
         status.set_status(STATUS.CONN_ERROR)
     elif(resp.content is None):

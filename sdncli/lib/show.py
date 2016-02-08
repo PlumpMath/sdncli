@@ -253,7 +253,7 @@ def show(ctl, args):
                     m = globals()[clazz](ctl, name, address, port, user, password)
                     # timeout = 60
                     #TODO fix pysdn to add timeout..
-                    result = m.get_interfaces_cfg()
+                    result = m.get_interfaces_list(100)
                     if(result.status.eq(STATUS.OK)):
                         intf = m.maptoietfinterfaces(name, json.loads(result.data))
                         int_table = int_table + intf
