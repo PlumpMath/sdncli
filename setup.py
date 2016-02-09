@@ -17,7 +17,7 @@ setup(
                       'prettytable',
                       'ascii_graph',
                       'pysdn>=1.3.6'],
-    dependency_links=['git+https://github.com/gaberger/pysdn.git@develop#egg=pysdn-1.3.6+25.g3317007'],
+    dependency_links=['git+https://github.com/gaberger/pysdn.git@develop#egg=pysdn-1.3.7a'],
     entry_points={'console_scripts': ['sdncli = sdncli.sdncli:main']},
     platforms='any',
     license='BSD')
