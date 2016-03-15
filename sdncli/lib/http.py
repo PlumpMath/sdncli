@@ -9,7 +9,6 @@ Options :
             -d --debug             Print JSON dump
             -h --help              This help screen
             -f --force             Ignore cache
-            -t <time> --timeout    HTTP Timeout in seconds
             -y --yang              Utilize yang mounted prefix
             -o --operational       Read from operational datastore
             -p --operations        RPC Resource
@@ -77,9 +76,6 @@ def http(ctl, args):
 
 def http_get(ctl, args):
     # ignore = args['--force']
-    timeout = args['--timeout']
-    if timeout is not None:
-        timeout = int(timeout)
     # import hashlib
     template_url = "http://{}:{}/restconf/{}"
     url = template_url.format(ctl.ipAddr, ctl.portNum, args['<resource>'])
@@ -92,7 +88,7 @@ def http_get(ctl, args):
     # if ignore or not status:
     # retval = _http_get(ctl, resource)
 
-    resp = ctl.http_get_request(url, data=None, headers=None, timeout=timeout)
+    resp = ctl.http_get_request(url, data=None, headers=None)
     if(resp is None):
         status.set_status(STATUS.CONN_ERROR)
     elif(resp.content is None):
@@ -109,15 +105,12 @@ def http_post(ctl, args):
         payload = args['<payload>']
     elif args['--file']:
         payload = util.load_json_file(args['<file>'])
-    timeout = args['--timeout']
-    if timeout is not None:
-        timeout = int(timeout)
     status = OperStatus()
     headers = {'content-type': 'application/yang.data+json',
                'accept': 'text/json, text/html, application/xml, */*'}
     template_url = "http://{}:{}/restconf/{}"
     url = template_url.format(ctl.ipAddr, ctl.portNum, args['<resource>'])
-    resp = ctl.http_post_request(url, json.dumps(payload), headers, timeout=timeout)
+    resp = ctl.http_post_request(url, json.dumps(payload), headers)
     if(resp is None):
         status.set_status(STATUS.CONN_ERROR)
     elif(resp.content is None):

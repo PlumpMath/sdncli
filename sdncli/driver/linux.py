@@ -24,7 +24,7 @@ class Linux(object):
             modelref = templateModelRef
             url = ctrl.get_ext_mount_config_url(name)
             url += modelref
-            resp = ctrl.http_get_request(url, data=None, headers=None, timeout=120)
+            resp = ctrl.http_get_request(url, data=None, headers=None)
             if(resp is None):
                 status.set_status(STATUS.CONN_ERROR)
             elif(resp.content is None):

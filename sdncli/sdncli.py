@@ -34,6 +34,7 @@ Options :
             -a --address <ip>      Address of controller (default: localhost)
             -p --port <port>       RestCONF port (default: 8181)
             -d --debug             Print JSON dump
+            -t --timeout <s>       Request Timeout
             -h --help              This help screen
 
 Commands:
@@ -68,8 +69,8 @@ from pysdn.common.status import STATUS
 
 
 class Session(Controller):
-    def __init__(self, ip, port, user, password):
-        Controller.__init__(self, ip, port, user, password)
+    def __init__(self, ip, port, user, password, debug, timeout):
+        Controller.__init__(self, ip, port, user, password, debug, timeout)
         # initialize session object
         result = self.build_inventory_object()
         if(result.status.eq(STATUS.OK)):
@@ -102,7 +103,7 @@ def main():
 
     try:
         ctl = Session(controller, port,
-                      auth.get('user', 'admin'), auth.get('password', 'admin'))
+                      auth.get('user', 'admin'), auth.get('password', 'admin'), debug=args.get('--debug'), timeout=args.get('--timeout'))
     except ConnectionError, e:
         print("Can't establish connection to controller {}".format(args.get('--address')))
         exit()
